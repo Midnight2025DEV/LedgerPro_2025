@@ -17,6 +17,11 @@ let package = Package(
             name: "LedgerPro",
             dependencies: [],
             path: "Sources/LedgerPro"
+        ),
+        .testTarget(
+            name: "LedgerProTests",
+            dependencies: ["LedgerPro"],
+            path: "Tests/LedgerProTests"
         )
     ]
 )
