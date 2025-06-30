@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  swift-tests:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Select Xcode version
+      run: sudo xcode-select --switch /Applications/Xcode_15.2.app/Contents/Developer
+    
+    - name: Build Swift package
+      run: |
+        cd LedgerPro
+        swift build
+    
+    - name: Run Swift tests
+      run: |
+        cd LedgerPro
+        swift test
+    
+    - name: Check Swift formatting (if swiftformat available)
+      run: |
+        cd LedgerPro
+        if command -v swiftformat >/dev/null 2>&1; then
+          swiftformat --lint Sources/
+        else
+          echo "SwiftFormat not available, skipping format check"
+        fi
+      continue-on-error: true
+
+  python-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ghostscript libpoppler-cpp-dev
+    
+    - name: Install Python dependencies
+      run: |
+        cd LedgerPro/backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run Python linting
+      run: |
+        cd LedgerPro/backend
+        black --check .
+        flake8 --max-line-length=88 --extend-ignore=E203,W503 .
+    
+    - name: Run Python type checking
+      run: |
+        cd LedgerPro/backend
+        mypy . --ignore-missing-imports
+    
+    - name: Run Python security scan
+      run: |
+        cd LedgerPro/backend
+        bandit -r . -x venv/
+    
+    - name: Run Python tests
+      run: |
+        cd LedgerPro/backend
+        pytest --cov=. --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./LedgerPro/backend/coverage.xml
+        flags: python
+        name: python-coverage

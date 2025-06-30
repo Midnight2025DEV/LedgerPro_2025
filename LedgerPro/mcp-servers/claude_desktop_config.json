@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "openai-service": {
+      "command": "python",
+      "args": [
+        "/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant/mcp-servers/openai-service/openai_server.py"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "your-api-key-here",
+        "PYTHONPATH": "/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant/mcp-servers/openai-service/venv/lib/python3.13/site-packages"
+      }
+    },
+    "pdf-processor": {
+      "command": "python",
+      "args": [
+        "/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant/mcp-servers/pdf-processor/pdf_processor_server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant/mcp-servers/pdf-processor/venv/lib/python3.13/site-packages:/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant"
+      }
+    },
+    "financial-analyzer": {
+      "command": "python",
+      "args": [
+        "/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant/mcp-servers/financial-analyzer/analyzer_server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant/mcp-servers/financial-analyzer/venv/lib/python3.13/site-packages:/Users/jonathanhernandez/Documents/Cursor_AI/AI_Financial_Accountant"
+      }
+    }
+  }
+}

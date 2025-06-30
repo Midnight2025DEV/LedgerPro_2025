@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "financial-api-diagnostics"
+version = "1.0.0"
+description = "MCP server for diagnosing API endpoint issues in AI Financial Accountant"
+dependencies = [
+    "mcp>=1.0.0",
+    "websockets>=12.0",
+    "aiohttp>=3.9.0"
+]
+
+[project.scripts]
+financial-api-diagnostics = "server:main"

@@ -1,0 +1,55 @@
+{
+    "openai": {
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "max_tokens": 1000
+    },
+    "goals": {
+        "goal_monthly_savings": 1000,
+        "goal_max_dining_out": 400,
+        "goal_limit_subscriptions": 150,
+        "goal_min_cash_flow": 500
+    },
+    "email": {
+        "smtp_server": "smtp.gmail.com",
+        "smtp_port": 587
+    },
+    "sheets": {
+        "sheets": {
+            "transactions": "Transactions",
+            "payment_history": "Payment_History",
+            "account_alerts": "Account_Alerts",
+            "summary": "Summary"
+        }
+    },
+    "monitoring": {
+        "anomaly_threshold": 2.0,
+        "check_frequency_minutes": 60,
+        "alert_categories": [
+            "unusual_spending",
+            "category_anomaly",
+            "goal_violation"
+        ]
+    },
+    "categories": {
+        "income": [
+            "Salary",
+            "Deposit",
+            "Transfer In"
+        ],
+        "expenses": [
+            "Dining",
+            "Groceries",
+            "Transportation",
+            "Housing",
+            "Utilities",
+            "Subscriptions",
+            "Entertainment",
+            "Shopping",
+            "Healthcare",
+            "Education",
+            "Travel",
+            "Other"
+        ]
+    }
+} 
