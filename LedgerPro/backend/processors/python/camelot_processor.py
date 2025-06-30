@@ -12,7 +12,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import camelot
 import pandas as pd
@@ -1209,12 +1209,14 @@ class CamelotProcessor:
                         "Amount": transaction.get("amount", 0),
                         "Type": transaction.get("type", "").title(),
                         "Category": transaction.get("category", ""),
-                        "Bank": transaction.get("bank_type", "")
-                        .replace("_", " ")
-                        .title(),
-                        "Extraction Method": transaction.get("extraction_method", "")
-                        .replace("_", " ")
-                        .title(),
+                        "Bank": (
+                            transaction.get("bank_type", "").replace("_", " ").title()
+                        ),
+                        "Extraction Method": (
+                            transaction.get("extraction_method", "")
+                            .replace("_", " ")
+                            .title()
+                        ),
                     }
 
             else:

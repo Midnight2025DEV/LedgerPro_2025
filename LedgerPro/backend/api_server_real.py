@@ -313,7 +313,9 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
                 "job_id": job_id,
                 "status": "completed",
                 "progress": 100,
-                "message": f"Successfully processed {len(transactions)} CSV transactions",
+                "message": (
+                    f"Successfully processed {len(transactions)} CSV transactions"
+                ),
                 "completed": True,
             },
         )
