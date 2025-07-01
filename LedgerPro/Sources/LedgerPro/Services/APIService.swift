@@ -81,6 +81,15 @@ class APIService: ObservableObject {
             }
             
             let decoder = JSONDecoder()
+            
+            // Debug: Print raw JSON for transactions endpoint
+            if endpoint.contains("/transactions/") {
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("📋 Raw JSON response preview (first 500 chars):")
+                    print(jsonString.prefix(500))
+                }
+            }
+            
             let result = try decoder.decode(responseType, from: data)
             
             print("Request successful for \(endpoint)")
@@ -256,10 +265,25 @@ class APIService: ObservableObject {
     }
     
     func getTransactions(_ jobId: String) async throws -> TransactionResults {
-        return try await makeRequest(
+        let results = try await makeRequest(
             endpoint: "/api/transactions/\(jobId)",
             responseType: TransactionResults.self
         )
+        
+        // DEBUG: Log forex data in API response
+        print("🌐 API Response received with \(results.transactions.count) transactions")
+        let forexTransactions = results.transactions.filter { $0.originalCurrency != nil }
+        print("🌐 Transactions with forex data: \(forexTransactions.count)")
+        
+        for transaction in forexTransactions.prefix(3) {
+            print("🌐 API Forex Transaction: \(transaction.description)")
+            print("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
+            print("   - originalAmount: \(transaction.originalAmount ?? 0)")
+            print("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
+            print("   - hasForex: \(transaction.hasForex ?? false)")
+        }
+        
+        return results
     }
     
     func pollJobUntilComplete(

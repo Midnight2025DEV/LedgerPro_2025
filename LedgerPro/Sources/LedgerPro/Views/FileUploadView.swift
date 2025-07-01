@@ -329,6 +329,17 @@ struct FileUploadView: View {
                     let results = try await apiService.getTransactions(uploadResponse.jobId)
                     print("✅ Retrieved \(results.transactions.count) transactions")
                     
+                    // Debug: Check if any transactions have forex data
+                    let forexTransactions = results.transactions.filter { $0.hasForex == true }
+                    if !forexTransactions.isEmpty {
+                        print("💱 Found \(forexTransactions.count) foreign currency transactions in API response:")
+                        for transaction in forexTransactions {
+                            print("  - \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
+                        }
+                    } else {
+                        print("⚠️ No foreign currency transactions found in API response")
+                    }
+                    
                     await MainActor.run {
                         processingProgress = 1.0
                         

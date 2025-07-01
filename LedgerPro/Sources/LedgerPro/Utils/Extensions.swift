@@ -220,6 +220,27 @@ extension NumberFormatter {
     }()
 }
 
+// MARK: - DateFormatter Extensions
+extension DateFormatter {
+    static let chartDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter
+    }()
+    
+    static let shortDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d"
+        return formatter
+    }()
+    
+    static let monthYearFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        return formatter
+    }()
+}
+
 // MARK: - DispatchQueue Extensions
 extension DispatchQueue {
     static func mainAsync(_ work: @escaping () -> Void) {

@@ -11,13 +11,23 @@ struct Transaction: Codable, Identifiable, Hashable {
     let accountId: String?
     let rawData: [String: String]?
     
+    // Foreign currency fields
+    let originalAmount: Double?     // Original foreign amount
+    let originalCurrency: String?   // Currency code (EUR, GBP, MXN, etc.)
+    let exchangeRate: Double?       // Exchange rate used
+    let hasForex: Bool?            // Flag for foreign transactions
+    
     enum CodingKeys: String, CodingKey {
         case id, date, description, amount, category, confidence, jobId, accountId
         case rawData = "raw_data"
+        case originalAmount = "original_amount"
+        case originalCurrency = "original_currency"
+        case exchangeRate = "exchange_rate"
+        case hasForex = "has_forex"
     }
     
     // Memberwise initializer for creating transactions manually
-    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil) {
+    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil) {
         if let providedId = id {
             self.id = providedId
         } else {
@@ -32,6 +42,10 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.jobId = jobId
         self.accountId = accountId
         self.rawData = rawData
+        self.originalAmount = originalAmount
+        self.originalCurrency = originalCurrency
+        self.exchangeRate = exchangeRate
+        self.hasForex = hasForex
     }
     
     // Decoder initializer for JSON parsing
@@ -57,6 +71,10 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.jobId = try container.decodeIfPresent(String.self, forKey: .jobId)
         self.accountId = try container.decodeIfPresent(String.self, forKey: .accountId)
         self.rawData = try container.decodeIfPresent([String: String].self, forKey: .rawData)
+        self.originalAmount = try container.decodeIfPresent(Double.self, forKey: .originalAmount)
+        self.originalCurrency = try container.decodeIfPresent(String.self, forKey: .originalCurrency)
+        self.exchangeRate = try container.decodeIfPresent(Double.self, forKey: .exchangeRate)
+        self.hasForex = try container.decodeIfPresent(Bool.self, forKey: .hasForex)
     }
     
     var formattedAmount: String {
@@ -220,4 +238,79 @@ extension Transaction {
     var categoryColor: String {
         return Self.categoryColors[category] ?? "gray"
     }
+    
+    // Helper to identify payment/transfer transactions
+    var isPaymentOrTransfer: Bool {
+        // Check category
+        if category == "Payment" || category == "Transfer" {
+            return true
+        }
+        
+        // Check description for payment patterns
+        let paymentKeywords = ["payment", "pymt", "capital one mobile", "transfer", "xfer"]
+        let descriptionLower = description.lowercased()
+        
+        return paymentKeywords.contains { keyword in
+            descriptionLower.contains(keyword)
+        }
+    }
+    
+    // Helper to identify actual income (not payments/transfers)
+    var isActualIncome: Bool {
+        return amount > 0 && !isPaymentOrTransfer
+    }
+    
+    // Pre-computed display values for better performance
+    var displayMerchantName: String {
+        if description.contains("Capital One") {
+            return "Capital One Mobile Payment"
+        } else if description.contains("UBER") {
+            return "Uber Eats"
+        } else if description.contains("WAL-MART") || description.contains("WALMART") {
+            return "Walmart"
+        } else if description.contains("CHEVRON") {
+            return "Chevron"
+        } else if description.contains("NETFLIX") {
+            return "Netflix.com"
+        } else if description.contains("FARM") {
+            return "Farm Roma Hipodromo"
+        }
+        return description.components(separatedBy: " ").prefix(4).joined(separator: " ")
+    }
+    
+    var displayDetailAmount: String {
+        let formatter = NumberFormatter.currencyFormatter
+        
+        if description.lowercased().contains("capital one") {
+            return formatter.string(from: NSNumber(value: abs(amount))) ?? "$0.00"
+        }
+        
+        if isExpense {
+            return "-" + (formatter.string(from: NSNumber(value: abs(amount))) ?? "$0.00")
+        } else {
+            return "+" + (formatter.string(from: NSNumber(value: amount)) ?? "$0.00")
+        }
+    }
+    
+    var displayDate: String {
+        return DateFormatter.fullDateFormatter.string(from: formattedDate)
+    }
+}
+
+// MARK: - Performance Optimizations
+extension NumberFormatter {
+    static let currencyFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter
+    }()
+}
+
+extension DateFormatter {
+    static let fullDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .full
+        return formatter
+    }()
 }
