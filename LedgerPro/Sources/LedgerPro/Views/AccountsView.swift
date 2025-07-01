@@ -347,19 +347,23 @@ struct AccountDetailView: View {
             }
             .frame(height: 200)
             .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { value in
-                    AxisGridLine()
-                    AxisValueLabel(format: .dateTime.month().day())
+                AxisMarks(values: .stride(by: .day, count: 3)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.secondary.opacity(0.3))
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(DateFormatter.chartDateFormatter.string(from: date))
+                                .font(.caption2)
+                        }
+                    }
                 }
             }
             .chartYAxis {
                 AxisMarks { value in
-                    AxisGridLine()
-                    AxisValueLabel {
-                        if let doubleValue = value.as(Double.self) {
-                            Text("$\(Int(doubleValue))")
-                        }
-                    }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.secondary.opacity(0.3))
+                    AxisValueLabel(format: .currency(code: "USD").precision(.fractionLength(0)))
+                        .font(.caption2)
                 }
             }
         }

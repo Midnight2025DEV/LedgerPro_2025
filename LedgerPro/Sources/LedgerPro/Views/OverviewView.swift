@@ -120,7 +120,6 @@ struct SpendingChartView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
     
     private var chartData: [DailySpending] {
-        let calendar = Calendar.current
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         
@@ -184,12 +183,7 @@ struct SpendingChartView: View {
                     AxisMarks(values: .stride(by: .day, count: max(1, chartData.count / 5))) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
                             .foregroundStyle(Color.secondary.opacity(0.3))
-                        AxisValueLabel {
-                            if let date = value.as(Date.self) {
-                                Text(DateFormatter.chartDateFormatter.string(from: date))
-                                    .font(.caption2)
-                            }
-                        }
+                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
                     }
                 }
                 .chartYAxis {

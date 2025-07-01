@@ -395,24 +395,24 @@ struct SpendingDistributionChart: View {
                 }
                 .frame(height: 200)
                 .chartXAxis {
-                    AxisMarks { value in
+                    AxisMarks(preset: .aligned, values: .automatic(desiredCount: 6)) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(Color.secondary.opacity(0.3))
                         AxisValueLabel {
                             if let category = value.as(String.self) {
-                                Text(category)
-                                    .font(.caption)
-                                    .rotationEffect(.degrees(-45))
+                                Text(category.truncated(to: 8))
+                                    .font(.caption2)
+                                    .multilineTextAlignment(.center)
                             }
                         }
                     }
                 }
                 .chartYAxis {
                     AxisMarks { value in
-                        AxisGridLine()
-                        AxisValueLabel {
-                            if let doubleValue = value.as(Double.self) {
-                                Text("$\(Int(doubleValue))")
-                            }
-                        }
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(Color.secondary.opacity(0.3))
+                        AxisValueLabel(format: .currency(code: "USD").precision(.fractionLength(0)))
+                            .font(.caption2)
                     }
                 }
             } else {
