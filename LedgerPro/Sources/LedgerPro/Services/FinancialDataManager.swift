@@ -164,6 +164,15 @@ class FinancialDataManager: ObservableObject {
             return
         }
         
+        // Debug: Check if any transactions have forex data
+        let forexTransactions = newTransactions.filter { $0.hasForex == true }
+        if !forexTransactions.isEmpty {
+            print("📈 Found \(forexTransactions.count) foreign currency transactions:")
+            for transaction in forexTransactions {
+                print("  - \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
+            }
+        }
+        
         // Detect or create bank account
         let detectedAccount = detectBankAccountFromFilename(filename, transactions: newTransactions)
         
@@ -184,7 +193,14 @@ class FinancialDataManager: ObservableObject {
         
         // Add transactions with account linkage
         let transactionsWithAccounts = newTransactions.map { transaction in
-            Transaction(
+            // DEBUG: Log forex data for each transaction
+            print("💾 Adding transaction: \(transaction.description)")
+            print("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
+            print("   - originalAmount: \(transaction.originalAmount ?? 0)")
+            print("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
+            print("   - hasForex: \(transaction.hasForex ?? false)")
+            
+            return Transaction(
                 id: transaction.id,
                 date: transaction.date,
                 description: transaction.description,
@@ -193,7 +209,11 @@ class FinancialDataManager: ObservableObject {
                 confidence: transaction.confidence,
                 jobId: jobId,
                 accountId: finalAccount.id,
-                rawData: transaction.rawData
+                rawData: transaction.rawData,
+                originalAmount: transaction.originalAmount,
+                originalCurrency: transaction.originalCurrency,
+                exchangeRate: transaction.exchangeRate,
+                hasForex: transaction.hasForex
             )
         }
         
@@ -315,16 +335,33 @@ class FinancialDataManager: ObservableObject {
         return calculateSummary(for: accountTransactions)
     }
     
+    func getAccount(for accountId: String?) -> BankAccount? {
+        guard let accountId = accountId else { return nil }
+        return bankAccounts.first { $0.id == accountId }
+    }
+    
+    func getAccountType(for transaction: Transaction) -> BankAccount.AccountType? {
+        return getAccount(for: transaction.accountId)?.accountType
+    }
+    
     // MARK: - Summary Calculation
     private func updateSummary() {
         summary = calculateSummary(for: transactions)
     }
     
     private func calculateSummary(for transactions: [Transaction]) -> FinancialSummary {
-        let income = transactions.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount }
+        // Exclude payments and transfers from income calculation
+        let income = transactions.filter { $0.isActualIncome }.reduce(0) { $0 + $1.amount }
+        
         let expenses = abs(transactions.filter { $0.amount < 0 }.reduce(0) { $0 + $1.amount })
         let netSavings = income - expenses
-        let availableBalance = netSavings + 1000 // Assume base balance
+        let availableBalance = netSavings // No assumed base balance when no transactions
+        
+        // Calculate percentage changes only if we have data
+        let incomeChange: String? = transactions.isEmpty ? nil : "+5.2%"
+        let expensesChange: String? = transactions.isEmpty ? nil : "-8.1%"
+        let savingsChange: String? = transactions.isEmpty ? nil : "+21.4%"
+        let balanceChange: String? = transactions.isEmpty ? nil : "+12.3%"
         
         return FinancialSummary(
             totalIncome: income,
@@ -332,10 +369,10 @@ class FinancialDataManager: ObservableObject {
             netSavings: netSavings,
             availableBalance: availableBalance,
             transactionCount: transactions.count,
-            incomeChange: "+5.2%",
-            expensesChange: "-8.1%",
-            savingsChange: "+21.4%",
-            balanceChange: "+12.3%"
+            incomeChange: incomeChange,
+            expensesChange: expensesChange,
+            savingsChange: savingsChange,
+            balanceChange: balanceChange
         )
     }
     

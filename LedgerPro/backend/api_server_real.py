@@ -269,16 +269,25 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
                 )
 
                 # CSV processor already returns correct format
-                transactions.append(
-                    {
-                        "date": transaction["date"],
-                        "description": transaction["description"],
-                        "amount": transaction["amount"],
-                        "category": transaction["category"],
-                        "confidence": transaction.get("confidence", 1.0),
-                        "raw_data": raw_data,  # ✅ Preserve raw CSV data
-                    }
-                )
+                transaction_data = {
+                    "date": transaction["date"],
+                    "description": transaction["description"],
+                    "amount": transaction["amount"],
+                    "category": transaction["category"],
+                    "confidence": transaction.get("confidence", 1.0),
+                    "raw_data": raw_data,  # ✅ Preserve raw CSV data
+                }
+                
+                # Add foreign currency fields if present
+                if transaction.get("has_forex"):
+                    transaction_data.update({
+                        "original_amount": transaction.get("original_amount"),
+                        "original_currency": transaction.get("original_currency"),
+                        "exchange_rate": transaction.get("exchange_rate"),
+                        "has_forex": True,
+                    })
+                
+                transactions.append(transaction_data)
 
                 if transaction["amount"] > 0:
                     total_income += transaction["amount"]
@@ -410,17 +419,39 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
 
         if result and "transactions" in result:
             for transaction in result["transactions"]:
+                # DEBUG: Log each transaction being processed
+                desc = transaction.get("description", "")[:50]
+                print(f"🔧 Processing transaction: {desc}")
+                print(f"   - has_forex: {transaction.get('has_forex')}")
+                print(f"   - original_currency: {transaction.get('original_currency')}")
+                print(f"   - original_amount: {transaction.get('original_amount')}")
+                print(f"   - exchange_rate: {transaction.get('exchange_rate')}")
+                
                 # Map processor fields to API fields
                 amount = float(transaction.get("amount", 0))
-                transactions.append(
-                    {
-                        "date": transaction.get("date", ""),
-                        "description": transaction.get("description", ""),
-                        "amount": amount,
-                        "category": transaction.get("category", "Other"),
-                        "confidence": transaction.get("confidence", 0.8),
-                    }
-                )
+                
+                # Build transaction with base fields
+                transaction_data = {
+                    "date": transaction.get("date", ""),
+                    "description": transaction.get("description", ""),
+                    "amount": amount,
+                    "category": transaction.get("category", "Other"),
+                    "confidence": transaction.get("confidence", 0.8),
+                }
+                
+                # Add foreign currency fields if present
+                if transaction.get("has_forex"):
+                    print(f"✅ ADDING FOREX DATA to {desc}")
+                    transaction_data.update({
+                        "original_amount": transaction.get("original_amount"),
+                        "original_currency": transaction.get("original_currency"),
+                        "exchange_rate": transaction.get("exchange_rate"),
+                        "has_forex": True,
+                    })
+                else:
+                    print(f"❌ NO FOREX DATA for {desc}")
+                
+                transactions.append(transaction_data)
 
                 if amount > 0:
                     total_income += amount

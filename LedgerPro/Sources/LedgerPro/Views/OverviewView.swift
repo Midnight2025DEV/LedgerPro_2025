@@ -120,7 +120,7 @@ struct SpendingChartView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
     
     private var chartData: [DailySpending] {
-        let _ = Calendar.current
+        let calendar = Calendar.current
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         
@@ -129,19 +129,32 @@ struct SpendingChartView: View {
             transaction.date
         }
         
-        // Create daily spending data
-        let dailyData = grouped.map { date, transactions in
+        // Create daily spending data and limit to recent dates for readability
+        let dailyData = grouped.compactMap { date, transactions -> DailySpending? in
+            guard let parsedDate = dateFormatter.date(from: date) else { return nil }
+            
             let expenses = transactions.filter { $0.amount < 0 }.reduce(0) { $0 + abs($1.amount) }
-            let income = transactions.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount }
+            
+            // Exclude payments and transfers from income calculation
+            let income = transactions.filter { $0.isActualIncome }.reduce(0) { $0 + $1.amount }
             
             return DailySpending(
-                date: dateFormatter.date(from: date) ?? Date(),
+                date: parsedDate,
                 expenses: expenses,
                 income: income
             )
         }
         
-        return dailyData.sorted { $0.date < $1.date }
+        // Sort and limit for better readability
+        let sortedData = dailyData.sorted { $0.date < $1.date }
+        
+        // If we have data, show recent portion or all data if less than 30 days total
+        if sortedData.count <= 30 {
+            return sortedData // Show all data if reasonable amount
+        } else {
+            // Show last 20 data points for better chart readability
+            return Array(sortedData.suffix(20))
+        }
     }
     
     var body: some View {
@@ -156,31 +169,50 @@ struct SpendingChartView: View {
                         x: .value("Date", data.date, unit: .day),
                         y: .value("Expenses", data.expenses)
                     )
-                    .foregroundStyle(.red.opacity(0.7))
+                    .foregroundStyle(.red.gradient)
+                    .opacity(0.8)
                     
                     BarMark(
                         x: .value("Date", data.date, unit: .day),
                         y: .value("Income", data.income)
                     )
-                    .foregroundStyle(.green.opacity(0.7))
+                    .foregroundStyle(.green.gradient)
+                    .opacity(0.8)
                 }
+                .frame(height: 250)
                 .chartXAxis {
-                    AxisMarks(values: .stride(by: .day)) { value in
-                        AxisGridLine()
-                        AxisValueLabel(format: .dateTime.month().day())
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks { value in
-                        AxisGridLine()
+                    AxisMarks(values: .stride(by: .day, count: max(1, chartData.count / 5))) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(Color.secondary.opacity(0.3))
                         AxisValueLabel {
-                            if let doubleValue = value.as(Double.self) {
-                                Text("$\(Int(doubleValue))")
+                            if let date = value.as(Date.self) {
+                                Text(DateFormatter.chartDateFormatter.string(from: date))
+                                    .font(.caption2)
                             }
                         }
                     }
                 }
-                .chartLegend(position: .top)
+                .chartYAxis {
+                    AxisMarks { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(Color.secondary.opacity(0.3))
+                        AxisValueLabel(format: .currency(code: "USD").precision(.fractionLength(0)))
+                            .font(.caption2)
+                    }
+                }
+                .chartLegend(position: .top, spacing: 20) {
+                    HStack(spacing: 20) {
+                        Label("Expenses", systemImage: "minus.circle.fill")
+                            .foregroundColor(.red)
+                        Label("Income", systemImage: "plus.circle.fill")
+                            .foregroundColor(.green)
+                    }
+                    .font(.caption)
+                }
+                .chartBackground { chartProxy in
+                    Color(NSColor.controlBackgroundColor)
+                }
+                .padding(.horizontal, 8)
             } else {
                 VStack {
                     Image(systemName: "chart.bar")
