@@ -77,18 +77,18 @@ class CamelotProcessor:
             "forex_patterns": [
                 # Capital One format: $518.82 MXN 19.93161365 Exchange Rate
                 r"\$?([\d,]+\.?\d+)\s+(MXN|EUR|GBP|JPY|CAD|AUD|INR|KRW|CHF|SEK|NOK|DKK)\s+([\d\.]+)\s+Exchange\s+Rate",
-                
+
                 # Standard format: €45.67 @ 1.0892 = $49.75
                 r"([€£¥₹₩])([\d,]+\.?\d+)\s*@\s*([\d\.]+)\s*=\s*\$([\d,]+\.\d{2})",
-                
-                # Alternative format: 750.00 MXN @ 0.0556 = $41.70  
+
+                # Alternative format: 750.00 MXN @ 0.0556 = $41.70
                 r"([\d,]+\.?\d+)\s+([A-Z]{3})\s+@\s*([\d\.]+)\s*=\s*\$([\d,]+\.\d{2})",
-                
+
                 # Compact format: €45.67@1.0892=$49.75
                 r"([€£¥₹₩])([\d,]+\.?\d+)@([\d\.]+)=\$([\d,]+\.\d{2})",
             ],
             "currency_symbols": {
-                "€": "EUR", "£": "GBP", "¥": "JPY", 
+                "€": "EUR", "£": "GBP", "¥": "JPY",
                 "₹": "INR", "₩": "KRW", "$": "USD"
             }
         }
@@ -402,9 +402,9 @@ class CamelotProcessor:
                 if skip_next > 0:
                     skip_next -= 1
                     continue
-                    
+
                 row = table.iloc[idx]
-                
+
                 # For Capital One, look ahead for forex data pattern
                 next_row_forex_data = None
                 if bank_type == "capital_one":
@@ -413,49 +413,49 @@ class CamelotProcessor:
                     if idx + 2 < len(table):
                         next_row = table.iloc[idx + 1]
                         next_next_row = table.iloc[idx + 2]
-                        
+
                         next_row_text = " ".join([str(val) for val in next_row if pd.notna(val)])
                         next_next_row_text = " ".join([str(val) for val in next_next_row if pd.notna(val)])
-                        
+
                         print(f"🔍 Row {idx}: {' '.join([str(val) for val in row if pd.notna(val)])[:80]}")
                         print(f"🔍 Next Row {idx+1}: {next_row_text[:80]}")
                         print(f"🔍 Next+2 Row {idx+2}: {next_next_row_text[:80]}")
-                        
+
                         # Check if forex pattern spans rows N+1 and N+2
                         if "Exchange Rate" in next_next_row_text and ("MXN" in next_row_text or "EUR" in next_row_text or "GBP" in next_row_text):
                             print(f"💱 FOUND forex pattern across rows {idx+1} and {idx+2}!")
-                            
+
                             # Combine the forex data rows
                             combined_forex_text = next_row_text + " " + next_next_row_text
                             print(f"💰 Combined forex text: {combined_forex_text[:100]}")
-                            
+
                             forex_data = self.extract_forex_data(combined_forex_text)
                             if forex_data.get("has_forex"):
                                 next_row_forex_data = forex_data
                                 skip_next = 2  # Skip the next 2 forex rows
                                 logger.info(f"Found forex data in next rows: {forex_data}")
                                 print(f"✅ FOREX DATA EXTRACTED: {forex_data}")
-                    
+
                     # Also check if next row alone contains Exchange Rate (fallback)
                     elif idx + 1 < len(table):
                         next_row = table.iloc[idx + 1]
                         next_row_text = " ".join([str(val) for val in next_row if pd.notna(val)])
-                        
+
                         if "Exchange Rate" in next_row_text:
                             print(f"💱 FOUND 'Exchange Rate' in single next row!")
-                            
+
                             # For single-row forex data
                             current_row_text = " ".join([str(val) for val in row if pd.notna(val)])
                             combined_text = current_row_text + " " + next_row_text
                             print(f"💰 Combined text for forex extraction: {combined_text[:100]}")
-                            
+
                             forex_data = self.extract_forex_data(combined_text)
                             if forex_data.get("has_forex"):
                                 next_row_forex_data = forex_data
                                 skip_next = 1  # Skip the next forex row
                                 logger.info(f"Found forex data in next row: {forex_data}")
                                 print(f"✅ FOREX DATA EXTRACTED: {forex_data}")
-                
+
                 transaction = self.parse_transaction_row(row, bank_type)
                 if transaction:
                     # Add forex data found in lookahead if present
@@ -463,7 +463,7 @@ class CamelotProcessor:
                         transaction.update(next_row_forex_data)
                         logger.info(f"Added forex data to transaction: {transaction['description']}")
                         logger.info(f"Added forex from next row to transaction: {transaction}")
-                    
+
                     transactions.append(transaction)
                     table_transactions += 1
                     logger.info(
@@ -632,12 +632,12 @@ class CamelotProcessor:
             # Check for foreign currency data in the full row text
             row_text = " ".join([str(val) for val in row if pd.notna(val)])
             forex_data = self.extract_forex_data(row_text)
-            
+
             if forex_data.get("has_forex"):
                 logger.info(f"Adding forex data to transaction: {forex_data}")
                 transaction.update(forex_data)
                 logger.info(f"Updated transaction with forex: {transaction}")
-                
+
                 # Clean description to remove forex artifacts if needed
                 if "Exchange Rate" in description_clean:
                     clean_desc = re.sub(
@@ -657,17 +657,16 @@ class CamelotProcessor:
 
     def extract_forex_data(self, description: str) -> Dict[str, Any]:
         """Extract foreign currency information from transaction description"""
-        
         # Check for Capital One multi-line foreign transaction format
         if "Exchange Rate" in description:
             pattern = r"\$?([\d,]+\.?\d*)\s*(MXN|EUR|GBP|JPY|CAD|AUD|INR|KRW|CHF|SEK|NOK|DKK)\s*([\d\.]+)\s*Exchange\s*Rate"
             match = re.search(pattern, description)
-            
+
             if match:
                 original_amount_str, currency_code, exchange_rate_str = match.groups()
-                
+
                 logger.info(f"Found forex data: {original_amount_str} {currency_code} @ {exchange_rate_str}")
-                
+
                 return {
                     "original_amount": float(original_amount_str.replace(",", "")),
                     "original_currency": currency_code,
@@ -675,20 +674,20 @@ class CamelotProcessor:
                     "has_forex": True,
                     "forex_raw": match.group(0)
                 }
-        
+
         # Check for other forex patterns
         for pattern in self.transaction_patterns["forex_patterns"][1:]:  # Skip first pattern (already checked)
             match = re.search(pattern, description)
             if match:
                 groups = match.groups()
-                
+
                 if len(groups) == 4 and groups[0] in self.transaction_patterns["currency_symbols"]:
                     # Symbol format: €45.67 @ 1.0892 = $49.75
                     symbol, original_amount, rate, usd_amount = groups
                     currency_code = self.transaction_patterns["currency_symbols"][symbol]
-                    
+
                     logger.info(f"Found forex data (symbol): {original_amount} {currency_code} @ {rate}")
-                    
+
                     return {
                         "original_amount": float(original_amount.replace(",", "")),
                         "original_currency": currency_code,
@@ -696,13 +695,13 @@ class CamelotProcessor:
                         "has_forex": True,
                         "forex_raw": match.group(0)
                     }
-                
+
                 elif len(groups) == 4:
                     # Code format: 750.00 MXN @ 0.0556 = $41.70
                     original_amount, currency_code, rate, usd_amount = groups
-                    
+
                     logger.info(f"Found forex data (code): {original_amount} {currency_code} @ {rate}")
-                    
+
                     return {
                         "original_amount": float(original_amount.replace(",", "")),
                         "original_currency": currency_code,
@@ -710,7 +709,7 @@ class CamelotProcessor:
                         "has_forex": True,
                         "forex_raw": match.group(0)
                     }
-        
+
         return {"has_forex": False}
 
     def parse_capital_one_date(self, date_str: str) -> Optional[str]:
@@ -1125,11 +1124,11 @@ class CamelotProcessor:
                 "category_breakdown": {},
                 "date_range": None,
             }
-        
+
         # Debug: Check forex data in final result
         forex_count = sum(1 for t in transactions if t.get('has_forex'))
         logger.info(f"Returning {len(transactions)} transactions, {forex_count} have forex data")
-        
+
         return {
             "transactions": transactions,
             "summary": summary,

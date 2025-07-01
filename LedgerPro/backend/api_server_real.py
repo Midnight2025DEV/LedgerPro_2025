@@ -277,7 +277,7 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
                     "confidence": transaction.get("confidence", 1.0),
                     "raw_data": raw_data,  # ✅ Preserve raw CSV data
                 }
-                
+
                 # Add foreign currency fields if present
                 if transaction.get("has_forex"):
                     transaction_data.update({
@@ -286,7 +286,7 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
                         "exchange_rate": transaction.get("exchange_rate"),
                         "has_forex": True,
                     })
-                
+
                 transactions.append(transaction_data)
 
                 if transaction["amount"] > 0:
@@ -422,14 +422,14 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
                 # DEBUG: Log each transaction being processed
                 desc = transaction.get("description", "")[:50]
                 print(f"🔧 Processing transaction: {desc}")
-                print(f"   - has_forex: {transaction.get('has_forex')}")
-                print(f"   - original_currency: {transaction.get('original_currency')}")
-                print(f"   - original_amount: {transaction.get('original_amount')}")
-                print(f"   - exchange_rate: {transaction.get('exchange_rate')}")
-                
+                print(f"- has_forex: {transaction.get('has_forex')}")
+                print(f"- original_currency: {transaction.get('original_currency')}")
+                print(f"- original_amount: {transaction.get('original_amount')}")
+                print(f"- exchange_rate: {transaction.get('exchange_rate')}")
+
                 # Map processor fields to API fields
                 amount = float(transaction.get("amount", 0))
-                
+
                 # Build transaction with base fields
                 transaction_data = {
                     "date": transaction.get("date", ""),
@@ -438,7 +438,7 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
                     "category": transaction.get("category", "Other"),
                     "confidence": transaction.get("confidence", 0.8),
                 }
-                
+
                 # Add foreign currency fields if present
                 if transaction.get("has_forex"):
                     print(f"✅ ADDING FOREX DATA to {desc}")
@@ -450,7 +450,7 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
                     })
                 else:
                     print(f"❌ NO FOREX DATA for {desc}")
-                
+
                 transactions.append(transaction_data)
 
                 if amount > 0:
