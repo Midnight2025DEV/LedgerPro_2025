@@ -252,7 +252,7 @@ struct CategoryBreakdownView: View {
                             innerRadius: .ratio(0.5),
                             angularInset: 2
                         )
-                        .foregroundStyle(by: .value("Category", data.category))
+                        .foregroundStyle(Color.forCategory(data.category))
                     }
                     .chartLegend(position: .trailing, alignment: .center)
                 } else {
