@@ -447,6 +447,50 @@ class FinancialDataManager: ObservableObject {
         
         addTransactions(demoTransactions, jobId: "demo_job", filename: "demo_statement.csv")
     }
+    
+    // MARK: - Transaction Updates
+    
+    /// Update the category of a specific transaction
+    func updateTransactionCategory(transactionId: String, newCategory: String) {
+        guard let index = transactions.firstIndex(where: { $0.id == transactionId }) else {
+            print("❌ Transaction not found: \(transactionId)")
+            return
+        }
+        
+        let oldCategory = transactions[index].category
+        let originalTransaction = transactions[index]
+        
+        // Create new transaction with updated category
+        let updatedTransaction = Transaction(
+            id: originalTransaction.id,
+            date: originalTransaction.date,
+            description: originalTransaction.description,
+            amount: originalTransaction.amount,
+            category: newCategory,
+            confidence: originalTransaction.confidence,
+            jobId: originalTransaction.jobId,
+            accountId: originalTransaction.accountId,
+            rawData: originalTransaction.rawData,
+            originalAmount: originalTransaction.originalAmount,
+            originalCurrency: originalTransaction.originalCurrency,
+            exchangeRate: originalTransaction.exchangeRate,
+            hasForex: originalTransaction.hasForex
+        )
+        
+        // Update the transaction in the array
+        transactions[index] = updatedTransaction
+        
+        // Update summary and save
+        updateSummary()
+        saveData()
+        
+        print("✅ Updated transaction category: \(oldCategory) → \(newCategory)")
+    }
+    
+    /// Update the category of a transaction using Category object (for new category system)
+    func updateTransactionCategory(transactionId: String, newCategory: Category) {
+        updateTransactionCategory(transactionId: transactionId, newCategory: newCategory.name)
+    }
 }
 
 // MARK: - Array Extensions

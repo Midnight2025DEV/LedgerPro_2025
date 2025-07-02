@@ -4,6 +4,7 @@ import Charts
 struct InsightsView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
     @EnvironmentObject private var apiService: APIService
+    @StateObject private var categoryService = CategoryService.shared
     @State private var selectedInsightTab: InsightTab = .overview
     @State private var isGeneratingInsights = false
     @State private var aiInsights: [AIInsight] = []
@@ -26,24 +27,89 @@ struct InsightsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Tab Picker
-            Picker("Insight Type", selection: $selectedInsightTab) {
-                ForEach(InsightTab.allCases, id: \.self) { tab in
-                    Label(tab.rawValue, systemImage: tab.systemImage)
-                        .tag(tab)
+            // Enhanced Tab Picker
+            VStack(spacing: 16) {
+                HStack {
+                    Text("Financial Insights")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    
+                    Spacer()
+                    
+                    Button(action: { 
+                        generateAIInsights() 
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: isGeneratingInsights ? "arrow.clockwise" : "sparkles")
+                                .font(.caption)
+                            Text(isGeneratingInsights ? "Analyzing..." : "AI Insights")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue.opacity(0.1))
+                        .foregroundColor(.blue)
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isGeneratingInsights)
                 }
+                
+                // Custom Tab Picker
+                HStack(spacing: 0) {
+                    ForEach(InsightTab.allCases, id: \.self) { tab in
+                        Button(action: { selectedInsightTab = tab }) {
+                            VStack(spacing: 8) {
+                                Image(systemName: tab.systemImage)
+                                    .font(.title3)
+                                    .foregroundColor(selectedInsightTab == tab ? .white : .secondary)
+                                
+                                Text(tab.rawValue)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(selectedInsightTab == tab ? .white : .secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(selectedInsightTab == tab ? 
+                                          LinearGradient(
+                                            gradient: Gradient(colors: [.blue, .blue.opacity(0.8)]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                          ) : 
+                                          LinearGradient(
+                                            gradient: Gradient(colors: [Color.clear]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                          )
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(4)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(12)
             }
-            .pickerStyle(.segmented)
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(Color(NSColor.windowBackgroundColor))
             
             ScrollView {
                 switch selectedInsightTab {
                 case .overview:
                     InsightOverviewView()
+                        .environmentObject(categoryService)
                 case .spending:
                     SpendingInsightsView()
+                        .environmentObject(categoryService)
                 case .trends:
                     TrendInsightsView()
+                        .environmentObject(categoryService)
                 case .ai:
                     AIInsightsView(
                         insights: aiInsights,
@@ -53,9 +119,14 @@ struct InsightsView: View {
                 }
             }
         }
-        .navigationTitle("Financial Insights")
+        .navigationTitle("")
         .onAppear {
             loadStoredInsights()
+            Task {
+                if categoryService.categories.isEmpty {
+                    await categoryService.loadCategories()
+                }
+            }
         }
     }
     
@@ -129,14 +200,18 @@ struct InsightsView: View {
         
         let grouped = Dictionary(grouping: expenses) { $0.category }
         
-        return grouped.map { category, transactions in
+        return grouped.map { categoryName, transactions in
             let amount = transactions.reduce(0) { $0 + abs($1.amount) }
             let percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0
             
+            // Try to find matching category from CategoryService for enhanced data
+            let categoryObject = categoryService.categories.first { $0.name == categoryName }
+            
             return CategorySpendingAnalysis(
-                category: category,
+                category: categoryName,
                 amount: amount,
-                percentage: percentage
+                percentage: percentage,
+                categoryObject: categoryObject
             )
         }.sorted { $0.amount > $1.amount }
     }
@@ -368,35 +443,57 @@ struct MetricCard: View {
 
 struct SpendingDistributionChart: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
+    @EnvironmentObject private var categoryService: CategoryService
     
-    private var categoryData: [CategorySpending] {
+    private var categoryData: [EnhancedCategorySpending] {
         let expenses = dataManager.transactions.filter { $0.amount < 0 }
         let grouped = Dictionary(grouping: expenses) { $0.category }
         
-        return grouped.map { category, transactions in
+        return grouped.map { categoryName, transactions in
             let total = transactions.reduce(0) { $0 + abs($1.amount) }
-            return CategorySpending(category: category, amount: total)
-        }.sorted { $0.amount > $1.amount }
+            let categoryObject = categoryService.categories.first { $0.name == categoryName }
+            
+            return EnhancedCategorySpending(
+                category: categoryName,
+                amount: total,
+                categoryObject: categoryObject
+            )
+        }.sorted { $0.amount > $1.amount }.prefix(8).map { $0 }
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Spending Distribution")
-                .font(.title2)
-                .fontWeight(.bold)
+            HStack {
+                Text("Category Spending")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Text("Top 8 Categories")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
             
             if !categoryData.isEmpty {
-                Chart(categoryData) { data in
+                Chart(categoryData, id: \.category) { data in
                     BarMark(
-                        x: .value("Category", data.category),
+                        x: .value("Category", data.shortName),
                         y: .value("Amount", data.amount)
                     )
-                    .foregroundStyle(.blue.gradient)
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [data.color, data.color.opacity(0.7)]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .cornerRadius(6)
                 }
-                .frame(height: 200)
+                .frame(height: 220)
                 .chartXAxis {
-                    AxisMarks(preset: .aligned, values: .automatic(desiredCount: 6)) { value in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                    AxisMarks(preset: .aligned, values: .automatic(desiredCount: 8)) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2]))
                             .foregroundStyle(Color.secondary.opacity(0.3))
                         AxisValueLabel {
                             if let category = value.as(String.self) {
@@ -497,14 +594,59 @@ struct AccountPerformanceRow: View {
 
 // Placeholder views for other insight tabs
 struct SpendingInsightsView: View {
+    @EnvironmentObject private var dataManager: FinancialDataManager
+    @EnvironmentObject private var categoryService: CategoryService
+    @State private var selectedPeriod: SpendingPeriod = .thisMonth
+    @State private var selectedCategory: CategorySpendingAnalysis?
+    @State private var showingCategoryDetail = false
+    
+    enum SpendingPeriod: String, CaseIterable {
+        case thisWeek = "This Week"
+        case thisMonth = "This Month"
+        case last3Months = "Last 3 Months"
+        case thisYear = "This Year"
+    }
+    
     var body: some View {
-        VStack {
-            Text("Spending Insights")
-                .font(.title)
-            Text("Detailed spending analysis coming soon...")
-                .foregroundColor(.secondary)
+        LazyVStack(spacing: 24) {
+            // Period Selector
+            VStack(spacing: 16) {
+                HStack {
+                    Text("Spending Analysis")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Spacer()
+                    
+                    Picker("Period", selection: $selectedPeriod) {
+                        ForEach(SpendingPeriod.allCases, id: \.self) { period in
+                            Text(period.rawValue).tag(period)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 150)
+                }
+                
+                // Total spending card
+                TotalSpendingCard(period: selectedPeriod)
+            }
+            
+            // Enhanced Category Charts
+            CategorySpendingCharts(
+                selectedCategory: $selectedCategory,
+                showingDetail: $showingCategoryDetail
+            )
+            
+            // Top Categories List
+            TopCategoriesList(
+                selectedCategory: $selectedCategory,
+                showingDetail: $showingCategoryDetail
+            )
         }
         .padding()
+        .sheet(item: $selectedCategory) { category in
+            CategoryDetailInsightsView(category: category)
+        }
     }
 }
 
@@ -658,16 +800,578 @@ struct AIInsight: Identifiable, Codable {
     }
 }
 
-struct CategorySpendingAnalysis {
+// MARK: - Enhanced Chart Components
+
+struct TotalSpendingCard: View {
+    @EnvironmentObject private var dataManager: FinancialDataManager
+    let period: SpendingInsightsView.SpendingPeriod
+    
+    private var totalSpending: Double {
+        let expenses = dataManager.transactions.filter { $0.amount < 0 }
+        return expenses.reduce(0) { $0 + abs($1.amount) }
+    }
+    
+    private var transactionCount: Int {
+        return dataManager.transactions.filter { $0.amount < 0 }.count
+    }
+    
+    var body: some View {
+        HStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Total Spending")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Text(formattedSpending)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                Text("\(transactionCount) transactions • \(period.rawValue)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(
+                        gradient: Gradient(colors: [.red.opacity(0.2), .red.opacity(0.1)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .frame(width: 80, height: 80)
+                
+                Image(systemName: "chart.pie.fill")
+                    .font(.system(size: 32))
+                    .foregroundColor(.red)
+            }
+        }
+        .padding(20)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+    
+    private var formattedSpending: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter.string(from: NSNumber(value: totalSpending)) ?? "$0.00"
+    }
+}
+
+struct CategorySpendingCharts: View {
+    @EnvironmentObject private var dataManager: FinancialDataManager
+    @EnvironmentObject private var categoryService: CategoryService
+    @Binding var selectedCategory: CategorySpendingAnalysis?
+    @Binding var showingDetail: Bool
+    
+    private var categoryData: [EnhancedCategorySpending] {
+        let expenses = dataManager.transactions.filter { $0.amount < 0 }
+        let grouped = Dictionary(grouping: expenses) { $0.category }
+        
+        return grouped.map { categoryName, transactions in
+            let total = transactions.reduce(0) { $0 + abs($1.amount) }
+            let categoryObject = categoryService.categories.first { $0.name == categoryName }
+            
+            return EnhancedCategorySpending(
+                category: categoryName,
+                amount: total,
+                categoryObject: categoryObject
+            )
+        }.sorted { $0.amount > $1.amount }.prefix(6).map { $0 }
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Pie Chart (macOS 14.0+)
+            if #available(macOS 14.0, *) {
+                CategoryPieChart(data: categoryData)
+            }
+            
+            // Enhanced Bar Chart
+            EnhancedBarChart(data: categoryData)
+        }
+    }
+}
+
+// TODO: Fix pie chart interaction - neither hover nor click selection is working properly
+// The onTapGesture on SectorMark doesn't seem to trigger
+// Need to investigate alternative approaches:
+// 1. Use chartPlotStyle with PlotContent tap gesture
+// 2. Add invisible overlay with proper hit testing
+// 3. Consider using chartAngleSelection with better stability
+// Current state: Chart displays correctly but interaction is broken
+@available(macOS 14.0, *)
+struct CategoryPieChart: View {
+    let data: [EnhancedCategorySpending]
+    @State private var selectedCategory: String?
+    
+    var totalAmount: Double {
+        data.reduce(0) { $0 + $1.amount }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Spending Breakdown")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            if !data.isEmpty {
+                Chart(data, id: \.category) { item in
+                    SectorMark(
+                        angle: .value("Amount", item.amount),
+                        innerRadius: .ratio(0.4),
+                        angularInset: 5
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [item.color, item.color.opacity(0.7)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(selectedCategory == nil || selectedCategory == item.category ? 1.0 : 0.3)
+                }
+                .frame(height: 250)
+                .chartBackground { chartProxy in
+                    ZStack {
+                        // Click detection layer
+                        GeometryReader { geometry in
+                            Rectangle()
+                                .fill(Color.clear)
+                                .contentShape(Rectangle())
+                                .onTapGesture { location in
+                                    // Calculate if we're over a segment
+                                    let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                                    let distance = sqrt(pow(location.x - center.x, 2) + pow(location.y - center.y, 2))
+                                    
+                                    // Check if within donut ring (40% inner, ~90% outer)
+                                    let outerRadius = min(geometry.size.width, geometry.size.height) * 0.45
+                                    let innerRadius = outerRadius * 0.4
+                                    
+                                    if distance >= innerRadius && distance <= outerRadius {
+                                        // Calculate angle from center
+                                        let angle = atan2(location.y - center.y, location.x - center.x)
+                                        let degrees = angle * 180 / .pi
+                                        let normalizedDegrees = degrees < 0 ? degrees + 360 : degrees
+                                        
+                                        // Convert to 0-360 starting from top (SwiftUI charts start from right)
+                                        let chartAngle = (normalizedDegrees + 90).truncatingRemainder(dividingBy: 360)
+                                        
+                                        let tappedCategory = categoryForAngle(chartAngle)
+                                        
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            // Toggle selection - click same category to deselect
+                                            if selectedCategory == tappedCategory {
+                                                selectedCategory = nil
+                                            } else {
+                                                selectedCategory = tappedCategory
+                                            }
+                                        }
+                                    } else {
+                                        // Clicked outside donut - deselect
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            selectedCategory = nil
+                                        }
+                                    }
+                                }
+                        }
+                        
+                        // Center text display
+                        VStack(spacing: 4) {
+                            if let selectedCategory = selectedCategory,
+                               let selectedData = data.first(where: { $0.category == selectedCategory }) {
+                                Text(selectedData.category)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                Text(selectedData.formattedAmount)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("Total")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                Text(NumberFormatter.currency.string(from: NSNumber(value: totalAmount)) ?? "$0.00")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .multilineTextAlignment(.center)
+                        .animation(.easeInOut(duration: 0.2), value: selectedCategory)
+                    }
+                }
+                
+                // Enhanced Legend with click support
+                CategoryLegend(data: data, hoveredCategory: $selectedCategory)
+            } else {
+                Text("No spending data available")
+                    .foregroundColor(.secondary)
+                    .frame(height: 200)
+            }
+        }
+        .padding(20)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+    
+    private func categoryForAngle(_ angle: Double) -> String? {
+        // Calculate cumulative angles to determine which category is at the given angle
+        let total = totalAmount
+        var cumulativeAngle: Double = 0
+        
+        for item in data {
+            let itemAngle = (item.amount / total) * 360
+            let endAngle = cumulativeAngle + itemAngle
+            
+            if angle >= cumulativeAngle && angle < endAngle {
+                return item.category
+            }
+            cumulativeAngle += itemAngle
+        }
+        
+        return nil
+    }
+}
+
+struct CategoryLegend: View {
+    let data: [EnhancedCategorySpending]
+    @Binding var hoveredCategory: String?
+    
+    init(data: [EnhancedCategorySpending], hoveredCategory: Binding<String?> = .constant(nil)) {
+        self.data = data
+        self._hoveredCategory = hoveredCategory
+    }
+    
+    var body: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: 12) {
+            ForEach(data) { item in
+                HStack(spacing: 8) {
+                    // Enhanced icon with category icon
+                    ZStack {
+                        Circle()
+                            .fill(item.color.opacity(0.2))
+                            .frame(width: 20, height: 20)
+                        
+                        Image(systemName: item.icon)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(item.color)
+                    }
+                    
+                    Text(item.shortName)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .foregroundColor(hoveredCategory == nil || hoveredCategory == item.category ? .primary : .secondary)
+                    
+                    Spacer()
+                    
+                    Text(item.formattedAmount)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(hoveredCategory == nil || hoveredCategory == item.category ? .primary : .secondary)
+                }
+                .scaleEffect(hoveredCategory == item.category ? 1.05 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: hoveredCategory)
+                .onHover { isHovering in
+                    hoveredCategory = isHovering ? item.category : nil
+                }
+            }
+        }
+    }
+}
+
+struct EnhancedBarChart: View {
+    let data: [EnhancedCategorySpending]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Category Comparison")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            if !data.isEmpty {
+                Chart(data, id: \.category) { item in
+                    BarMark(
+                        x: .value("Amount", item.amount),
+                        y: .value("Category", item.shortName)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [item.color, item.color.opacity(0.7)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(6)
+                }
+                .frame(height: 300)
+                .chartXAxis {
+                    AxisMarks(position: .bottom) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2]))
+                            .foregroundStyle(Color.secondary.opacity(0.3))
+                        AxisValueLabel {
+                            if let amount = value.as(Double.self) {
+                                Text(formatAmount(amount))
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
+                        AxisValueLabel {
+                            if let category = value.as(String.self),
+                               let categoryData = data.first(where: { $0.shortName == category }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: categoryData.icon)
+                                        .font(.system(size: 8, weight: .medium))
+                                        .foregroundColor(categoryData.color)
+                                    
+                                    Text(category)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+    
+    private func formatAmount(_ amount: Double) -> String {
+        if amount >= 1000 {
+            return String(format: "$%.1fK", amount / 1000)
+        } else {
+            return String(format: "$%.0f", amount)
+        }
+    }
+}
+
+struct TopCategoriesList: View {
+    @EnvironmentObject private var dataManager: FinancialDataManager
+    @EnvironmentObject private var categoryService: CategoryService
+    @Binding var selectedCategory: CategorySpendingAnalysis?
+    @Binding var showingDetail: Bool
+    
+    private var categoryAnalysis: [CategorySpendingAnalysis] {
+        let expenses = dataManager.transactions.filter { $0.amount < 0 }
+        let totalExpenses = expenses.reduce(0) { $0 + abs($1.amount) }
+        let grouped = Dictionary(grouping: expenses) { $0.category }
+        
+        return grouped.map { categoryName, transactions in
+            let amount = transactions.reduce(0) { $0 + abs($1.amount) }
+            let percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0
+            let categoryObject = categoryService.categories.first { $0.name == categoryName }
+            
+            return CategorySpendingAnalysis(
+                category: categoryName,
+                amount: amount,
+                percentage: percentage,
+                categoryObject: categoryObject
+            )
+        }.sorted { $0.amount > $1.amount }.prefix(8).map { $0 }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Top Spending Categories")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            LazyVStack(spacing: 12) {
+                ForEach(categoryAnalysis) { category in
+                    CategorySpendingRow(
+                        category: category,
+                        onTap: {
+                            selectedCategory = category
+                            showingDetail = true
+                        }
+                    )
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+}
+
+struct CategorySpendingRow: View {
+    let category: CategorySpendingAnalysis
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 16) {
+                // Category Icon
+                ZStack {
+                    Circle()
+                        .fill(category.color.opacity(0.2))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: category.icon)
+                        .font(.title3)
+                        .foregroundColor(category.color)
+                }
+                
+                // Category Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(category.category)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    Text("\(String(format: "%.1f", category.percentage))% of spending")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Amount and Arrow
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(category.formattedAmount)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+        .background(Color.clear)
+    }
+}
+
+struct CategoryDetailInsightsView: View {
+    let category: CategorySpendingAnalysis
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                // Category Header
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(category.color.opacity(0.2))
+                            .frame(width: 60, height: 60)
+                        
+                        Image(systemName: category.icon)
+                            .font(.title)
+                            .foregroundColor(category.color)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(category.category)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text(category.formattedAmount)
+                            .font(.title3)
+                            .foregroundColor(category.color)
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+                
+                Spacer()
+                
+                Text("Detailed category insights coming soon...")
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+            }
+            .navigationTitle("Category Details")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct CategorySpendingAnalysis: Identifiable {
+    let id = UUID()
     let category: String
     let amount: Double
     let percentage: Double
+    let categoryObject: Category?
     
     var formattedAmount: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
         return formatter.string(from: NSNumber(value: amount)) ?? "$0.00"
+    }
+    
+    var icon: String {
+        return categoryObject?.icon ?? "circle.fill"
+    }
+    
+    var color: Color {
+        if let categoryObject = categoryObject,
+           let color = Color(hex: categoryObject.color) {
+            return color
+        }
+        return .gray
+    }
+}
+
+// Enhanced category spending for charts
+struct EnhancedCategorySpending: Identifiable {
+    let id = UUID()
+    let category: String
+    let amount: Double
+    let categoryObject: Category?
+    
+    var shortName: String {
+        return category.truncated(to: 12)
+    }
+    
+    var color: Color {
+        if let categoryObject = categoryObject {
+            return Color.fromHex(categoryObject.color)
+        }
+        return .gray
+    }
+    
+    var icon: String {
+        return categoryObject?.icon ?? "circle.fill"
+    }
+    
+    var formattedAmount: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0.00"
+    }
+}
+
+// MARK: - Color Hex Extension
+extension Color {
+    static func fromHex(_ hex: String) -> Color {
+        // Use the existing hex initializer from Category model, fallback to gray
+        return Color(hex: hex) ?? .gray
     }
 }
 

@@ -9,6 +9,11 @@ struct TransactionListView: View {
     @State private var selectedTransaction: Transaction?
     @State private var showingDetail = false
     
+    // Enhanced category filtering
+    @State private var showingCategoryFilter = false
+    @State private var selectedCategoryObject: Category?
+    @StateObject private var categoryService = CategoryService.shared
+    
     let onTransactionSelect: (Transaction) -> Void
     
     enum SortOrder: String, CaseIterable {
@@ -48,6 +53,14 @@ struct TransactionListView: View {
             filtered = filtered.filter { $0.category == selectedCategory }
         }
         
+        // Enhanced category filtering
+        if let categoryObject = selectedCategoryObject {
+            filtered = filtered.filter { transaction in
+                // Simple name matching for now - can be enhanced later
+                return transaction.category == categoryObject.name
+            }
+        }
+        
         // Sort
         switch sortOrder {
         case .dateDescending:
@@ -82,13 +95,32 @@ struct TransactionListView: View {
                 
                 if showingFilters {
                     HStack {
-                        Picker("Category", selection: $selectedCategory) {
-                            ForEach(categories, id: \.self) { category in
-                                Text(category).tag(category)
+                        // Enhanced Category Filter Button
+                        Button(action: { showingCategoryFilter = true }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: selectedCategoryObject?.icon ?? "folder.fill")
+                                    .font(.caption)
+                                    .foregroundColor(selectedCategoryObject != nil ? Color(hex: selectedCategoryObject!.color) ?? .blue : .secondary)
+                                
+                                Text(selectedCategoryObject?.name ?? "All Categories")
+                                    .font(.subheadline)
+                                    .lineLimit(1)
+                                
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
                         }
-                        .pickerStyle(.menu)
-                        .frame(width: 150)
+                        .buttonStyle(.plain)
+                        .frame(width: 180)
                         
                         Picker("Sort", selection: $sortOrder) {
                             ForEach(SortOrder.allCases, id: \.self) { order in
@@ -103,6 +135,7 @@ struct TransactionListView: View {
                         Button("Clear Filters") {
                             searchText = ""
                             selectedCategory = "All"
+                            selectedCategoryObject = nil
                             sortOrder = .dateDescending
                         }
                         .buttonStyle(.bordered)
@@ -126,10 +159,11 @@ struct TransactionListView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    if !searchText.isEmpty || selectedCategory != "All" {
+                    if !searchText.isEmpty || selectedCategory != "All" || selectedCategoryObject != nil {
                         Button("Clear Filters") {
                             searchText = ""
                             selectedCategory = "All"
+                            selectedCategoryObject = nil
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -154,11 +188,17 @@ struct TransactionListView: View {
                             
                             // Transaction Rows
                             ForEach(transactions) { transaction in
-                                DistributedTransactionRowView(transaction: transaction)
-                                    .onTapGesture {
-                                        selectedTransaction = transaction
+                                DistributedTransactionRowView(
+                                    transaction: transaction,
+                                    onTransactionSelect: { selectedTransaction in
+                                        self.selectedTransaction = selectedTransaction
                                         showingDetail = true
                                     }
+                                )
+                                .onTapGesture {
+                                    selectedTransaction = transaction
+                                    showingDetail = true
+                                }
                             }
                         }
                     }
@@ -184,6 +224,27 @@ struct TransactionListView: View {
         .popover(isPresented: $showingDetail, arrowEdge: .trailing) {
             if let transaction = selectedTransaction {
                 TransactionDetailView(transaction: transaction)
+            }
+        }
+        .overlay(
+            Group {
+                if showingCategoryFilter {
+                    CategoryFilterPickerPopup(
+                        selectedCategory: $selectedCategoryObject,
+                        isPresented: $showingCategoryFilter
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .zIndex(1000)
+                }
+            }
+        )
+        .animation(.easeInOut(duration: 0.2), value: showingCategoryFilter)
+        .onAppear {
+            // Load categories when view appears
+            if categoryService.categories.isEmpty {
+                Task {
+                    await categoryService.loadCategories()
+                }
             }
         }
     }
@@ -273,6 +334,7 @@ struct DateSeparatorView: View {
 struct DistributedTransactionRowView: View {
     let transaction: Transaction
     @EnvironmentObject private var dataManager: FinancialDataManager
+    let onTransactionSelect: (Transaction) -> Void
     
     var body: some View {
         HStack(spacing: 24) {
@@ -355,6 +417,16 @@ struct DistributedTransactionRowView: View {
             .foregroundColor(categoryColor)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .frame(width: 180, alignment: .leading)
+            .contextMenu {
+                Button("Change Category") {
+                    onTransactionSelect(transaction)
+                }
+                
+                Button("Quick Categories") {
+                    // Quick category options could go here
+                }
+                .disabled(true) // For future implementation
+            }
             
             // Payment Method Column
             HStack(spacing: 8) {
@@ -750,6 +822,11 @@ struct TransactionDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var dataManager: FinancialDataManager
     
+    // Category editing state
+    @State private var showingCategoryPicker = false
+    @State private var selectedCategory: Category?
+    @StateObject private var categoryService = CategoryService.shared
+    
     // Pre-computed values to avoid repeated calculations
     private let displayData: TransactionDisplayData
     
@@ -814,7 +891,13 @@ struct TransactionDetailView: View {
                     // Transaction Details
                     VStack(alignment: .leading, spacing: 12) {
                         DetailRow(label: "Date", value: displayData.formattedDate)
-                        DetailRow(label: "Category", value: transaction.category)
+                        
+                        // Interactive Category Row
+                        InteractiveCategoryRow(
+                            transaction: transaction,
+                            onEditCategory: { showingCategoryPicker = true }
+                        )
+                        
                         DetailRow(label: "Type", value: displayData.transactionType)
                         DetailRow(label: "Payment Method", value: paymentMethod)
                         
@@ -880,6 +963,38 @@ struct TransactionDetailView: View {
         .background(Color(NSColor.windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 8)
+        .overlay(
+            Group {
+                if showingCategoryPicker {
+                    CategoryPickerPopup(
+                        selectedCategory: $selectedCategory,
+                        isPresented: $showingCategoryPicker,
+                        transaction: transaction
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .zIndex(1000)
+                }
+            }
+        )
+        .animation(.easeInOut(duration: 0.2), value: showingCategoryPicker)
+        .onAppear {
+            // Load categories if needed
+            if categoryService.categories.isEmpty {
+                Task {
+                    await categoryService.loadCategories()
+                }
+            }
+        }
+        .onChange(of: selectedCategory) { category in
+            if let category = category {
+                // Update the transaction category
+                dataManager.updateTransactionCategory(
+                    transactionId: transaction.id,
+                    newCategory: category
+                )
+                showingCategoryPicker = false
+            }
+        }
     }
     
     // Only keep payment method as computed since it needs dataManager
@@ -1040,6 +1155,244 @@ struct TransactionRowView: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         return formatter.string(from: transaction.formattedDate)
+    }
+}
+
+// MARK: - Interactive Category Row
+
+struct InteractiveCategoryRow: View {
+    let transaction: Transaction
+    let onEditCategory: () -> Void
+    
+    var body: some View {
+        HStack {
+            Text("Category")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+                .frame(width: 120, alignment: .leading)
+            
+            Spacer()
+            
+            Button(action: onEditCategory) {
+                HStack(spacing: 8) {
+                    HStack(spacing: 6) {
+                        Image(systemName: categoryIcon)
+                            .font(.caption)
+                        
+                        Text(transaction.category)
+                            .font(.body)
+                            .fontWeight(.medium)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(categoryColor.opacity(0.15))
+                    .foregroundColor(categoryColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    
+                    Image(systemName: "pencil")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .help("Click to change category")
+        }
+    }
+    
+    private var categoryIcon: String {
+        switch transaction.category {
+        case "Groceries": return "cart.fill"
+        case "Food & Dining": return "fork.knife"
+        case "Transportation": return "car.fill"
+        case "Shopping": return "bag.fill"
+        case "Entertainment": return "tv.fill"
+        case "Bills & Utilities": return "bolt.fill"
+        case "Healthcare": return "cross.fill"
+        case "Travel": return "airplane"
+        case "Income", "Deposits": return "plus.circle.fill"
+        default: return "circle.fill"
+        }
+    }
+    
+    private var categoryColor: Color {
+        switch transaction.category {
+        case "Groceries": return .green
+        case "Food & Dining": return .orange
+        case "Transportation": return .blue
+        case "Shopping": return .purple
+        case "Entertainment": return .pink
+        case "Bills & Utilities": return .red
+        case "Healthcare": return .mint
+        case "Travel": return .teal
+        case "Income", "Deposits": return .green
+        default: return .gray
+        }
+    }
+}
+
+// MARK: - Category Filter Picker
+
+struct CategoryFilterPickerPopup: View {
+    @Binding var selectedCategory: Category?
+    @Binding var isPresented: Bool
+    
+    @StateObject private var categoryService = CategoryService.shared
+    @State private var searchText = ""
+    
+    var body: some View {
+        ZStack {
+            // Background overlay - tap to dismiss
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    isPresented = false
+                }
+            
+            // The actual popup
+            VStack(spacing: 0) {
+                // Header
+                VStack(spacing: 12) {
+                    HStack {
+                        Text("Filter by Category")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Spacer()
+                        
+                        Button(action: { isPresented = false }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.escape)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    
+                    // Search bar
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.secondary)
+                            .imageScale(.medium)
+                        
+                        TextField("Search categories...", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .font(.body)
+                        
+                        if !searchText.isEmpty {
+                            Button(action: { searchText = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                                    .imageScale(.small)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(8)
+                    .padding(.horizontal, 20)
+                }
+                .background(Color(NSColor.windowBackgroundColor))
+                
+                Divider()
+                
+                // Category list
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        // All Categories option
+                        CategoryFilterItem(
+                            category: nil,
+                            isSelected: selectedCategory == nil,
+                            onSelect: {
+                                selectedCategory = nil
+                                isPresented = false
+                            }
+                        )
+                        
+                        // Root categories
+                        ForEach(filteredCategories) { category in
+                            CategoryFilterItem(
+                                category: category,
+                                isSelected: selectedCategory?.id == category.id,
+                                onSelect: {
+                                    selectedCategory = category
+                                    isPresented = false
+                                }
+                            )
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+            .frame(width: 400, height: 500)
+            .background(Color(NSColor.windowBackgroundColor))
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 8)
+            .onTapGesture {} // Prevent taps on popup from closing
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var filteredCategories: [Category] {
+        if searchText.isEmpty {
+            return categoryService.rootCategories
+        } else {
+            return categoryService.categories.filter { category in
+                category.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+}
+
+struct CategoryFilterItem: View {
+    let category: Category?
+    let isSelected: Bool
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 12) {
+                Image(systemName: category?.icon ?? "folder.fill")
+                    .font(.title3)
+                    .foregroundColor(category != nil ? Color(hex: category!.color) ?? .blue : .secondary)
+                    .frame(width: 24, height: 24)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(category?.name ?? "All Categories")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    if let category = category {
+                        Text(category.isSystem ? "System Category" : "Custom Category")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Show all transactions")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.blue)
+                        .font(.title3)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
     }
 }
 

@@ -60,13 +60,19 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingUploadSheet) {
-            FileUploadView()
+            NavigationStack {
+                FileUploadView()
+            }
         }
         .sheet(isPresented: $showingCategoryTest) {
-            CategoryTestView()
+            NavigationStack {
+                CategoryTestView()
+            }
         }
         .sheet(item: $selectedTransaction) { transaction in
-            TransactionDetailView(transaction: transaction)
+            NavigationStack {
+                TransactionDetailView(transaction: transaction)
+            }
         }
         .alert("Backend Health", isPresented: $showingHealthAlert) {
             Button("OK") { }
