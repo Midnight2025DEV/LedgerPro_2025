@@ -12,7 +12,7 @@ struct TransactionListView: View {
     // Enhanced category filtering
     @State private var showingCategoryFilter = false
     @State private var selectedCategoryObject: Category?
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     
     let onTransactionSelect: (Transaction) -> Void
     
@@ -825,7 +825,7 @@ struct TransactionDetailView: View {
     // Category editing state
     @State private var showingCategoryPicker = false
     @State private var selectedCategory: Category?
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     
     // Pre-computed values to avoid repeated calculations
     private let displayData: TransactionDisplayData
@@ -1238,7 +1238,7 @@ struct CategoryFilterPickerPopup: View {
     @Binding var selectedCategory: Category?
     @Binding var isPresented: Bool
     
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     @State private var searchText = ""
     
     var body: some View {

@@ -3,7 +3,7 @@ import SwiftUI
 /// View for adding new categories to the system
 struct AddCategoryView: View {
     @Environment(\.dismiss) var dismiss
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     
     // Form fields
     @State private var name = ""

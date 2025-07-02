@@ -234,6 +234,27 @@ class CategoryService: ObservableObject {
         return path.joined(separator: " → ")
     }
     
+    /// Reload categories from system definitions (useful after updating systemCategories)
+    func reloadCategories() async throws {
+        print("🔄 Reloading categories from system definitions...")
+        
+        // Clear existing categories
+        await MainActor.run {
+            self.categories.removeAll()
+            self.rootCategories.removeAll()
+        }
+        
+        // Force reinitialize system categories
+        userDefaults.set(false, forKey: hasInitializedKey)
+        try await initializeSystemCategories()
+        userDefaults.set(true, forKey: hasInitializedKey)
+        
+        // Reload from storage
+        await loadCategories()
+        
+        print("✅ Categories reloaded successfully")
+    }
+    
     /// Reset all categories (for testing)
     func resetCategories() async {
         userDefaults.removeObject(forKey: categoriesKey)
