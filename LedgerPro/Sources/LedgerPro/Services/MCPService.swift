@@ -1,11 +1,15 @@
 import Foundation
 
+/// Legacy MCP Service - now delegates to the new MCPBridge
 @MainActor
 class MCPService: ObservableObject {
     
     @Published var isConnected = false
     @Published var availableServers: [MCPServer] = []
     @Published var lastInsights: [MCPInsight] = []
+    
+    // New MCP Bridge instance
+    private let mcpBridge = MCPBridge()
     
     struct MCPServer: Identifiable, Codable {
         let id: String
@@ -43,6 +47,39 @@ class MCPService: ObservableObject {
     
     init() {
         loadAvailableServers()
+        
+        // Observe bridge connection status
+        Task {
+            for await _ in mcpBridge.$isConnected.values {
+                await updateConnectionStatus()
+            }
+        }
+    }
+    
+    // MARK: - Bridge Integration
+    
+    private func updateConnectionStatus() async {
+        isConnected = mcpBridge.isConnected
+        
+        // Convert bridge servers to legacy format for compatibility
+        let bridgeServers = mcpBridge.servers.values
+        availableServers = bridgeServers.map { bridgeServer in
+            MCPServer(
+                id: bridgeServer.id,
+                name: bridgeServer.info.name,
+                description: bridgeServer.info.description ?? "",
+                port: (bridgeServer.connection as? HTTPConnection)?.port ?? 8000,
+                isActive: bridgeServer.isConnected
+            )
+        }
+    }
+    
+    func connectToBridge() async {
+        await mcpBridge.connectAll()
+    }
+    
+    func disconnectFromBridge() async {
+        await mcpBridge.disconnect()
     }
     
     private func loadAvailableServers() {
@@ -73,21 +110,14 @@ class MCPService: ObservableObject {
     }
     
     func checkServerHealth() async {
-        var activeCount = 0
+        // Delegate to new MCP Bridge - it handles health checks automatically
+        await updateConnectionStatus()
         
-        for server in availableServers {
-            do {
-                let isHealthy = try await pingServer(server)
-                if isHealthy {
-                    activeCount += 1
-                }
-            } catch {
-                print("Server \(server.name) is unreachable: \(error)")
-            }
-        }
+        let serverStatus = mcpBridge.getServerStatus()
+        let activeCount = serverStatus.values.filter { $0.isConnected }.count
         
-        isConnected = activeCount > 0
-        print("MCP Health Check: \(activeCount)/\(availableServers.count) servers active")
+        print("MCP Health Check: \(activeCount)/\(serverStatus.count) servers active")
+        print("Bridge Status: \(mcpBridge.connectionStatus.description)")
     }
     
     private func pingServer(_ server: MCPServer) async throws -> Bool {
@@ -110,32 +140,35 @@ class MCPService: ObservableObject {
     }
     
     func generateFinancialInsights(transactions: [Transaction]) async throws -> [MCPInsight] {
-        let analyzer = availableServers.first { $0.id == "financial-analyzer" }
-        guard let server = analyzer else {
-            throw MCPError.serverNotAvailable("Financial Analyzer")
+        // Delegate to new MCP Bridge
+        let analysisResults = try await mcpBridge.analyzeTransactions(transactions)
+        
+        // Convert bridge results to legacy format
+        let insights = analysisResults.map { result in
+            MCPInsight(
+                serverName: result.serverId ?? "Unknown",
+                type: result.type,
+                title: result.title,
+                description: result.description,
+                confidence: result.confidence,
+                timestamp: result.timestamp,
+                data: result.data.mapValues { $0.value as? String ?? "\($0.value)" }
+            )
         }
         
-        let insights = try await requestInsights(from: server, transactions: transactions)
         lastInsights = insights
         return insights
     }
     
     func categorizeTransactions(_ transactions: [Transaction]) async throws -> [Transaction] {
-        let openaiService = availableServers.first { $0.id == "openai-service" }
-        guard let server = openaiService else {
-            throw MCPError.serverNotAvailable("OpenAI Service")
-        }
-        
-        return try await requestCategorization(from: server, transactions: transactions)
+        // Delegate to new MCP Bridge
+        return try await mcpBridge.categorizeTransactions(transactions)
     }
     
     func processDocument(at url: URL) async throws -> [Transaction] {
-        let pdfProcessor = availableServers.first { $0.id == "pdf-processor" }
-        guard let server = pdfProcessor else {
-            throw MCPError.serverNotAvailable("PDF Processor")
-        }
-        
-        return try await requestDocumentProcessing(from: server, fileURL: url)
+        // Delegate to new MCP Bridge
+        let result = try await mcpBridge.processDocument(url)
+        return result.transactions
     }
     
     private func requestInsights(from server: MCPServer, transactions: [Transaction]) async throws -> [MCPInsight] {
@@ -271,8 +304,10 @@ struct ProcessingResponse: Codable {
 enum MCPError: LocalizedError {
     case invalidURL
     case serverNotAvailable(String)
+    case serverUnavailable
     case requestFailed
     case decodingError
+    case internalError
     
     var errorDescription: String? {
         switch self {
@@ -280,10 +315,18 @@ enum MCPError: LocalizedError {
             return "Invalid server URL"
         case .serverNotAvailable(let serverName):
             return "Server \(serverName) is not available"
+        case .serverUnavailable:
+            return "Server is unavailable"
         case .requestFailed:
             return "MCP request failed"
         case .decodingError:
             return "Failed to decode MCP response"
+        case .internalError:
+            return "Internal MCP error"
         }
+    }
+    
+    var message: String {
+        return errorDescription ?? "Unknown error"
     }
 }
