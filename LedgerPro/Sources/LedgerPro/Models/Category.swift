@@ -141,26 +141,30 @@ extension Category {
             Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000014")!, name: "Bonus", icon: "gift.fill", color: "#34C759", parentId: incomeId, isSystem: true, sortOrder: 3),
             Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000015")!, name: "Other Income", icon: "plus.circle.fill", color: "#34C759", parentId: incomeId, isSystem: true, sortOrder: 4),
             
-            // Expense Subcategories - Essential
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000021")!, name: "Housing", icon: "house.fill", color: "#FF3B30", parentId: expenseId, isSystem: true, sortOrder: 0),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000022")!, name: "Transportation", icon: "car.fill", color: "#007AFF", parentId: expenseId, isSystem: true, sortOrder: 1),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000023")!, name: "Food & Dining", icon: "fork.knife", color: "#FF9500", parentId: expenseId, isSystem: true, sortOrder: 2),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000024")!, name: "Utilities", icon: "bolt.fill", color: "#FFCC00", parentId: expenseId, isSystem: true, sortOrder: 3),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000025")!, name: "Healthcare", icon: "cross.fill", color: "#FF2D92", parentId: expenseId, isSystem: true, sortOrder: 4),
+            // Expense Subcategories - Essential (matching Overview's Color.forCategory)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000021")!, name: "Housing", icon: "house.fill", color: "#FF3B30", parentId: expenseId, isSystem: true, sortOrder: 0), // Red (bills/rent)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000022")!, name: "Transportation", icon: "car.fill", color: "#007AFF", parentId: expenseId, isSystem: true, sortOrder: 1), // Blue
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000023")!, name: "Food & Dining", icon: "fork.knife", color: "#34C759", parentId: expenseId, isSystem: true, sortOrder: 2), // Green (dining)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000024")!, name: "Utilities", icon: "bolt.fill", color: "#FF3B30", parentId: expenseId, isSystem: true, sortOrder: 3), // Red (bills)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000025")!, name: "Healthcare", icon: "cross.fill", color: "#00C7BE", parentId: expenseId, isSystem: true, sortOrder: 4), // Mint
             
-            // Expense Subcategories - Lifestyle
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000031")!, name: "Shopping", icon: "bag.fill", color: "#AF52DE", parentId: expenseId, isSystem: true, sortOrder: 5),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000032")!, name: "Entertainment", icon: "tv.fill", color: "#FF2D92", parentId: expenseId, isSystem: true, sortOrder: 6),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000033")!, name: "Travel", icon: "airplane", color: "#5AC8FA", parentId: expenseId, isSystem: true, sortOrder: 7),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000034")!, name: "Education", icon: "graduationcap.fill", color: "#FFCC00", parentId: expenseId, isSystem: true, sortOrder: 8),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000035")!, name: "Personal Care", icon: "person.circle.fill", color: "#FF9500", parentId: expenseId, isSystem: true, sortOrder: 9),
+            // Expense Subcategories - Lifestyle (matching Overview's Color.forCategory)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000031")!, name: "Shopping", icon: "bag.fill", color: "#AF52DE", parentId: expenseId, isSystem: true, sortOrder: 5), // Purple
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000032")!, name: "Entertainment", icon: "tv.fill", color: "#FF2D92", parentId: expenseId, isSystem: true, sortOrder: 6), // Pink
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000033")!, name: "Travel", icon: "airplane", color: "#30D5C8", parentId: expenseId, isSystem: true, sortOrder: 7), // Teal
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000034")!, name: "Education", icon: "graduationcap.fill", color: "#FFCC00", parentId: expenseId, isSystem: true, sortOrder: 8), // Yellow
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000035")!, name: "Personal Care", icon: "person.circle.fill", color: "#8E8E93", parentId: expenseId, isSystem: true, sortOrder: 9), // Gray (default)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000036")!, name: "Business", icon: "briefcase.fill", color: "#007AFF", parentId: expenseId, isSystem: true, sortOrder: 10), // Blue
             
-            // Expense Subcategories - Financial
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000041")!, name: "Insurance", icon: "shield.fill", color: "#34C759", parentId: expenseId, isSystem: true, sortOrder: 10),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000042")!, name: "Taxes", icon: "doc.text.fill", color: "#8E8E93", parentId: expenseId, isSystem: true, sortOrder: 11),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000043")!, name: "Investments", icon: "chart.pie.fill", color: "#5856D6", parentId: expenseId, isSystem: true, sortOrder: 12),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000044")!, name: "Savings", icon: "banknote.fill", color: "#34C759", parentId: expenseId, isSystem: true, sortOrder: 13),
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000045")!, name: "Debt Payments", icon: "creditcard.fill", color: "#FF3B30", parentId: expenseId, isSystem: true, sortOrder: 14),
+            // Expense Subcategories - Financial (matching Overview's Color.forCategory)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000041")!, name: "Insurance", icon: "shield.fill", color: "#FF9500", parentId: expenseId, isSystem: true, sortOrder: 11), // Orange
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000042")!, name: "Taxes", icon: "doc.text.fill", color: "#5856D6", parentId: expenseId, isSystem: true, sortOrder: 12), // Indigo
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000043")!, name: "Investments", icon: "chart.pie.fill", color: "#AF52DE", parentId: expenseId, isSystem: true, sortOrder: 13), // Purple
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000044")!, name: "Savings", icon: "banknote.fill", color: "#34C759", parentId: expenseId, isSystem: true, sortOrder: 14),
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000045")!, name: "Debt Payments", icon: "creditcard.fill", color: "#FF3B30", parentId: expenseId, isSystem: true, sortOrder: 15),
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000046")!, name: "Groceries", icon: "cart.fill", color: "#FFCC00", parentId: expenseId, isSystem: true, sortOrder: 16), // Yellow
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000047")!, name: "Subscriptions", icon: "repeat.circle.fill", color: "#BF5AF2", parentId: expenseId, isSystem: true, sortOrder: 17), // Light Purple  
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000048")!, name: "Lodging", icon: "bed.double.fill", color: "#30D5C8", parentId: expenseId, isSystem: true, sortOrder: 18), // Teal
             
             // Transfer Subcategories
             Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000051")!, name: "Account Transfer", icon: "arrow.left.arrow.right.square.fill", color: "#007AFF", parentId: transferId, isSystem: true, sortOrder: 0),
@@ -168,7 +172,7 @@ extension Category {
             Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000053")!, name: "Loan Payment", icon: "building.columns.fill", color: "#007AFF", parentId: transferId, isSystem: true, sortOrder: 2),
             
             // Catch-all
-            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000999")!, name: "Other", icon: "questionmark.circle.fill", color: "#8E8E93", isSystem: true, sortOrder: 999)
+            Category(id: UUID(uuidString: "00000000-0000-0000-0000-000000000999")!, name: "Other", icon: "questionmark.circle.fill", color: "#FF6B35", isSystem: true, sortOrder: 999)
         ]
     }()
     

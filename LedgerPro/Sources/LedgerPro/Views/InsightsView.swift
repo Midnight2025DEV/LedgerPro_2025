@@ -4,7 +4,7 @@ import Charts
 struct InsightsView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
     @EnvironmentObject private var apiService: APIService
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     @State private var selectedInsightTab: InsightTab = .overview
     @State private var isGeneratingInsights = false
     @State private var aiInsights: [AIInsight] = []
@@ -470,7 +470,7 @@ struct SpendingDistributionChart: View {
                 
                 Spacer()
                 
-                Text("Top 8 Categories")
+                Text("All Categories")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -871,16 +871,50 @@ struct CategorySpendingCharts: View {
         let expenses = dataManager.transactions.filter { $0.amount < 0 }
         let grouped = Dictionary(grouping: expenses) { $0.category }
         
-        return grouped.map { categoryName, transactions in
+        let enhancedData = grouped.map { categoryName, transactions in
             let total = transactions.reduce(0) { $0 + abs($1.amount) }
+            // Try exact match first
             let categoryObject = categoryService.categories.first { $0.name == categoryName }
+                ?? categoryService.categories.first { $0.name.lowercased().contains(categoryName.lowercased()) }
+                ?? categoryService.categories.first { categoryName.lowercased().contains($0.name.lowercased()) }
+            print("🔍 Category: '\(categoryName)'")
+            print("   Found object: \(categoryObject?.name ?? "NOT FOUND")")
+            print("   Available categories containing this word:")
+            for cat in categoryService.categories where cat.name.lowercased().contains(categoryName.lowercased()) {
+                print("   - '\(cat.name)' (color: \(cat.color))")
+            }
             
-            return EnhancedCategorySpending(
+            if categoryObject == nil {
+                print("⚠️ Creating missing category: \(categoryName)")
+                // You might want to create the category here or use a default
+            }
+            
+            let categorySpending = EnhancedCategorySpending(
                 category: categoryName,
                 amount: total,
                 categoryObject: categoryObject
             )
-        }.sorted { $0.amount > $1.amount }.prefix(6).map { $0 }
+            
+            print("🎨 Category: \(categoryName), Color: \(categorySpending.color), Icon: \(categorySpending.icon)")
+            
+            return categorySpending
+        }
+        
+        let sortedData = enhancedData.sorted { $0.amount > $1.amount }
+        
+        // Debug logging for chart data
+        print("🎨 INSIGHTS CHART DATA:")
+        let allCategories = grouped.map { categoryName, transactions in
+            let total = transactions.reduce(0) { $0 + abs($1.amount) }
+            return (categoryName, total)
+        }.sorted { $0.1 > $1.1 }
+        print("All categories before filtering:")
+        for (cat, amount) in allCategories {
+            print("  - \(cat): $\(String(format: "%.2f", amount)) (\(String(format: "%.1f%%", amount/allCategories.map{$0.1}.reduce(0,+)*100)))")
+        }
+        print("All categories shown: \(allCategories.map{$0.0})")
+        
+        return sortedData
     }
     
     var body: some View {
@@ -893,6 +927,22 @@ struct CategorySpendingCharts: View {
             // Enhanced Bar Chart
             EnhancedBarChart(data: categoryData)
         }
+        .onAppear {
+            print("📊 CategoryService has \(categoryService.categories.count) categories loaded")
+            for cat in categoryService.categories.prefix(5) {
+                print("  - \(cat.name): \(cat.color)")
+            }
+            
+            // Force reload categories to get updated colors
+            Task {
+                do {
+                    try await categoryService.reloadCategories()
+                    print("✅ Categories reloaded with updated colors")
+                } catch {
+                    print("❌ Failed to reload categories: \(error)")
+                }
+            }
+        }
     }
 }
 
@@ -904,7 +954,7 @@ struct CategorySpendingCharts: View {
 @available(macOS 14.0, *)
 struct CategoryPieChart: View {
     let data: [EnhancedCategorySpending]
-    @State private var selectedCategory: String?
+    @State private var hoveredCategory: String?
     
     var totalAmount: Double {
         data.reduce(0) { $0 + $1.amount }
@@ -918,6 +968,7 @@ struct CategoryPieChart: View {
             
             if !data.isEmpty {
                 Chart(data, id: \.category) { item in
+                    let _ = print("🎨 Rendering segment: \(item.category), Color: \(item.color)")
                     SectorMark(
                         angle: .value("Amount", item.amount),
                         innerRadius: .ratio(0.4),
@@ -930,97 +981,78 @@ struct CategoryPieChart: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .opacity(selectedCategory == nil || selectedCategory == item.category ? 1.0 : 0.3)
+                    .opacity(hoveredCategory == nil || hoveredCategory == item.category ? 1.0 : 0.3)
                 }
                 .frame(height: 250)
-                .chartBackground { chartProxy in
-                    ZStack {
-                        // Click detection layer
-                        GeometryReader { geometry in
-                            Rectangle()
-                                .fill(Color.clear)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    // For now, just cycle through categories on tap
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        if let currentSelection = selectedCategory,
-                                           let currentIndex = data.firstIndex(where: { $0.category == currentSelection }) {
-                                            // Select next category
-                                            let nextIndex = (currentIndex + 1) % data.count
-                                            selectedCategory = data[nextIndex].category
-                                        } else {
-                                            // Select first category
-                                            selectedCategory = data.first?.category
-                                        }
-                                    }
-                                }
-                                .simultaneousGesture(
-                                    DragGesture(minimumDistance: 0)
-                                        .onEnded { value in
-                                            // Calculate if we're over a segment
-                                            let location = value.location
-                                            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                                            let distance = sqrt(pow(location.x - center.x, 2) + pow(location.y - center.y, 2))
+                .contentShape(Rectangle())
+                .overlay(
+                    GeometryReader { geometry in
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .allowsHitTesting(true)
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onEnded { value in
+                                        let location = value.location
+                                        print("🎯 TAP ON CHART at location: \(location)")
+                                        let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                                        let distance = sqrt(pow(location.x - center.x, 2) + pow(location.y - center.y, 2))
+                                        print("📍 Center: \(center), Distance: \(distance)")
+                                        
+                                        // Check if within donut ring
+                                        let outerRadius = min(geometry.size.width, geometry.size.height) * 0.45
+                                        let innerRadius = outerRadius * 0.4
+                                        
+                                        if distance >= innerRadius && distance <= outerRadius {
+                                            let angle = atan2(location.y - center.y, location.x - center.x)
+                                            let degrees = angle * 180 / .pi
+                                            let normalizedDegrees = degrees < 0 ? degrees + 360 : degrees
+                                            let chartAngle = (normalizedDegrees + 90).truncatingRemainder(dividingBy: 360)
                                             
-                                            // Check if within donut ring (40% inner, ~90% outer)
-                                            let outerRadius = min(geometry.size.width, geometry.size.height) * 0.45
-                                            let innerRadius = outerRadius * 0.4
+                                            print("📐 Chart angle: \(chartAngle)°")
+                                            let tappedCategory = categoryForAngle(chartAngle)
+                                            print("🎯 Tapped category: \(tappedCategory ?? "nil")")
                                             
-                                            if distance >= innerRadius && distance <= outerRadius {
-                                                // Calculate angle from center
-                                                let angle = atan2(location.y - center.y, location.x - center.x)
-                                                let degrees = angle * 180 / .pi
-                                                let normalizedDegrees = degrees < 0 ? degrees + 360 : degrees
-                                                
-                                                // Convert to 0-360 starting from top (SwiftUI charts start from right)
-                                                let chartAngle = (normalizedDegrees + 90).truncatingRemainder(dividingBy: 360)
-                                                
-                                                let tappedCategory = categoryForAngle(chartAngle)
-                                                
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    // Toggle selection - click same category to deselect
-                                                    if selectedCategory == tappedCategory {
-                                                        selectedCategory = nil
-                                                    } else {
-                                                        selectedCategory = tappedCategory
-                                                    }
-                                                }
-                                            } else {
-                                                // Clicked outside donut - deselect
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    selectedCategory = nil
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                if hoveredCategory == tappedCategory {
+                                                    hoveredCategory = nil
+                                                } else {
+                                                    hoveredCategory = tappedCategory
                                                 }
                                             }
+                                        } else {
+                                            print("🎯 Click outside donut ring")
                                         }
-                                )
-                        }
-                        
-                        // Center text display
-                        VStack(spacing: 4) {
-                            if let selectedCategory = selectedCategory,
-                               let selectedData = data.first(where: { $0.category == selectedCategory }) {
-                                Text(selectedData.category)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.primary)
-                                Text(selectedData.formattedAmount)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("Total")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.primary)
-                                Text(NumberFormatter.currency.string(from: NSNumber(value: totalAmount)) ?? "$0.00")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .multilineTextAlignment(.center)
-                        .animation(.easeInOut(duration: 0.2), value: selectedCategory)
+                                    }
+                            )
                     }
+                )
+                .chartBackground { chartProxy in
+                    // Center text display only
+                    VStack(spacing: 4) {
+                        if let hoveredCategory = hoveredCategory,
+                           let selectedData = data.first(where: { $0.category == hoveredCategory }) {
+                            Text(selectedData.category)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.primary)
+                            Text(selectedData.formattedAmount)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Total")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.primary)
+                            Text(NumberFormatter.currency.string(from: NSNumber(value: totalAmount)) ?? "$0.00")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .multilineTextAlignment(.center)
+                    .animation(.easeInOut(duration: 0.2), value: hoveredCategory)
                 }
                 
                 // Enhanced Legend with click support
-                CategoryLegend(data: data, hoveredCategory: $selectedCategory)
+                CategoryLegend(data: data, hoveredCategory: $hoveredCategory)
             } else {
                 Text("No spending data available")
                     .foregroundColor(.secondary)
@@ -1038,15 +1070,19 @@ struct CategoryPieChart: View {
         let total = totalAmount
         var cumulativeAngle: Double = 0
         
+        print("🔍 Looking for angle: \(angle)° in categories:")
         for item in data {
             let itemAngle = (item.amount / total) * 360
             let endAngle = cumulativeAngle + itemAngle
+            print("  📊 \(item.category): \(cumulativeAngle)° to \(endAngle)° (size: \(itemAngle)°)")
             
             if angle >= cumulativeAngle && angle < endAngle {
+                print("  ✅ Found match: \(item.category)")
                 return item.category
             }
             cumulativeAngle += itemAngle
         }
+        print("  ❌ No category found for angle \(angle)°")
         
         return nil
     }
@@ -1378,8 +1414,9 @@ struct EnhancedCategorySpending: Identifiable {
     }
     
     var color: Color {
-        if let categoryObject = categoryObject {
-            return Color.fromHex(categoryObject.color)
+        if let categoryObject = categoryObject,
+           let color = Color(hex: categoryObject.color) {
+            return color
         }
         return .gray
     }

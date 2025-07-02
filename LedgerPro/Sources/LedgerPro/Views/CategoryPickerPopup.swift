@@ -6,7 +6,7 @@ struct CategoryPickerPopup: View {
     @Binding var isPresented: Bool
     let transaction: Transaction
     
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     @State private var searchText = ""
     @State private var showingAddCategory = false
     

@@ -55,7 +55,24 @@ extension String {
 
 // MARK: - Color Extensions
 extension Color {
-    static func forCategory(_ category: String) -> Color {
+    @MainActor static func forCategory(_ category: String) -> Color {
+        // Use CategoryService as single source of truth
+        let categoryService = CategoryService.shared
+        
+        // Find exact match first
+        if let categoryObject = categoryService.categories.first(where: { $0.name.lowercased() == category.lowercased() }) {
+            return Color(hex: categoryObject.color) ?? .gray
+        }
+        
+        // Try partial match (e.g., "Dining" matches "Food & Dining")
+        if let categoryObject = categoryService.categories.first(where: { 
+            $0.name.lowercased().contains(category.lowercased()) || 
+            category.lowercased().contains($0.name.lowercased())
+        }) {
+            return Color(hex: categoryObject.color) ?? .gray
+        }
+        
+        // Legacy fallback mappings for unmapped categories
         switch category.lowercased() {
         case "groceries", "food", "dining":
             return .green
@@ -63,22 +80,6 @@ extension Color {
             return .blue
         case "shopping", "retail":
             return .purple
-        case "entertainment", "movies", "games":
-            return .pink
-        case "bills", "utilities", "rent", "mortgage":
-            return .red
-        case "healthcare", "medical", "pharmacy":
-            return .mint
-        case "travel", "vacation", "hotel":
-            return .teal
-        case "income", "salary", "deposit":
-            return .green
-        case "investment", "stocks", "bonds":
-            return .indigo
-        case "insurance":
-            return .orange
-        case "education", "school", "tuition":
-            return .yellow
         default:
             return .gray
         }

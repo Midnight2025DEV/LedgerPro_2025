@@ -3,7 +3,7 @@ import SwiftUI
 /// Test view for the category system - displays hierarchical categories with management features
 struct CategoryTestView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var categoryService = CategoryService.shared
+    @EnvironmentObject private var categoryService: CategoryService
     @State private var showAddCategory = false
     @State private var selectedCategory: Category?
     @State private var showCategoryDetails = false
@@ -425,7 +425,7 @@ struct CategoryTestView: View {
     struct CategoryDetailView: View {
         let category: Category
         @Environment(\.dismiss) var dismiss
-        @StateObject private var categoryService = CategoryService.shared
+        @EnvironmentObject private var categoryService: CategoryService
         
         var body: some View {
             NavigationStack {
