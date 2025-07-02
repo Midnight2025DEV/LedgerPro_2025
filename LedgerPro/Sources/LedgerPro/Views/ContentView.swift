@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var selectedTransaction: Transaction?
     @State private var showingHealthAlert = false
     @State private var healthCheckMessage = ""
+    @State private var showingCategoryTest = false
     
     enum DashboardTab: String, CaseIterable {
         case overview = "Overview"
@@ -37,6 +38,12 @@ struct ContentView: View {
         .navigationTitle("LedgerPro")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button(action: { showingCategoryTest = true }) {
+                    Image(systemName: "folder.badge.gearshape")
+                        .foregroundColor(.blue)
+                }
+                .help("Test Category System")
+                
                 Button(action: checkHealth) {
                     Image(systemName: apiService.isHealthy ? "heart.fill" : "heart")
                         .foregroundColor(apiService.isHealthy ? .green : .red)
@@ -53,10 +60,19 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingUploadSheet) {
-            FileUploadView()
+            NavigationStack {
+                FileUploadView()
+            }
+        }
+        .sheet(isPresented: $showingCategoryTest) {
+            NavigationStack {
+                CategoryTestView()
+            }
         }
         .sheet(item: $selectedTransaction) { transaction in
-            TransactionDetailView(transaction: transaction)
+            NavigationStack {
+                TransactionDetailView(transaction: transaction)
+            }
         }
         .alert("Backend Health", isPresented: $showingHealthAlert) {
             Button("OK") { }
