@@ -70,6 +70,34 @@ final class RuleSuggestionEngineTests: XCTestCase {
         XCTAssertEqual(pattern, "BP")
     }
     
+    func test_extractMerchantPattern_preservesNumbers() {
+        let description = "7-ELEVEN STORE #1234 SEATTLE WA"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "7-ELEVEN")
+    }
+    
+    func test_extractMerchantPattern_24HourFitness() {
+        let description = "24 HOUR FITNESS CLUB 12345678 SAN FRANCISCO CA"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "24 HOUR FITNESS")
+    }
+    
+    func test_extractMerchantPattern_studio54() {
+        let description = "STUDIO 54 NIGHTCLUB NEW YORK NY"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "STUDIO 54")
+    }
+    
+    func test_extractMerchantPattern_wholeFoods365() {
+        let description = "365 BY WHOLE FOODS MARKET AUSTIN TX"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "365 BY")
+    }
+    
     // MARK: - Suggestion Generation Tests
     
     func test_generateSuggestions_emptyTransactions() {

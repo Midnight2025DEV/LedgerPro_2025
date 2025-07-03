@@ -98,10 +98,9 @@ class RuleSuggestionEngine: ObservableObject {
         
         // Remove common patterns
         let patternsToRemove = [
-            #"\s+#\d+"#,           // Store numbers like "#1234"
-            #"\s+\d{4,}"#,         // Long numbers
+            #"\s+#\d{4,}"#,        // Store numbers like " #1234" (4+ digits after #)
+            #"\s+\d{8,}"#,         // Very long numbers (8+ digits) like account numbers
             #"\s+[A-Z]{2}$"#,      // State codes at end
-            #"^(\d+\s+)?"#,        // Leading numbers
             #"\s+(INC|LLC|CORP)\.?"#, // Company suffixes
             #"\s+\*.*$"#,          // Everything after asterisk
             #"\s+\d{2}/\d{2}"#,    // Dates
@@ -124,9 +123,10 @@ class RuleSuggestionEngine: ObservableObject {
         
         // Must be at least 3 characters (or 2 for known short brands) and not too generic
         let genericTerms = ["PAYMENT", "TRANSFER", "DEPOSIT", "WITHDRAWAL", "FEE", "CHARGE"]
-        let knownShortBrands = ["BP", "7-ELEVEN", "QT", "AM", "PM"]
+        let knownShortBrands = ["BP", "QT", "AM", "PM"]
+        let brandsWithNumbers = ["7-ELEVEN", "24 HOUR FITNESS"]
         
-        let minimumLength = knownShortBrands.contains(normalizedMerchant) ? 2 : 3
+        let minimumLength = (knownShortBrands.contains(normalizedMerchant) || brandsWithNumbers.contains(normalizedMerchant)) ? 2 : 3
         
         if normalizedMerchant.count >= minimumLength && !genericTerms.contains(normalizedMerchant) {
             return normalizedMerchant
@@ -164,7 +164,9 @@ class RuleSuggestionEngine: ObservableObject {
         "CHIPOTLE": ["CHIPOTLE"],
         "PANERA": ["PANERA"],
         "SUBWAY": ["SUBWAY"],
-        "DUNKIN": ["DUNKIN", "DUNKIN'", "DUNKIN DONUTS"]
+        "DUNKIN": ["DUNKIN", "DUNKIN'", "DUNKIN DONUTS"],
+        "7-ELEVEN": ["7-ELEVEN", "7-11", "SEVEN ELEVEN"],
+        "24 HOUR FITNESS": ["24 HOUR FITNESS", "24 HOUR"]
     ]
     
     /// Normalizes merchant names to group similar merchants together
