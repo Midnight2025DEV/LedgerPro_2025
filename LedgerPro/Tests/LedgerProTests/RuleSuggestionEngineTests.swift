@@ -98,6 +98,27 @@ final class RuleSuggestionEngineTests: XCTestCase {
         XCTAssertEqual(pattern, "365 BY")
     }
     
+    func test_extractMerchantPattern_airline() {
+        let description = "UNITED AIRLINES FLIGHT 1234 SFO"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "UNITED")
+    }
+    
+    func test_extractMerchantPattern_hotel() {
+        let description = "MARRIOTT HOTEL DOWNTOWN NYC"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "MARRIOTT")
+    }
+    
+    func test_extractMerchantPattern_foodDelivery() {
+        let description = "DOORDASH DELIVERY FEE SAN FRANCISCO CA"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "DOORDASH")
+    }
+    
     // MARK: - Suggestion Generation Tests
     
     func test_generateSuggestions_emptyTransactions() {
