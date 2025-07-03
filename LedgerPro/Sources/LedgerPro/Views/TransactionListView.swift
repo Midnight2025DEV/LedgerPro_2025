@@ -403,13 +403,29 @@ struct DistributedTransactionRowView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             // Category Column
-            HStack(spacing: 8) {
-                Image(systemName: categoryBadgeIcon)
-                    .font(.caption)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: categoryBadgeIcon)
+                        .font(.caption)
+                    
+                    Text(transaction.category)
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(.medium)
+                }
                 
-                Text(transaction.category)
-                    .font(.system(.body, design: .rounded))
-                    .fontWeight(.medium)
+                // Auto-categorization indicator
+                if let confidence = transaction.confidence, confidence > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.caption2)
+                        Text("AUTO")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                        Text("\(Int(confidence * 100))%")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.secondary)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -1089,14 +1105,19 @@ struct TransactionRowView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    if let confidence = transaction.confidence {
+                    if let confidence = transaction.confidence, confidence > 0 {
                         HStack(spacing: 2) {
-                            Image(systemName: "star.fill")
+                            Image(systemName: "sparkles")
                                 .font(.caption2)
-                            Text("\(Int(confidence * 100))%")
+                            Text("AUTO \(Int(confidence * 100))%")
                                 .font(.caption2)
+                                .fontWeight(.semibold)
                         }
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(4)
                     }
                 }
             }

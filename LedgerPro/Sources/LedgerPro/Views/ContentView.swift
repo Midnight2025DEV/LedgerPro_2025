@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var showingHealthAlert = false
     @State private var healthCheckMessage = ""
     @State private var showingCategoryTest = false
+    @State private var showingRulesWindow = false
     
     enum DashboardTab: String, CaseIterable {
         case overview = "Overview"
@@ -38,6 +39,12 @@ struct ContentView: View {
         .navigationTitle("LedgerPro")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button(action: { showingRulesWindow = true }) {
+                    Image(systemName: "gearshape.2")
+                        .foregroundColor(.purple)
+                }
+                .help("Manage Rules")
+                
                 Button(action: { showingCategoryTest = true }) {
                     Image(systemName: "folder.badge.gearshape")
                         .foregroundColor(.blue)
@@ -63,6 +70,9 @@ struct ContentView: View {
             NavigationStack {
                 FileUploadView()
             }
+        }
+        .sheet(isPresented: $showingRulesWindow) {
+            RulesManagementView()
         }
         .sheet(isPresented: $showingCategoryTest) {
             NavigationStack {
