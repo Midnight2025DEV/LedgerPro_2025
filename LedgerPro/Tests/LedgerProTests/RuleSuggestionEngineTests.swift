@@ -119,6 +119,38 @@ final class RuleSuggestionEngineTests: XCTestCase {
         XCTAssertEqual(pattern, "DOORDASH")
     }
     
+    // MARK: - Performance Tests
+    
+    func test_performanceBatchProcessing() {
+        // Create a large dataset to trigger batch processing
+        var largeTransactionSet: [Transaction] = []
+        
+        for i in 0..<600 { // More than 500 to trigger batching
+            let merchantNames = ["STARBUCKS", "AMAZON", "UBER", "TARGET", "WALMART"]
+            let merchant = merchantNames[i % merchantNames.count]
+            let transaction = Transaction(
+                date: "2024-01-\(String(format: "%02d", (i % 28) + 1))",
+                description: "\(merchant) STORE #\(i)",
+                amount: Double.random(in: -100...(-5)),
+                category: "Other"
+            )
+            largeTransactionSet.append(transaction)
+        }
+        
+        let suggestions = suggestionEngine.generateSuggestions(from: largeTransactionSet)
+        
+        // Should generate suggestions for all 5 merchants
+        XCTAssertGreaterThanOrEqual(suggestions.count, 5)
+        
+        // Verify we have expected merchants
+        let merchantPatterns = suggestions.map { $0.merchantPattern }
+        XCTAssertTrue(merchantPatterns.contains("STARBUCKS"))
+        XCTAssertTrue(merchantPatterns.contains("AMAZON"))
+        XCTAssertTrue(merchantPatterns.contains("UBER"))
+        XCTAssertTrue(merchantPatterns.contains("TARGET"))
+        XCTAssertTrue(merchantPatterns.contains("WALMART"))
+    }
+    
     // MARK: - Suggestion Generation Tests
     
     func test_generateSuggestions_emptyTransactions() {
