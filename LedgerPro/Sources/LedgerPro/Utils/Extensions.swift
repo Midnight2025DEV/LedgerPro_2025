@@ -240,6 +240,12 @@ extension DateFormatter {
         formatter.dateFormat = "MMM yyyy"
         return formatter
     }()
+    
+    static let apiDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
 }
 
 // MARK: - DispatchQueue Extensions

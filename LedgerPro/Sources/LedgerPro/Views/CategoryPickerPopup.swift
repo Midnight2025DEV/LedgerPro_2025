@@ -13,8 +13,8 @@ struct CategoryPickerPopup: View {
     // MARK: - Computed Properties
     
     private var recentCategories: [Category] {
-        // TODO: Implement recent category tracking
-        // For now, return a few commonly used categories
+        // Returns commonly used categories for quick access
+        // Future enhancement: Track user's recent category selections
         let commonIds = [
             Category.systemCategoryIds.foodDining,
             Category.systemCategoryIds.transportation,
@@ -24,23 +24,28 @@ struct CategoryPickerPopup: View {
     }
     
     private var suggestedCategories: [Category] {
-        guard let suggested = categoryService.suggestCategory(
-            for: transaction.description,
-            amount: transaction.amount
-        ) else { return [] }
+        let (suggested, confidence) = categoryService.suggestCategory(for: transaction)
+        guard let suggestedCategory = suggested, confidence > 0.2 else { 
+            return [] // Only show suggestions with reasonable confidence
+        }
         
         // Return the suggested category plus related ones
-        var suggestions = [suggested]
+        var suggestions = [suggestedCategory]
         
         // Add related categories from the same parent
-        if let parentId = suggested.parentId {
+        if let parentId = suggestedCategory.parentId {
             let siblings = categoryService.children(of: parentId)
-                .filter { $0.id != suggested.id }
+                .filter { $0.id != suggestedCategory.id }
                 .prefix(3)
             suggestions.append(contentsOf: siblings)
         }
         
         return suggestions
+    }
+    
+    private var suggestionConfidence: Double {
+        let (_, confidence) = categoryService.suggestCategory(for: transaction)
+        return confidence
     }
     
     private var categoryGroups: [(key: String, value: [Category])] {
