@@ -43,11 +43,11 @@ class CategoryService: ObservableObject {
             // Organize hierarchy
             await organizeCategories(loadedCategories)
             
-            print("✅ Loaded \(categories.count) categories (\(rootCategories.count) root categories)")
+            AppLogger.shared.info("Loaded \(categories.count) categories (\(rootCategories.count) root categories)")
             
         } catch {
             lastError = error.localizedDescription
-            print("❌ Failed to load categories: \(error)")
+            AppLogger.shared.error("Failed to load categories: \(error)")
         }
     }
     
@@ -60,7 +60,7 @@ class CategoryService: ObservableObject {
             let decoder = JSONDecoder()
             return try decoder.decode([Category].self, from: data)
         } catch {
-            print("❌ Failed to decode categories: \(error)")
+            AppLogger.shared.error("Failed to decode categories: \(error)")
             return []
         }
     }
@@ -87,7 +87,7 @@ class CategoryService: ObservableObject {
             categories[index] = updatedCategory
         }
         
-        print("📊 Category hierarchy organized: \(rootCategories.count) root, \(categories.count) total")
+        AppLogger.shared.debug("Category hierarchy organized: \(rootCategories.count) root, \(categories.count) total")
     }
     
     // MARK: - System Categories Initialization
@@ -296,27 +296,75 @@ enum CategoryServiceError: LocalizedError {
 extension CategoryService {
     /// Find the best matching category for a transaction description
     func suggestCategory(for transactionDescription: String, amount: Double) -> Category? {
-        let description = transactionDescription.lowercased()
+        // Create a temporary transaction for rule matching
+        let tempTransaction = Transaction(
+            date: DateFormatter.apiDateFormatter.string(from: Date()),
+            description: transactionDescription,
+            amount: amount,
+            category: "Other" // Placeholder
+        )
         
-        // Simple rule-based matching (this would be enhanced with CategoryRule engine later)
-        if amount > 0 {
+        let (category, _) = suggestCategory(for: tempTransaction)
+        return category
+    }
+    
+    func suggestCategory(for transaction: Transaction) -> (category: Category?, confidence: Double) {
+        // Use the sophisticated rule engine with both system and custom rules
+        let allRules = RuleStorageService.shared.allRules
+        let matchingRules = allRules
+            .filter { $0.matches(transaction: transaction) }
+            .sorted { rule1, rule2 in
+                // Sort by priority first, then confidence
+                if rule1.priority != rule2.priority {
+                    return rule1.priority > rule2.priority
+                }
+                return rule1.confidence > rule2.confidence
+            }
+        
+        if let bestRule = matchingRules.first {
+            let confidence = bestRule.matchConfidence(for: transaction)
+            return (categoryForRule(bestRule), confidence)
+        }
+        
+        // Fallback to basic heuristics if no rules match
+        return fallbackCategorySuggestion(for: transaction)
+    }
+    
+    /// Get category from a rule's categoryId
+    private func categoryForRule(_ rule: CategoryRule) -> Category? {
+        return category(by: rule.categoryId)
+    }
+    
+    /// Fallback categorization when no rules match
+    private func fallbackCategorySuggestion(for transaction: Transaction) -> (category: Category?, confidence: Double) {
+        let description = transaction.description.lowercased()
+        
+        if transaction.amount > 0 {
             // Positive amount - likely income
-            return category(by: Category.systemCategoryIds.salary) ?? category(by: Category.systemCategoryIds.income)
+            let incomeCategory = category(by: Category.systemCategoryIds.salary) ?? 
+                               category(by: Category.systemCategoryIds.income)
+            return (incomeCategory, 0.3) // Low confidence fallback
         } else {
             // Negative amount - expense
+            var suggestedCategory: Category?
+            
             if description.contains("uber") || description.contains("lyft") {
-                return category(by: Category.systemCategoryIds.transportation)
+                suggestedCategory = category(by: Category.systemCategoryIds.transportation)
             } else if description.contains("walmart") || description.contains("grocery") {
-                return category(by: Category.systemCategoryIds.foodDining)
+                suggestedCategory = category(by: Category.systemCategoryIds.foodDining)
             } else if description.contains("amazon") {
-                return category(by: Category.systemCategoryIds.shopping)
+                suggestedCategory = category(by: Category.systemCategoryIds.shopping)
             } else if description.contains("capital one") && description.contains("payment") {
-                return category(by: Category.systemCategoryIds.creditCardPayment)
+                suggestedCategory = category(by: Category.systemCategoryIds.creditCardPayment)
+            }
+            
+            if let category = suggestedCategory {
+                return (category, 0.5) // Medium confidence fallback
             }
         }
         
-        // Default fallback
-        return category(by: Category.systemCategoryIds.other)
+        // Ultimate fallback
+        return (category(by: Category.systemCategoryIds.other), 0.1)
     }
     
     /// Get transactions for a specific category (placeholder for future integration)

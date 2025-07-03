@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct FileUploadView: View {
     @EnvironmentObject private var apiService: APIService
     @EnvironmentObject private var dataManager: FinancialDataManager
+    @EnvironmentObject private var categoryService: CategoryService
     @Environment(\.dismiss) private var dismiss
     
     @State private var isDragOver = false
@@ -14,6 +15,8 @@ struct FileUploadView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var processingProgress = 0.0
+    @State private var importResult: ImportResult?
+    @State private var showingImportSummary = false
     
     var body: some View {
         VStack(spacing: 32) {
@@ -72,6 +75,14 @@ struct FileUploadView: View {
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             print("🎯 STEP 2: FileUploadView appeared")
+        }
+        .sheet(isPresented: $showingImportSummary) {
+            if let result = importResult {
+                ImportSummaryView(result: result) {
+                    showingImportSummary = false
+                    dismiss()
+                }
+            }
         }
         .alert("Upload Error", isPresented: $showingError) {
             Button("OK") { 
@@ -341,18 +352,34 @@ struct FileUploadView: View {
                     }
                     
                     await MainActor.run {
+                        processingStatus = "Auto-categorizing transactions..."
+                        processingProgress = 0.9
+                    }
+                    
+                    // Auto-categorize transactions
+                    print("🤖 Auto-categorizing \(results.transactions.count) transactions...")
+                    let categorizationService = ImportCategorizationService()
+                    let categorizedResult = categorizationService.categorizeTransactions(results.transactions)
+                    print("✅ Auto-categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions")
+                    
+                    await MainActor.run {
                         processingProgress = 1.0
+                        importResult = categorizedResult
                         
-                        // Add transactions to data manager
+                        // Add categorized transactions to data manager
+                        let finalTransactions = categorizedResult.categorizedTransactions.map { $0.0 } + 
+                                              categorizedResult.uncategorizedTransactions
+                        
                         dataManager.addTransactions(
-                            results.transactions,
+                            finalTransactions,
                             jobId: results.jobId,
                             filename: results.metadata.filename
                         )
                         
                         print("🎉 Upload completed successfully!")
-                        // Close the modal
-                        dismiss()
+                        
+                        // Show import summary instead of immediately dismissing
+                        showingImportSummary = true
                     }
                 } else {
                     print("❌ Processing failed with status: \(finalStatus.status)")
@@ -455,8 +482,147 @@ struct ErrorDisplayView: View {
     }
 }
 
+struct ImportSummaryView: View {
+    let result: ImportResult
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                // Header
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.green)
+                    
+                    Text("Import Complete!")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("Your transactions have been imported and auto-categorized")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Summary Stats
+                VStack(spacing: 16) {
+                    HStack(spacing: 20) {
+                        StatBox(
+                            title: "Total",
+                            value: "\(result.totalTransactions)",
+                            color: .blue,
+                            icon: "list.bullet"
+                        )
+                        
+                        StatBox(
+                            title: "Categorized",
+                            value: "\(result.categorizedCount)",
+                            subtitle: "\(Int(result.successRate * 100))%",
+                            color: .green,
+                            icon: "checkmark.circle"
+                        )
+                        
+                        StatBox(
+                            title: "High Confidence",
+                            value: "\(result.highConfidenceCount)",
+                            color: .purple,
+                            icon: "star.fill"
+                        )
+                        
+                        StatBox(
+                            title: "Need Review",
+                            value: "\(result.uncategorizedCount)",
+                            color: .orange,
+                            icon: "exclamationmark.triangle"
+                        )
+                    }
+                    
+                    // Progress Bar
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Categorization Rate")
+                                .font(.headline)
+                            Spacer()
+                            Text("\(Int(result.successRate * 100))%")
+                                .font(.headline)
+                                .foregroundColor(.green)
+                        }
+                        
+                        ProgressView(value: result.successRate)
+                            .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                            .scaleEffect(1.2)
+                    }
+                    .padding()
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(12)
+                }
+                
+                Spacer()
+                
+                // Action Buttons
+                VStack(spacing: 12) {
+                    Button("Continue") {
+                        onDismiss()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    
+                    if result.uncategorizedCount > 0 {
+                        Button("Review Uncategorized (\(result.uncategorizedCount))") {
+                            // Future enhancement: Navigate to transaction list filtered by uncategorized
+                            // For now, returns to main view where user can manually review
+                            onDismiss()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            }
+            .padding(32)
+            .frame(width: 600, height: 500)
+            .navigationTitle("Import Summary")
+        }
+    }
+}
+
+struct StatBox: View {
+    let title: String
+    let value: String
+    var subtitle: String? = nil
+    let color: Color
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            
+            if let subtitle = subtitle {
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(color.opacity(0.1))
+        .cornerRadius(12)
+    }
+}
+
 #Preview {
     FileUploadView()
         .environmentObject(APIService())
         .environmentObject(FinancialDataManager())
+        .environmentObject(CategoryService.shared)
 }
