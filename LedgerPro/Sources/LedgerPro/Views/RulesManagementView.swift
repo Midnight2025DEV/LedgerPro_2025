@@ -837,6 +837,7 @@ struct SuggestionCardView: View {
     let onCreateRule: () -> Void
     let onDismiss: () -> Void
     
+    @MainActor
     private var suggestedCategory: Category? {
         categoryService.categories.first { $0.id == suggestion.suggestedCategory }
     }
