@@ -1,7 +1,7 @@
 import Foundation
 
 /// Rule-based auto-categorization system for transactions
-struct CategoryRule: Identifiable, Codable {
+struct CategoryRule: Identifiable, Codable, Hashable {
     let id: UUID
     let categoryId: UUID
     var ruleName: String
@@ -374,6 +374,211 @@ extension CategoryRule {
         })
         
         return rules
+    }()
+    
+    /// Common rule templates for popular merchants and transaction patterns
+    static let commonRuleTemplates: [CategoryRule] = {
+        var templates: [CategoryRule] = []
+        
+        // Coffee Shops
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.foodDining,
+            ruleName: "Starbucks",
+            priority: 75
+        ).with {
+            $0.merchantContains = "STARBUCKS"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.foodDining,
+            ruleName: "Dunkin Donuts",
+            priority: 75
+        ).with {
+            $0.merchantContains = "DUNKIN"
+            $0.amountSign = .negative
+        })
+        
+        // Fast Food Chains
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.foodDining,
+            ruleName: "McDonald's",
+            priority: 75
+        ).with {
+            $0.merchantContains = "MCDONALD"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.foodDining,
+            ruleName: "Chipotle",
+            priority: 75
+        ).with {
+            $0.merchantContains = "CHIPOTLE"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.foodDining,
+            ruleName: "Subway",
+            priority: 75
+        ).with {
+            $0.merchantContains = "SUBWAY"
+            $0.amountSign = .negative
+        })
+        
+        // Ride Sharing
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.transportation,
+            ruleName: "Uber",
+            priority: 80
+        ).with {
+            $0.merchantContains = "UBER"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.transportation,
+            ruleName: "Lyft",
+            priority: 80
+        ).with {
+            $0.merchantContains = "LYFT"
+            $0.amountSign = .negative
+        })
+        
+        // Online Shopping
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.shopping,
+            ruleName: "Amazon",
+            priority: 80
+        ).with {
+            $0.regexPattern = "AMAZON|AMZN"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.shopping,
+            ruleName: "Target",
+            priority: 75
+        ).with {
+            $0.merchantContains = "TARGET"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.shopping,
+            ruleName: "Walmart",
+            priority: 75
+        ).with {
+            $0.regexPattern = "WAL-MART|WALMART"
+            $0.amountSign = .negative
+        })
+        
+        // Grocery Stores
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000046")!, // Groceries
+            ruleName: "Whole Foods",
+            priority: 80
+        ).with {
+            $0.merchantContains = "WHOLE FOODS"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000046")!, // Groceries
+            ruleName: "Kroger",
+            priority: 75
+        ).with {
+            $0.merchantContains = "KROGER"
+            $0.amountSign = .negative
+        })
+        
+        // Gas Stations
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.transportation,
+            ruleName: "Shell Gas",
+            priority: 80
+        ).with {
+            $0.merchantContains = "SHELL"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.transportation,
+            ruleName: "Exxon Mobile",
+            priority: 80
+        ).with {
+            $0.regexPattern = "EXXON|MOBIL"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.transportation,
+            ruleName: "BP Gas",
+            priority: 80
+        ).with {
+            $0.merchantContains = "BP"
+            $0.amountSign = .negative
+        })
+        
+        // Streaming Services
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000047")!, // Subscriptions
+            ruleName: "Netflix",
+            priority: 85
+        ).with {
+            $0.merchantContains = "NETFLIX"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000047")!, // Subscriptions
+            ruleName: "Spotify",
+            priority: 85
+        ).with {
+            $0.merchantContains = "SPOTIFY"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000047")!, // Subscriptions
+            ruleName: "Apple Subscriptions",
+            priority: 85
+        ).with {
+            $0.regexPattern = "APPLE\\.COM|ITUNES"
+            $0.amountSign = .negative
+        })
+        
+        // Utilities
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000024")!, // Utilities
+            ruleName: "Electric Company",
+            priority: 90
+        ).with {
+            $0.regexPattern = "ELECTRIC|PG&E|CON ED|EDISON"
+            $0.amountSign = .negative
+        })
+        
+        templates.append(CategoryRule(
+            categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000024")!, // Utilities
+            ruleName: "Internet/Cable",
+            priority: 90
+        ).with {
+            $0.regexPattern = "COMCAST|VERIZON|AT&T|SPECTRUM|XFINITY"
+            $0.amountSign = .negative
+        })
+        
+        // Banking/Finance
+        templates.append(CategoryRule(
+            categoryId: Category.systemCategoryIds.creditCardPayment,
+            ruleName: "Credit Card Payments",
+            priority: 95
+        ).with {
+            $0.regexPattern = "PAYMENT|AUTOPAY|ONLINE PMT"
+            $0.amountSign = .positive
+        })
+        
+        return templates
     }()
 }
 
