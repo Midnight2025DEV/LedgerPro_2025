@@ -10,6 +10,10 @@ class RuleViewModel: ObservableObject {
     @Published var filterCustomOnly = false
     @Published var sortOrder = SortOrder.priority
     @Published var isLoading = false
+    @Published var ruleSuggestions: [RuleSuggestion] = []
+    @Published var isGeneratingSuggestions = false
+    
+    @AppStorage("dismissedSuggestions") private var dismissedSuggestionIDs: String = ""
     
     enum SortOrder: String, CaseIterable {
         case priority = "Priority"
@@ -21,9 +25,12 @@ class RuleViewModel: ObservableObject {
     private let ruleStorage = RuleStorageService.shared
     private let categoryService = CategoryService.shared
     private let dataManager = FinancialDataManager()
+    private let suggestionEngine: RuleSuggestionEngine
     
     init() {
+        self.suggestionEngine = RuleSuggestionEngine(categoryService: categoryService)
         loadRules()
+        generateSuggestions()
     }
     
     func loadRules() {
@@ -123,5 +130,69 @@ class RuleViewModel: ObservableObject {
             ]
         }
         return Array(dataManager.transactions.prefix(20)) // Return first 20 for testing
+    }
+    
+    // MARK: - Rule Suggestions
+    
+    func generateSuggestions() {
+        // Use real transactions from dataManager
+        let uncategorizedTransactions = dataManager.transactions.filter { 
+            $0.category == "Other" || 
+            ($0.confidence ?? 0) < 0.5
+        }
+        
+        // If no real transactions, fall back to sample data for demo
+        if uncategorizedTransactions.isEmpty {
+            generateSuggestions(from: getSampleTransactions())
+        } else {
+            generateSuggestions(from: uncategorizedTransactions)
+        }
+    }
+    
+    func generateSuggestions(from transactions: [Transaction]) {
+        isGeneratingSuggestions = true
+        
+        Task {
+            let allSuggestions = suggestionEngine.generateSuggestions(from: transactions)
+            
+            // Filter out dismissed suggestions
+            let dismissedPatterns = Set(dismissedSuggestionIDs.split(separator: ",").map(String.init))
+            let filteredSuggestions = allSuggestions.filter { suggestion in
+                !dismissedPatterns.contains(suggestion.merchantPattern)
+            }
+            
+            await MainActor.run {
+                self.ruleSuggestions = filteredSuggestions
+                self.isGeneratingSuggestions = false
+            }
+        }
+    }
+    
+    func createRuleFromSuggestion(_ suggestion: RuleSuggestion) {
+        let rule = suggestion.toCategoryRule()
+        saveRule(rule)
+        
+        // Remove the suggestion after creating the rule
+        ruleSuggestions.removeAll { $0.id == suggestion.id }
+    }
+    
+    func dismissSuggestion(_ suggestion: RuleSuggestion) {
+        ruleSuggestions.removeAll { $0.id == suggestion.id }
+        
+        // Store dismissed merchant pattern
+        var dismissedPatterns = dismissedSuggestionIDs.split(separator: ",").map(String.init)
+        if !dismissedPatterns.contains(suggestion.merchantPattern) {
+            dismissedPatterns.append(suggestion.merchantPattern)
+            dismissedSuggestionIDs = dismissedPatterns.joined(separator: ",")
+        }
+    }
+    
+    func refreshSuggestions() {
+        generateSuggestions()
+    }
+    
+    func clearDismissedSuggestions() {
+        dismissedSuggestionIDs = ""
+        generateSuggestions()
     }
 }

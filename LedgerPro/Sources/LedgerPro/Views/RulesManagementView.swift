@@ -59,6 +59,36 @@ struct RulesManagementView: View {
 struct RulesListView: View {
     @ObservedObject var viewModel: RuleViewModel
     @Binding var selectedRule: CategoryRule?
+    @State private var selectedTab = 0
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Tab Bar
+            Picker("View", selection: $selectedTab) {
+                Text("Rules (\(viewModel.filteredRules.count))").tag(0)
+                Text("Suggestions (\(viewModel.ruleSuggestions.count))").tag(1)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding(.horizontal)
+            .padding(.top)
+            
+            TabView(selection: $selectedTab) {
+                // Rules Tab
+                RulesTabView(viewModel: viewModel, selectedRule: $selectedRule)
+                    .tag(0)
+                
+                // Suggestions Tab  
+                SuggestionsTabView(viewModel: viewModel)
+                    .tag(1)
+            }
+        }
+    }
+}
+
+// MARK: - Rules Tab View
+struct RulesTabView: View {
+    @ObservedObject var viewModel: RuleViewModel
+    @Binding var selectedRule: CategoryRule?
     
     var body: some View {
         VStack {
@@ -116,6 +146,86 @@ struct RulesListView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Suggestions Tab View
+@available(macOS 13.0, *)
+struct SuggestionsTabView: View {
+    @ObservedObject var viewModel: RuleViewModel
+    @EnvironmentObject private var categoryService: CategoryService
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Suggested Rules")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Text("Based on transactions needing categorization")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Button("Refresh") {
+                    viewModel.refreshSuggestions()
+                }
+                .disabled(viewModel.isGeneratingSuggestions)
+                
+                Button("Clear Dismissed") {
+                    viewModel.clearDismissedSuggestions()
+                }
+                .disabled(viewModel.isGeneratingSuggestions)
+            }
+            .padding(.horizontal)
+            .padding(.top)
+            
+            // Suggestions List
+            if viewModel.isGeneratingSuggestions {
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Analyzing transactions...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.ruleSuggestions.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "lightbulb")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No Suggestions Available")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                    Text("Import more transactions or adjust categorization")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.ruleSuggestions) { suggestion in
+                            SuggestionCardView(
+                                suggestion: suggestion,
+                                categoryService: categoryService,
+                                onCreateRule: { viewModel.createRuleFromSuggestion(suggestion) },
+                                onDismiss: { viewModel.dismissSuggestion(suggestion) }
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            
+            Spacer(minLength: 0)
         }
     }
 }
@@ -718,6 +828,142 @@ struct TemplateCardView: View {
         }
     }
 }
+
+// MARK: - Suggestion Card View
+@available(macOS 13.0, *)
+struct SuggestionCardView: View {
+    let suggestion: RuleSuggestion
+    let categoryService: CategoryService
+    let onCreateRule: () -> Void
+    let onDismiss: () -> Void
+    
+    private var suggestedCategory: Category? {
+        categoryService.categories.first { $0.id == suggestion.suggestedCategory }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(suggestion.merchantPattern)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Text("\(suggestion.transactionCount) transactions")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Confidence Badge
+                Text("\(Int(suggestion.confidence * 100))%")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(confidenceColor.opacity(0.2))
+                    .foregroundColor(confidenceColor)
+                    .cornerRadius(6)
+            }
+            
+            // Suggested Category
+            HStack(spacing: 8) {
+                Text("Suggested Category:")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                if let category = suggestedCategory {
+                    Text(category.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                } else {
+                    Text("Unknown")
+                        .font(.subheadline)
+                        .foregroundColor(.red)
+                }
+            }
+            
+            // Transaction Details
+            HStack {
+                Text("Average Amount:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(NumberFormatter.currencyFormatter.string(from: suggestion.averageAmount as NSDecimalNumber) ?? "$0.00")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                
+                Spacer()
+                
+                Text("Examples:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("\(min(suggestion.exampleTransactions.count, 3))")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            
+            // Example Transactions (first 2)
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(suggestion.exampleTransactions.prefix(2)), id: \.id) { transaction in
+                    HStack {
+                        Text(transaction.description.prefix(35))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        Text(transaction.formattedAmount)
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(transaction.amount < 0 ? .red : .green)
+                    }
+                }
+            }
+            .padding(.top, 4)
+            
+            // Action Buttons
+            HStack(spacing: 12) {
+                Button("Dismiss") {
+                    onDismiss()
+                }
+                .buttonStyle(.bordered)
+                
+                Spacer()
+                
+                Button("Create Rule") {
+                    onCreateRule()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+    
+    private var confidenceColor: Color {
+        if suggestion.confidence >= 0.8 {
+            return .green
+        } else if suggestion.confidence >= 0.6 {
+            return .orange
+        } else {
+            return .red
+        }
+    }
+}
+
 
 #Preview {
     RulesManagementView()
