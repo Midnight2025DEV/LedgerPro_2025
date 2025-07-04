@@ -11,6 +11,14 @@ struct ContentView: View {
     @State private var healthCheckMessage = ""
     @State private var showingCategoryTest = false
     @State private var showingRulesWindow = false
+    @State private var selectedTransactionFilter: TransactionFilter = .all
+    @State private var shouldNavigateToTransactions = false
+    
+    enum TransactionFilter {
+        case all
+        case uncategorized
+        case category(String)
+    }
     
     enum DashboardTab: String, CaseIterable {
         case overview = "Overview"
@@ -88,6 +96,17 @@ struct ContentView: View {
             Button("OK") { }
         } message: {
             Text(healthCheckMessage)
+        }
+        .onAppear {
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("NavigateToUncategorized"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                selectedTab = .transactions
+                selectedTransactionFilter = .uncategorized
+                shouldNavigateToTransactions = true
+            }
         }
         .task {
             checkHealth()

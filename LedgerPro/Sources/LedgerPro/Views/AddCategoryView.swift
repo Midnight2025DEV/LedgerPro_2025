@@ -184,7 +184,7 @@ struct AddCategoryView: View {
                 Text(errorMessage)
             }
         }
-        .frame(width: 500, height: 700)
+        .frame(width: 600, height: 750)
     }
     
     // MARK: - Actions

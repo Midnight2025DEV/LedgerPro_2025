@@ -3,12 +3,13 @@ import Charts
 
 struct OverviewView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
+    @StateObject private var dashboardService = DashboardDataService()
     
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 // Quick Stats Grid
-                QuickStatsGrid()
+                QuickStatsGrid(dashboardService: dashboardService)
                 
                 // Charts Section
                 HStack(spacing: 20) {
@@ -17,9 +18,12 @@ struct OverviewView: View {
                         .frame(minHeight: 300)
                     
                     // Category Breakdown
-                    CategoryBreakdownView()
+                    CategoryBreakdownView(dashboardService: dashboardService)
                         .frame(minWidth: 300, minHeight: 300)
                 }
+                
+                // Top Merchants
+                TopMerchantsView(dashboardService: dashboardService)
                 
                 // Recent Transactions
                 RecentTransactionsView()
@@ -27,11 +31,15 @@ struct OverviewView: View {
             .padding()
         }
         .navigationTitle("Financial Overview")
+        .onAppear {
+            dashboardService.refreshData()
+        }
     }
 }
 
 struct QuickStatsGrid: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
+    @ObservedObject var dashboardService: DashboardDataService
     
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 16) {
@@ -46,7 +54,8 @@ struct QuickStatsGrid: View {
             StatCard(
                 title: "Total Expenses",
                 value: dataManager.summary.formattedExpenses,
-                change: dataManager.summary.expensesChange ?? "+0%",
+                change: dashboardService.formattedPercentageChange,
+                subtitle: "vs last month: " + dashboardService.formattedPreviousMonthTotal,
                 color: .red,
                 icon: "arrow.down.circle.fill"
             )
@@ -74,8 +83,18 @@ struct StatCard: View {
     let title: String
     let value: String
     let change: String
+    let subtitle: String?
     let color: Color
     let icon: String
+    
+    init(title: String, value: String, change: String, subtitle: String? = nil, color: Color, icon: String) {
+        self.title = title
+        self.value = value
+        self.change = change
+        self.subtitle = subtitle
+        self.color = color
+        self.icon = icon
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -99,6 +118,13 @@ struct StatCard: View {
             Text(title)
                 .font(.caption)
                 .foregroundColor(.secondary)
+            
+            if let subtitle = subtitle {
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
         }
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
@@ -227,15 +253,15 @@ struct SpendingChartView: View {
 
 struct CategoryBreakdownView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
+    @ObservedObject var dashboardService: DashboardDataService
     
     private var categoryData: [CategorySpending] {
-        let expenses = dataManager.transactions.filter { $0.amount < 0 }
-        let grouped = Dictionary(grouping: expenses) { $0.category }
-        
-        return grouped.map { category, transactions in
-            let total = transactions.reduce(0) { $0 + abs($1.amount) }
-            return CategorySpending(category: category, amount: total)
-        }.sorted { $0.amount > $1.amount }
+        return dashboardService.categoryBreakdown.map { breakdown in
+            CategorySpending(
+                category: breakdown.category.name,
+                amount: Double(truncating: breakdown.amount as NSDecimalNumber)
+            )
+        }
     }
     
     var body: some View {
@@ -252,7 +278,7 @@ struct CategoryBreakdownView: View {
                             innerRadius: .ratio(0.5),
                             angularInset: 2
                         )
-                        .foregroundStyle(Color.forCategory(data.category))
+                        .foregroundStyle(colorForCategory(data.category))
                     }
                     .chartLegend(position: .trailing, alignment: .center)
                 } else {
@@ -261,7 +287,7 @@ struct CategoryBreakdownView: View {
                         ForEach(categoryData.prefix(5)) { data in
                             HStack {
                                 Circle()
-                                    .fill(Color.forCategory(data.category))
+                                    .fill(colorForCategory(data.category))
                                     .frame(width: 12, height: 12)
                                 Text(data.category)
                                     .font(.caption)
@@ -292,6 +318,14 @@ struct CategoryBreakdownView: View {
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(12)
         .shadow(radius: 1)
+    }
+    
+    private func colorForCategory(_ categoryName: String) -> Color {
+        if let breakdown = dashboardService.categoryBreakdown.first(where: { $0.category.name == categoryName }),
+           let color = Color(hex: breakdown.category.color) {
+            return color
+        }
+        return Color.forCategory(categoryName) // Fallback to existing method
     }
 }
 

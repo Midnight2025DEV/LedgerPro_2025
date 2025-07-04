@@ -12,6 +12,7 @@ struct TransactionListView: View {
     // Enhanced category filtering
     @State private var showingCategoryFilter = false
     @State private var selectedCategoryObject: Category?
+    @State private var showUncategorizedOnly = false
     @EnvironmentObject private var categoryService: CategoryService
     
     let onTransactionSelect: (Transaction) -> Void
@@ -58,6 +59,15 @@ struct TransactionListView: View {
             filtered = filtered.filter { transaction in
                 // Simple name matching for now - can be enhanced later
                 return transaction.category == categoryObject.name
+            }
+        }
+        
+        // Filter for uncategorized transactions
+        if showUncategorizedOnly {
+            filtered = filtered.filter { transaction in
+                transaction.category.isEmpty || 
+                transaction.category == "Uncategorized" ||
+                transaction.category == "Other"
             }
         }
         
@@ -245,6 +255,18 @@ struct TransactionListView: View {
                 Task {
                     await categoryService.loadCategories()
                 }
+            }
+            
+            // Listen for uncategorized filter requests
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("NavigateToUncategorized"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                showUncategorizedOnly = true
+                selectedCategory = "All"  // Reset other filters
+                selectedCategoryObject = nil
+                searchText = ""
             }
         }
     }
