@@ -56,6 +56,47 @@ class RuleSuggestionEngine: ObservableObject {
     
     /// Analyzes transactions and generates rule suggestions
     func generateSuggestions(from transactions: [Transaction]) -> [RuleSuggestion] {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        defer {
+            let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+            print("📊 [Performance] Generated suggestions for \(transactions.count) transactions in \(String(format: "%.3f", timeElapsed))s")
+        }
+        
+        // Process in batches for large datasets to improve memory usage
+        let batchSize = 500
+        if transactions.count > batchSize {
+            print("🔄 [Performance] Processing \(transactions.count) transactions in batches of \(batchSize)")
+            return generateSuggestionsInBatches(transactions: transactions, batchSize: batchSize)
+        }
+        
+        // Standard processing for smaller datasets
+        return generateSuggestionsForBatch(transactions)
+    }
+    
+    /// Processes large transaction sets in batches for better memory management
+    private func generateSuggestionsInBatches(transactions: [Transaction], batchSize: Int) -> [RuleSuggestion] {
+        let batches = transactions.chunked(into: batchSize)
+        var merchantGroups: [String: [Transaction]] = [:]
+        
+        // Process each batch and merge results
+        for batch in batches {
+            let batchUncategorized = filterUncategorizedTransactions(batch)
+            let batchGroups = groupTransactionsByMerchant(batchUncategorized)
+            
+            // Merge batch results into main merchant groups
+            for (pattern, batchTransactions) in batchGroups {
+                merchantGroups[pattern, default: []].append(contentsOf: batchTransactions)
+            }
+        }
+        
+        let filteredGroups = filterGroupsByFrequency(merchantGroups)
+        return filteredGroups.compactMap { (merchantPattern, transactions) in
+            createSuggestion(for: merchantPattern, transactions: transactions)
+        }.sorted { $0.confidence > $1.confidence }
+    }
+    
+    /// Generates suggestions for a single batch of transactions
+    private func generateSuggestionsForBatch(_ transactions: [Transaction]) -> [RuleSuggestion] {
         let uncategorizedTransactions = filterUncategorizedTransactions(transactions)
         let merchantGroups = groupTransactionsByMerchant(uncategorizedTransactions)
         let filteredGroups = filterGroupsByFrequency(merchantGroups)
@@ -79,7 +120,17 @@ class RuleSuggestionEngine: ObservableObject {
     
     /// Groups transactions by extracted merchant patterns
     private func groupTransactionsByMerchant(_ transactions: [Transaction]) -> [String: [Transaction]] {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        defer {
+            let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+            if timeElapsed > 0.1 { // Log if grouping takes more than 100ms
+                print("🔍 [Performance] Merchant grouping took \(String(format: "%.3f", timeElapsed))s for \(transactions.count) transactions")
+            }
+        }
+        
+        // Pre-allocate dictionary capacity for better performance
         var groups: [String: [Transaction]] = [:]
+        groups.reserveCapacity(transactions.count / 3) // Estimate: ~3 transactions per merchant on average
         
         for transaction in transactions {
             let merchantPattern = extractMerchantPattern(from: transaction.description)
@@ -91,25 +142,42 @@ class RuleSuggestionEngine: ObservableObject {
         return groups
     }
     
+    // Pre-compiled regex patterns for better performance
+    private static let storeNumberPattern = try! NSRegularExpression(pattern: #"\s+#\d{4,}"#)
+    private static let longNumberPattern = try! NSRegularExpression(pattern: #"\s+\d{8,}"#)
+    private static let stateCodePattern = try! NSRegularExpression(pattern: #"\s+[A-Z]{2}$"#)
+    private static let companySuffixPattern = try! NSRegularExpression(pattern: #"\s+(INC|LLC|CORP)\.?"#)
+    private static let asteriskPattern = try! NSRegularExpression(pattern: #"\s+\*.*$"#)
+    private static let datePattern = try! NSRegularExpression(pattern: #"\s+\d{2}/\d{2}"#)
+    private static let dotComPattern = try! NSRegularExpression(pattern: #"\.COM.*$"#)
+    
     /// Extracts a clean merchant pattern from transaction description
     func extractMerchantPattern(from description: String) -> String {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        defer {
+            let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+            if timeElapsed > 0.01 { // Log if extraction takes more than 10ms
+                print("🔍 [Performance] Merchant extraction took \(String(format: "%.3f", timeElapsed))s for: \(description.prefix(50))")
+            }
+        }
+        
         // Remove common suffixes and prefixes
         var cleaned = description.uppercased()
         
-        // Remove common patterns
-        let patternsToRemove = [
-            #"\s+#\d+"#,           // Store numbers like "#1234"
-            #"\s+\d{4,}"#,         // Long numbers
-            #"\s+[A-Z]{2}$"#,      // State codes at end
-            #"^(\d+\s+)?"#,        // Leading numbers
-            #"\s+(INC|LLC|CORP)\.?"#, // Company suffixes
-            #"\s+\*.*$"#,          // Everything after asterisk
-            #"\s+\d{2}/\d{2}"#,    // Dates
-            #"\.COM.*$"#           // .com and everything after
+        // Use pre-compiled regex patterns for better performance
+        let compiledPatterns = [
+            Self.storeNumberPattern,    // Store numbers like " #1234" (4+ digits after #)
+            Self.longNumberPattern,     // Very long numbers (8+ digits) like account numbers
+            Self.stateCodePattern,      // State codes at end
+            Self.companySuffixPattern,  // Company suffixes
+            Self.asteriskPattern,       // Everything after asterisk
+            Self.datePattern,           // Dates
+            Self.dotComPattern          // .com and everything after
         ]
         
-        for pattern in patternsToRemove {
-            cleaned = cleaned.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
+        for pattern in compiledPatterns {
+            let range = NSRange(cleaned.startIndex..<cleaned.endIndex, in: cleaned)
+            cleaned = pattern.stringByReplacingMatches(in: cleaned, range: range, withTemplate: "")
         }
         
         // Extract main merchant name (first 1-2 words for better grouping)
@@ -124,9 +192,10 @@ class RuleSuggestionEngine: ObservableObject {
         
         // Must be at least 3 characters (or 2 for known short brands) and not too generic
         let genericTerms = ["PAYMENT", "TRANSFER", "DEPOSIT", "WITHDRAWAL", "FEE", "CHARGE"]
-        let knownShortBrands = ["BP", "7-ELEVEN", "QT", "AM", "PM"]
+        let knownShortBrands = ["BP", "QT", "AM", "PM"]
+        let brandsWithNumbers = ["7-ELEVEN", "24 HOUR FITNESS"]
         
-        let minimumLength = knownShortBrands.contains(normalizedMerchant) ? 2 : 3
+        let minimumLength = (knownShortBrands.contains(normalizedMerchant) || brandsWithNumbers.contains(normalizedMerchant)) ? 2 : 3
         
         if normalizedMerchant.count >= minimumLength && !genericTerms.contains(normalizedMerchant) {
             return normalizedMerchant
@@ -135,46 +204,81 @@ class RuleSuggestionEngine: ObservableObject {
         return ""
     }
     
+    // Sorted alphabetically for easy maintenance
     /// Map of normalized names to their possible prefixes
     private static let merchantPrefixMap: [String: [String]] = [
+        "7-ELEVEN": ["7-ELEVEN", "7-11", "SEVEN ELEVEN"],
+        "24 HOUR FITNESS": ["24 HOUR FITNESS", "24 HOUR"],
         "AMAZON": ["AMAZON", "AMZN"],
-        "UBER": ["UBER"],
-        "STARBUCKS": ["STARBUCKS", "SBUX"],
-        "TARGET": ["TARGET"],
-        "WALMART": ["WALMART", "WAL-MART"],
-        "SHELL": ["SHELL"],
-        "CHEVRON": ["CHEVRON"],
-        "EXXON": ["EXXON", "ESSO"],
-        "BP": ["BP"],
-        "MCDONALDS": ["MCDONALDS", "MCDONALD'S", "MCD"],
-        "NETFLIX": ["NETFLIX"],
-        "SPOTIFY": ["SPOTIFY"],
+        "AMERICAN": ["AMERICAN AIRLINES", "AA", "AAL"],
         "APPLE": ["APPLE", "APL"],
-        "GOOGLE": ["GOOGLE", "GOOGL"],
-        "MICROSOFT": ["MICROSOFT", "MSFT"],
-        "TESLA": ["TESLA", "TSL"],
-        "COSTCO": ["COSTCO"],
-        "SAFEWAY": ["SAFEWAY"],
-        "KROGER": ["KROGER"],
-        "CVS": ["CVS"],
-        "WALGREENS": ["WALGREENS", "WAG"],
-        "HOME DEPOT": ["HOME DEPOT", "HOMEDEPOT"],
-        "LOWES": ["LOWES", "LOWE'S"],
         "BEST BUY": ["BEST BUY", "BESTBUY"],
+        "BP": ["BP"],
+        "CHEVRON": ["CHEVRON"],
         "CHIPOTLE": ["CHIPOTLE"],
+        "COSTCO": ["COSTCO"],
+        "CVS": ["CVS"],
+        "DELTA": ["DELTA AIR", "DELTA", "DAL"],
+        "DOORDASH": ["DOORDASH", "DD", "DOOR DASH"],
+        "DROPBOX": ["DROPBOX", "DBX"],
+        "DUNKIN": ["DUNKIN", "DUNKIN'", "DUNKIN DONUTS"],
+        "EXXON": ["EXXON", "ESSO"],
+        "GITHUB": ["GITHUB", "GITHUB.COM"],
+        "GOOGLE": ["GOOGLE", "GOOGL"],
+        "GRUBHUB": ["GRUBHUB", "SEAMLESS"],
+        "HILTON": ["HILTON", "HAMPTON INN", "DOUBLETREE", "EMBASSY SUITES"],
+        "HOME DEPOT": ["HOME DEPOT", "HOMEDEPOT"],
+        "HYATT": ["HYATT", "ANDAZ", "GRAND HYATT"],
+        "KROGER": ["KROGER"],
+        "LOWES": ["LOWES", "LOWE'S"],
+        "MARRIOTT": ["MARRIOTT", "COURTYARD", "RESIDENCE INN", "RITZ CARLTON"],
+        "MCDONALDS": ["MCDONALDS", "MCDONALD'S", "MCD"],
+        "MICROSOFT": ["MICROSOFT", "MSFT"],
+        "NETFLIX": ["NETFLIX"],
         "PANERA": ["PANERA"],
+        "POSTMATES": ["POSTMATES", "POSTMATE"],
+        "PUBLIX": ["PUBLIX", "PUBLIX SUPER"],
+        "RITE AID": ["RITE AID", "RITEAID"],
+        "SAFEWAY": ["SAFEWAY"],
+        "SHELL": ["SHELL"],
+        "SOUTHWEST": ["SOUTHWEST AIR", "SOUTHWEST", "SWA"],
+        "SPOTIFY": ["SPOTIFY"],
+        "STARBUCKS": ["STARBUCKS", "SBUX"],
         "SUBWAY": ["SUBWAY"],
-        "DUNKIN": ["DUNKIN", "DUNKIN'", "DUNKIN DONUTS"]
+        "TARGET": ["TARGET"],
+        "TESLA": ["TESLA", "TSL"],
+        "UBER": ["UBER"],
+        "UNITED": ["UNITED AIRLINES", "UNITED", "UAL"],
+        "WALGREENS": ["WALGREENS", "WAG"],
+        "WALMART": ["WALMART", "WAL-MART"],
+        "ZOOM": ["ZOOM.US", "ZOOM"]
+    ]
+    
+    // Common merchants ordered by frequency for O(1) lookup optimization
+    private static let commonMerchantPrefixes = [
+        "AMAZON", "STARBUCKS", "WALMART", "TARGET", "MCDONALDS", "UBER", "APPLE", 
+        "GOOGLE", "NETFLIX", "CVS", "WALGREENS", "HOME DEPOT", "COSTCO"
     ]
     
     /// Normalizes merchant names to group similar merchants together
     private func normalizeMerchantName(_ merchantName: String) -> String {
         let merchant = merchantName.uppercased()
         
-        // Find matching prefix
+        // Fast path: Check most common merchants first for better performance
+        for commonMerchant in Self.commonMerchantPrefixes {
+            if let prefixes = Self.merchantPrefixMap[commonMerchant] {
+                if prefixes.contains(where: { merchant.hasPrefix($0) }) {
+                    return commonMerchant
+                }
+            }
+        }
+        
+        // Slower path: Check remaining merchants
         for (normalized, prefixes) in Self.merchantPrefixMap {
-            if prefixes.contains(where: { merchant.hasPrefix($0) }) {
-                return normalized
+            if !Self.commonMerchantPrefixes.contains(normalized) {
+                if prefixes.contains(where: { merchant.hasPrefix($0) }) {
+                    return normalized
+                }
             }
         }
         
@@ -278,5 +382,16 @@ extension Transaction {
         return category == "Other" || 
                confidence == nil || 
                (confidence ?? 0.0) < 0.5
+    }
+}
+
+// MARK: - Array Extensions for Performance
+
+extension Array {
+    /// Splits array into chunks of specified size for batch processing
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
     }
 }

@@ -70,6 +70,87 @@ final class RuleSuggestionEngineTests: XCTestCase {
         XCTAssertEqual(pattern, "BP")
     }
     
+    func test_extractMerchantPattern_preservesNumbers() {
+        let description = "7-ELEVEN STORE #1234 SEATTLE WA"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "7-ELEVEN")
+    }
+    
+    func test_extractMerchantPattern_24HourFitness() {
+        let description = "24 HOUR FITNESS CLUB 12345678 SAN FRANCISCO CA"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "24 HOUR FITNESS")
+    }
+    
+    func test_extractMerchantPattern_studio54() {
+        let description = "STUDIO 54 NIGHTCLUB NEW YORK NY"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "STUDIO 54")
+    }
+    
+    func test_extractMerchantPattern_wholeFoods365() {
+        let description = "365 BY WHOLE FOODS MARKET AUSTIN TX"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "365 BY")
+    }
+    
+    func test_extractMerchantPattern_airline() {
+        let description = "UNITED AIRLINES FLIGHT 1234 SFO"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "UNITED")
+    }
+    
+    func test_extractMerchantPattern_hotel() {
+        let description = "MARRIOTT HOTEL DOWNTOWN NYC"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "MARRIOTT")
+    }
+    
+    func test_extractMerchantPattern_foodDelivery() {
+        let description = "DOORDASH DELIVERY FEE SAN FRANCISCO CA"
+        let pattern = suggestionEngine.extractMerchantPattern(from: description)
+        
+        XCTAssertEqual(pattern, "DOORDASH")
+    }
+    
+    // MARK: - Performance Tests
+    
+    func test_performanceBatchProcessing() {
+        // Create a large dataset to trigger batch processing
+        var largeTransactionSet: [Transaction] = []
+        
+        for i in 0..<600 { // More than 500 to trigger batching
+            let merchantNames = ["STARBUCKS", "AMAZON", "UBER", "TARGET", "WALMART"]
+            let merchant = merchantNames[i % merchantNames.count]
+            let transaction = Transaction(
+                date: "2024-01-\(String(format: "%02d", (i % 28) + 1))",
+                description: "\(merchant) STORE #\(i)",
+                amount: Double.random(in: -100...(-5)),
+                category: "Other"
+            )
+            largeTransactionSet.append(transaction)
+        }
+        
+        let suggestions = suggestionEngine.generateSuggestions(from: largeTransactionSet)
+        
+        // Should generate suggestions for all 5 merchants
+        XCTAssertGreaterThanOrEqual(suggestions.count, 5)
+        
+        // Verify we have expected merchants
+        let merchantPatterns = suggestions.map { $0.merchantPattern }
+        XCTAssertTrue(merchantPatterns.contains("STARBUCKS"))
+        XCTAssertTrue(merchantPatterns.contains("AMAZON"))
+        XCTAssertTrue(merchantPatterns.contains("UBER"))
+        XCTAssertTrue(merchantPatterns.contains("TARGET"))
+        XCTAssertTrue(merchantPatterns.contains("WALMART"))
+    }
+    
     // MARK: - Suggestion Generation Tests
     
     func test_generateSuggestions_emptyTransactions() {
