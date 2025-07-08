@@ -534,6 +534,7 @@ struct EnhancedCategorySection: View {
         }
     }
     
+    @MainActor
     private var sectionTotal: Double {
         categories.reduce(0) { total, category in
             total + (statsProvider.stats(for: category).spentThisMonth ?? 0)
