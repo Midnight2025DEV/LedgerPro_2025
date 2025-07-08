@@ -4,7 +4,7 @@ import Foundation
 
 /// JSON-RPC 2.0 Request Message
 struct MCPRequest: Codable {
-    let jsonrpc: String = "2.0"
+    var jsonrpc: String = "2.0"
     let id: String
     let method: MCPMethod
     let params: [String: AnyCodable]?
@@ -18,7 +18,7 @@ struct MCPRequest: Codable {
 
 /// JSON-RPC 2.0 Response Message
 struct MCPResponse: Codable {
-    let jsonrpc: String = "2.0"
+    var jsonrpc: String = "2.0"
     let id: String
     let result: AnyCodable?
     let error: MCPRPCError?
@@ -70,6 +70,8 @@ enum MCPMethod: String, Codable, CaseIterable {
     case initialize = "initialize"
     case ping = "ping"
     case listCapabilities = "listCapabilities"
+    case listTools = "tools/list"
+    case callTool = "tools/call"
     
     // Financial Analysis Methods
     case analyzeTransactions = "financial/analyze"
@@ -136,7 +138,9 @@ struct AnyCodable: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        if let bool = try? container.decode(Bool.self) {
+        if container.decodeNil() {
+            value = NSNull()
+        } else if let bool = try? container.decode(Bool.self) {
             value = bool
         } else if let int = try? container.decode(Int.self) {
             value = int
@@ -160,6 +164,8 @@ struct AnyCodable: Codable {
         var container = encoder.singleValueContainer()
         
         switch value {
+        case is NSNull:
+            try container.encodeNil()
         case let bool as Bool:
             try container.encode(bool)
         case let int as Int:
@@ -174,11 +180,13 @@ struct AnyCodable: Codable {
         case let dictionary as [String: Any]:
             let encodableDict = dictionary.mapValues { AnyCodable($0) }
             try container.encode(encodableDict)
+        case let codable as Codable:
+            // Try to encode any Codable type directly
+            try codable.encode(to: encoder)
         default:
-            throw EncodingError.invalidValue(
-                value,
-                EncodingError.Context(codingPath: [], debugDescription: "AnyCodable value cannot be encoded")
-            )
+            // As a last resort, try to convert to string representation
+            let stringValue = String(describing: value)
+            try container.encode(stringValue)
         }
     }
 }

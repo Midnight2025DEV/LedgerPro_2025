@@ -17,6 +17,10 @@ struct Transaction: Codable, Identifiable, Hashable {
     let exchangeRate: Double?       // Exchange rate used
     let hasForex: Bool?            // Flag for foreign transactions
     
+    // Auto-categorization tracking
+    let wasAutoCategorized: Bool?   // Whether this was auto-categorized
+    let categorizationMethod: String? // "merchant_rule", "smart_rule", "ai_suggestion"
+    
     enum CodingKeys: String, CodingKey {
         case id, date, description, amount, category, confidence, jobId, accountId
         case rawData = "raw_data"
@@ -24,10 +28,12 @@ struct Transaction: Codable, Identifiable, Hashable {
         case originalCurrency = "original_currency"
         case exchangeRate = "exchange_rate"
         case hasForex = "has_forex"
+        case wasAutoCategorized = "was_auto_categorized"
+        case categorizationMethod = "categorization_method"
     }
     
     // Memberwise initializer for creating transactions manually
-    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil) {
+    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
         if let providedId = id {
             self.id = providedId
         } else {
@@ -46,6 +52,8 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.originalCurrency = originalCurrency
         self.exchangeRate = exchangeRate
         self.hasForex = hasForex
+        self.wasAutoCategorized = wasAutoCategorized
+        self.categorizationMethod = categorizationMethod
     }
     
     // Decoder initializer for JSON parsing
@@ -75,6 +83,8 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.originalCurrency = try container.decodeIfPresent(String.self, forKey: .originalCurrency)
         self.exchangeRate = try container.decodeIfPresent(Double.self, forKey: .exchangeRate)
         self.hasForex = try container.decodeIfPresent(Bool.self, forKey: .hasForex)
+        self.wasAutoCategorized = try container.decodeIfPresent(Bool.self, forKey: .wasAutoCategorized)
+        self.categorizationMethod = try container.decodeIfPresent(String.self, forKey: .categorizationMethod)
     }
     
     var formattedAmount: String {

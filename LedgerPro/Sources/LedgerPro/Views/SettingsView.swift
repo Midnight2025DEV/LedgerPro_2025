@@ -13,6 +13,8 @@ struct SettingsView: View {
     @State private var showingDataExport = false
     @State private var exportProgress = 0.0
     @State private var isExporting = false
+    @State private var showingMCPManager = false
+    @State private var escKeyMonitor: Any?
     
     enum ExportFormat: String, CaseIterable {
         case csv = "CSV"
@@ -59,6 +61,34 @@ struct SettingsView: View {
                     }
                 }
                 .buttonStyle(.bordered)
+            }
+            
+            // MCP AI Services
+            Section("AI Services") {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("MCP Server Manager")
+                        Text("Manage AI-powered backend services")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Button("Manage Servers") {
+                        showingMCPManager = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("AI Features")
+                        .fontWeight(.medium)
+                    Text("Enable advanced transaction categorization, financial analysis, and PDF processing with AI-powered MCP servers.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             
             // Data Management
@@ -228,6 +258,50 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingAbout) {
             AboutView()
+        }
+        .overlay {
+            if showingMCPManager {
+                ZStack {
+                    // Semi-transparent background that captures clicks
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            showingMCPManager = false
+                        }
+                    
+                    // The actual popup - pass the binding so it can dismiss itself
+                    MCPServerManagerView(isPresented: $showingMCPManager)
+                        .frame(width: 500, height: 600)
+                        .background(Color(NSColor.windowBackgroundColor))
+                        .cornerRadius(12)
+                        .shadow(radius: 20)
+                }
+                // TODO: ESC key dismissal not working - needs investigation
+                // Attempted solutions:
+                // 1. onKeyPress with focusable() - requires macOS 14+
+                // 2. NSEvent.addLocalMonitorForEvents - not capturing ESC properly
+                // Consider alternative approaches:
+                // - Using a custom NSWindow subclass
+                // - Implementing NSWindowDelegate methods
+                // - Using a proper sheet presentation instead of overlay
+                .onAppear {
+                    escKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                        if event.keyCode == 53 && showingMCPManager { // ESC key
+                            showingMCPManager = false
+                            return nil
+                        }
+                        return event
+                    }
+                }
+                .onDisappear {
+                    if let monitor = escKeyMonitor {
+                        NSEvent.removeMonitor(monitor)
+                        escKeyMonitor = nil
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .animation(.easeInOut(duration: 0.2), value: showingMCPManager)
+            }
         }
         .onAppear {
             loadSettings()

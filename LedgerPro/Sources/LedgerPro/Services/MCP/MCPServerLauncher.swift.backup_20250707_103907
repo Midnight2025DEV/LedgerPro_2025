@@ -1,0 +1,357 @@
+import Foundation
+import OSLog
+import Combine
+import AppKit
+
+/// MCP Server Launcher - Manages lifecycle of external MCP servers
+@MainActor
+class MCPServerLauncher: ObservableObject {
+    
+    // MARK: - Published Properties
+    
+    @Published var launchedServers: [String: LaunchedServer] = [:]
+    @Published var isLaunching: Bool = false
+    @Published var lastError: MCPLauncherError?
+    @Published var launchStatus: LaunchStatus = .idle
+    
+    // MARK: - Private Properties
+    
+    private let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "MCPServerLauncher")
+    private let mcpBridge: MCPBridge
+    private var serverProcesses: [String: Process] = [:]
+    private let mcpToolsPath = NSHomeDirectory() + "/mcp-tools"
+    
+    // MARK: - Types
+    
+    enum LaunchStatus {
+        case idle
+        case launching(serverType: ServerType)
+        case running(activeServers: Int)
+        case error(MCPLauncherError)
+    }
+    
+    struct LaunchedServer {
+        let type: ServerType
+        let process: Process
+        let port: Int
+        let startTime: Date
+        var isHealthy: Bool = false
+        var lastHealthCheck: Date?
+        
+        var uptime: TimeInterval {
+            return Date().timeIntervalSince(startTime)
+        }
+    }
+    
+    // MARK: - Initialization
+    
+    init(mcpBridge: MCPBridge) {
+        self.mcpBridge = mcpBridge
+        setupCleanupHandler()
+    }
+    
+    deinit {
+        Task { @MainActor in
+            stopAllServers()
+        }
+    }
+    
+    // MARK: - Server Lifecycle Management
+    
+    /// Launch a specific MCP server type
+    func launchServer(_ type: ServerType) async throws {
+        logger.info("🚀 Launching \(type.displayName) server...")
+        
+        guard !isServerRunning(type) else {
+            throw MCPLauncherError.serverAlreadyRunning(type.displayName)
+        }
+        
+        isLaunching = true
+        launchStatus = .launching(serverType: type)
+        
+        do {
+            let process = try createServerProcess(for: type)
+            let server = LaunchedServer(
+                type: type,
+                process: process,
+                port: type.port,
+                startTime: Date()
+            )
+            
+            // Store the launched server
+            launchedServers[type.rawValue] = server
+            serverProcesses[type.rawValue] = process
+            
+            // Start the process
+            try process.run()
+            
+            // Wait for server to be ready
+            try await waitForServerReady(type)
+            
+            // Connect via MCPBridge
+            try await mcpBridge.addServer(type: type)
+            
+            // Update status
+            launchedServers[type.rawValue]?.isHealthy = true
+            launchedServers[type.rawValue]?.lastHealthCheck = Date()
+            
+            updateLaunchStatus()
+            isLaunching = false
+            lastError = nil
+            
+            logger.info("✅ Successfully launched \(type.displayName) server on port \(type.port)")
+            
+        } catch {
+            isLaunching = false
+            let mcpError = MCPLauncherError.launchFailed(type.displayName, error.localizedDescription)
+            lastError = mcpError
+            launchStatus = .error(mcpError)
+            
+            // Cleanup on failure
+            stopServer(type)
+            
+            logger.error("❌ Failed to launch \(type.displayName): \(error.localizedDescription)")
+            throw mcpError
+        }
+    }
+    
+    /// Stop a specific MCP server
+    func stopServer(_ type: ServerType) {
+        logger.info("🛑 Stopping \(type.displayName) server...")
+        
+        // Remove from MCPBridge
+        Task {
+            await mcpBridge.removeServer(type: type)
+        }
+        
+        // Terminate process
+        if let process = serverProcesses[type.rawValue] {
+            process.terminate()
+            
+            // Wait for graceful termination
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+                if process.isRunning {
+                    process.interrupt()
+                }
+            }
+        }
+        
+        // Cleanup
+        launchedServers.removeValue(forKey: type.rawValue)
+        serverProcesses.removeValue(forKey: type.rawValue)
+        
+        updateLaunchStatus()
+        
+        logger.info("✅ Stopped \(type.displayName) server")
+    }
+    
+    /// Stop all running servers
+    func stopAllServers() {
+        logger.info("🛑 Stopping all MCP servers...")
+        
+        for type in Array(launchedServers.keys).compactMap({ ServerType(rawValue: $0) }) {
+            stopServer(type)
+        }
+        
+        launchStatus = .idle
+        logger.info("✅ All MCP servers stopped")
+    }
+    
+    /// Launch core servers (Financial Analyzer + OpenAI Service)
+    func launchCoreServers() async throws {
+        logger.info("🚀 Launching core MCP servers...")
+        
+        let coreServers: [ServerType] = [.financialAnalyzer, .openAIService]
+        
+        for serverType in coreServers {
+            if !isServerRunning(serverType) {
+                try await launchServer(serverType)
+                
+                // Small delay between launches
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            }
+        }
+        
+        logger.info("✅ Core MCP servers launched successfully")
+    }
+    
+    // MARK: - Server Status
+    
+    /// Check if a server type is currently running
+    func isServerRunning(_ type: ServerType) -> Bool {
+        return launchedServers[type.rawValue]?.process.isRunning == true
+    }
+    
+    /// Get health status of all servers
+    func getHealthStatus() -> [ServerHealthStatus] {
+        return launchedServers.values.map { server in
+            ServerHealthStatus(
+                type: server.type,
+                isRunning: server.process.isRunning,
+                isHealthy: server.isHealthy,
+                uptime: server.uptime,
+                port: server.port,
+                lastHealthCheck: server.lastHealthCheck
+            )
+        }
+    }
+    
+    /// Perform health check on all running servers
+    func performHealthCheck() async {
+        for (_, server) in launchedServers {
+            if server.process.isRunning {
+                let isHealthy = await checkServerHealth(server.type)
+                launchedServers[server.type.rawValue]?.isHealthy = isHealthy
+                launchedServers[server.type.rawValue]?.lastHealthCheck = Date()
+            }
+        }
+        updateLaunchStatus()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func createServerProcess(for type: ServerType) throws -> Process {
+        // Use the new resolver
+        return try createServerProcessWithResolver(for: type)
+    }
+    
+    private func createPythonServerProcess(script: String, port: Int) throws -> Process {
+        let process = Process()
+        let scriptPath = URL(fileURLWithPath: script, relativeTo: URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+        
+        // Check if script exists
+        guard FileManager.default.fileExists(atPath: scriptPath.path) else {
+            throw MCPLauncherError.scriptNotFound(scriptPath.path)
+        }
+        
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        process.arguments = [scriptPath.path, "--port", "\(port)"]
+        process.currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        
+        // Setup environment
+        var environment = ProcessInfo.processInfo.environment
+        environment["MCP_SERVER_PORT"] = "\(port)"
+        environment["PYTHONPATH"] = scriptPath.deletingLastPathComponent().path
+        process.environment = environment
+        
+        // Setup pipes for output
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+        
+        // Log server output
+        outputPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty, let output = String(data: data, encoding: .utf8) {
+                self.logger.info("📊 \(script): \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+            }
+        }
+        
+        errorPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty, let error = String(data: data, encoding: .utf8) {
+                self.logger.error("⚠️ \(script): \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
+            }
+        }
+        
+        return process
+    }
+    
+    private func waitForServerReady(_ type: ServerType, timeout: TimeInterval = 10.0) async throws {
+        let startTime = Date()
+        
+        while Date().timeIntervalSince(startTime) < timeout {
+            if await checkServerHealth(type) {
+                return
+            }
+            
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        }
+        
+        throw MCPLauncherError.serverStartupTimeout(type.displayName)
+    }
+    
+    private func checkServerHealth(_ type: ServerType) async -> Bool {
+        let url = URL(string: "http://127.0.0.1:\(type.port)/health")!
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(from: url)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+        } catch {
+            return false
+        }
+    }
+    
+    private func updateLaunchStatus() {
+        let activeServers = launchedServers.values.filter { $0.process.isRunning }.count
+        
+        if activeServers > 0 {
+            launchStatus = .running(activeServers: activeServers)
+        } else {
+            launchStatus = .idle
+        }
+    }
+    
+    private func setupCleanupHandler() {
+        // Cleanup servers when app terminates
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            self.stopAllServers()
+        }
+    }
+}
+
+// MARK: - Supporting Types
+
+struct ServerHealthStatus {
+    let type: ServerType
+    let isRunning: Bool
+    let isHealthy: Bool
+    let uptime: TimeInterval
+    let port: Int
+    let lastHealthCheck: Date?
+    
+    var statusDescription: String {
+        if isRunning && isHealthy {
+            return "✅ Healthy (\(formattedUptime))"
+        } else if isRunning {
+            return "⚠️ Running but unhealthy"
+        } else {
+            return "❌ Stopped"
+        }
+    }
+    
+    private var formattedUptime: String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: uptime) ?? "0s"
+    }
+}
+
+enum MCPLauncherError: LocalizedError {
+    case serverAlreadyRunning(String)
+    case launchFailed(String, String)
+    case scriptNotFound(String)
+    case serverStartupTimeout(String)
+    case unsupportedServerType(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .serverAlreadyRunning(let server):
+            return "Server \(server) is already running"
+        case .launchFailed(let server, let reason):
+            return "Failed to launch \(server): \(reason)"
+        case .scriptNotFound(let path):
+            return "Server script not found: \(path)"
+        case .serverStartupTimeout(let server):
+            return "\(server) failed to start within timeout"
+        case .unsupportedServerType(let type):
+            return "Unsupported server type: \(type)"
+        }
+    }
+}

@@ -38,6 +38,10 @@ struct TransactionListView: View {
         }
     }
     
+    private var autoCategorizedCount: Int {
+        filteredTransactions.filter { $0.wasAutoCategorized == true }.count
+    }
+    
     private var filteredTransactions: [Transaction] {
         var filtered = dataManager.transactions
         
@@ -157,6 +161,16 @@ struct TransactionListView: View {
             .background(Color(NSColor.controlBackgroundColor))
             
             Divider()
+            
+            // Auto-categorization stats banner
+            if !filteredTransactions.isEmpty {
+                AutoCategorizationStatsBanner(
+                    autoCategorizedCount: autoCategorizedCount,
+                    totalCount: filteredTransactions.count
+                )
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
             
             // Transaction List
             if filteredTransactions.isEmpty {
@@ -436,18 +450,8 @@ struct DistributedTransactionRowView: View {
                 }
                 
                 // Auto-categorization indicator
-                if let confidence = transaction.confidence, confidence > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "sparkles")
-                            .font(.caption2)
-                        Text("AUTO")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                        Text("\(Int(confidence * 100))%")
-                            .font(.caption2)
-                    }
-                    .foregroundColor(.secondary)
-                }
+                // Enhanced auto-categorization indicator
+                AutoCategoryIndicator(transaction: transaction)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -495,6 +499,7 @@ struct DistributedTransactionRowView: View {
             alignment: .bottom
         )
         .contentShape(Rectangle())
+        .autoCategorizedStyle(transaction)
     }
     
     // MARK: - Computed Properties
@@ -928,7 +933,7 @@ struct TransactionDetailView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Transaction Details
                     VStack(alignment: .leading, spacing: 12) {
-                        DetailRow(label: "Date", value: displayData.formattedDate)
+                        TransactionDetailRow(label: "Date", value: displayData.formattedDate)
                         
                         // Interactive Category Row
                         InteractiveCategoryRow(
@@ -936,8 +941,8 @@ struct TransactionDetailView: View {
                             onEditCategory: { showingCategoryPicker = true }
                         )
                         
-                        DetailRow(label: "Type", value: displayData.transactionType)
-                        DetailRow(label: "Payment Method", value: paymentMethod)
+                        TransactionDetailRow(label: "Type", value: displayData.transactionType)
+                        TransactionDetailRow(label: "Payment Method", value: paymentMethod)
                         
                         // Foreign Currency Information
                         if let forexInfo = displayData.forexInfo {
@@ -951,21 +956,21 @@ struct TransactionDetailView: View {
                                 .textCase(.uppercase)
                                 .padding(.bottom, 4)
                             
-                            DetailRow(label: "Original Amount", value: forexInfo.originalAmount)
-                            DetailRow(label: "Exchange Rate", value: forexInfo.exchangeRate)
-                            DetailRow(label: "USD Amount", value: transaction.formattedAmount)
-                            DetailRow(label: "Conversion", value: forexInfo.conversion)
+                            TransactionDetailRow(label: "Original Amount", value: forexInfo.originalAmount)
+                            TransactionDetailRow(label: "Exchange Rate", value: forexInfo.exchangeRate)
+                            TransactionDetailRow(label: "USD Amount", value: transaction.formattedAmount)
+                            TransactionDetailRow(label: "Conversion", value: forexInfo.conversion)
                             
                             Divider()
                                 .padding(.vertical, 8)
                         }
                         
                         if let confidence = displayData.confidenceText {
-                            DetailRow(label: "Confidence", value: confidence)
+                            TransactionDetailRow(label: "Confidence", value: confidence)
                         }
                         
                         if let jobId = displayData.shortJobId {
-                            DetailRow(label: "Job ID", value: jobId)
+                            TransactionDetailRow(label: "Job ID", value: jobId)
                         }
                     }
                     
@@ -1071,7 +1076,7 @@ struct TransactionDetailView: View {
     }
 }
 
-struct DetailRow: View {
+struct TransactionDetailRow: View {
     let label: String
     let value: String
     
@@ -1127,20 +1132,8 @@ struct TransactionRowView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    if let confidence = transaction.confidence, confidence > 0 {
-                        HStack(spacing: 2) {
-                            Image(systemName: "sparkles")
-                                .font(.caption2)
-                            Text("AUTO \(Int(confidence * 100))%")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(.blue)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(4)
-                    }
+                    // Enhanced auto-categorization indicator
+                    AutoCategoryIndicator(transaction: transaction)
                 }
             }
             
