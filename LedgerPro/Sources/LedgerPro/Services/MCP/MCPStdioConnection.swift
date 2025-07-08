@@ -64,8 +64,8 @@ class MCPStdioConnection: ObservableObject {
         outputPipe?.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
             guard !data.isEmpty else { return }
-            Task {@MainActor in
-                self?.handleOutputData(data)
+            Task {
+                await self?.handleOutputData(data)
             }
         }
         
@@ -73,8 +73,8 @@ class MCPStdioConnection: ObservableObject {
             let data = handle.availableData
             guard !data.isEmpty else { return }
             if let error = String(data: data, encoding: .utf8) {
-                Task { @MainActor in
-                    self?.logger.error("⚠️ Server error: \(error)")
+                Task {
+                    await self?.logger.error("⚠️ Server error: \(error)")
                 }
             }
         }
