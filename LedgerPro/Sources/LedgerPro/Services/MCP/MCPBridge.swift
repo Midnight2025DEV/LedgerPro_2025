@@ -14,6 +14,70 @@ class MCPBridge: ObservableObject {
     @Published var lastError: MCPRPCError?
     @Published var metrics: BridgeMetrics = BridgeMetrics()
     
+    // MARK: - Public Server Access (for MCPServerLauncher)
+    
+    /// Individual server access for MCPServerLauncher
+    var financialAnalyzer: MCPServer? {
+        return self.servers.values.first { $0.info.name == "Financial Analyzer" }
+    }
+    
+    var openAIService: MCPServer? {
+        return self.servers.values.first { $0.info.name == "OpenAI Service" }
+    }
+    
+    var pdfProcessor: MCPServer? {
+        return self.servers.values.first { $0.info.name == "PDF Processor" }
+    }
+    
+    /// Server configurations for MCPServerLauncher
+    var serverConfigurations: [String: ServerConfiguration] {
+        return [
+            "financial-analyzer": ServerConfiguration(
+                name: "Financial Analyzer",
+                factory: MCPServer.financialAnalyzer,
+                description: "Advanced financial analysis and insights generation"
+            ),
+            "openai-service": ServerConfiguration(
+                name: "OpenAI Service", 
+                factory: MCPServer.openAIService,
+                description: "AI-powered transaction categorization and insights"
+            ),
+            "pdf-processor": ServerConfiguration(
+                name: "PDF Processor",
+                factory: MCPServer.pdfProcessor,
+                description: "Enhanced PDF document processing and data extraction"
+            )
+        ]
+    }
+    
+    /// Get server by type for MCPServerLauncher
+    func getServer(type: ServerType) -> MCPServer? {
+        switch type {
+        case .financialAnalyzer:
+            return financialAnalyzer
+        case .openAIService:
+            return openAIService
+        case .pdfProcessor:
+            return pdfProcessor
+        case .custom:
+            return nil
+        }
+    }
+    
+    /// Check if specific server type is available
+    func isServerAvailable(_ type: ServerType) -> Bool {
+        return getServer(type: type)?.isConnected == true
+    }
+    
+    /// Get all available server types
+    var availableServerTypes: [ServerType] {
+        var types: [ServerType] = []
+        if financialAnalyzer?.isConnected == true { types.append(.financialAnalyzer) }
+        if openAIService?.isConnected == true { types.append(.openAIService) }
+        if pdfProcessor?.isConnected == true { types.append(.pdfProcessor) }
+        return types
+    }
+    
     // MARK: - Private Properties
     
     private let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "MCPBridge")
@@ -70,7 +134,7 @@ class MCPBridge: ObservableObject {
     
     init() {
         setupDefaultServers()
-        logger.info("MCPBridge initialized with \(self.servers.count) configured servers")
+        logger.info("MCPBridge initialized with \(self.self.servers.count) configured servers")
     }
     
     deinit {
@@ -87,18 +151,18 @@ class MCPBridge: ObservableObject {
         ]
         
         for server in defaultServers {
-            servers[server.id] = server
+            self.servers[server.id] = server
         }
     }
     
     func registerServer(_ server: MCPServer) {
-        servers[server.id] = server
+        self.servers[server.id] = server
         logger.info("Registered MCP server: \(server.info.name)")
         updateConnectionStatus()
     }
     
     func unregisterServer(id: String) async {
-        if let server = servers[id] {
+        if let server = self.servers[id] {
             await server.disconnect()
             servers.removeValue(forKey: id)
             logger.info("Unregistered MCP server: \(server.info.name)")
@@ -109,11 +173,11 @@ class MCPBridge: ObservableObject {
     // MARK: - Connection Management
     
     func connectAll() async {
-        connectionStatus = .connecting
+        self.connectionStatus = .connecting
         logger.info("Connecting to all MCP servers...")
         
         await withTaskGroup(of: Void.self) { group in
-            for server in servers.values {
+            for server in self.servers.values {
                 group.addTask {
                     do {
                         try await server.connect()
@@ -130,7 +194,12 @@ class MCPBridge: ObservableObject {
         }
         
         updateConnectionStatus()
-        startHealthMonitoring()
+        
+        // Wait before starting health monitoring to ensure servers are fully initialized
+        Task {
+            try? await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds delay
+            startHealthMonitoring()
+        }
     }
     
     func disconnect() async {
@@ -138,41 +207,41 @@ class MCPBridge: ObservableObject {
         healthCheckTask = nil
         
         await withTaskGroup(of: Void.self) { group in
-            for server in servers.values {
+            for server in self.servers.values {
                 group.addTask {
                     await server.disconnect()
                 }
             }
         }
         
-        isConnected = false
-        connectionStatus = .disconnected
+        self.isConnected = false
+        self.connectionStatus = .disconnected
         metrics.activeConnections = 0
         
         logger.info("Disconnected from all MCP servers")
     }
     
     private func updateConnectionStatus() {
-        let connectedServers = servers.values.filter { $0.isConnected }
-        let totalServers = servers.count
+        let connectedServers = self.servers.values.filter { $0.isConnected }
+        let totalServers = self.servers.count
         let activeCount = connectedServers.count
         
         metrics.activeConnections = activeCount
-        isConnected = activeCount > 0
+        self.isConnected = activeCount > 0
         
         if activeCount == 0 {
-            connectionStatus = .disconnected
+            self.connectionStatus = .disconnected
         } else if activeCount == totalServers {
-            connectionStatus = .connected(activeServers: activeCount, totalServers: totalServers)
+            self.connectionStatus = .connected(activeServers: activeCount, totalServers: totalServers)
         } else {
-            connectionStatus = .degraded(activeServers: activeCount, totalServers: totalServers)
+            self.connectionStatus = .degraded(activeServers: activeCount, totalServers: totalServers)
         }
     }
     
     // MARK: - Request Handling
     
     func sendRequest(to serverId: String, method: MCPMethod, params: [String: AnyCodable]? = nil) async throws -> MCPResponse {
-        guard let server = servers[serverId] else {
+        guard let server = self.servers[serverId] else {
             throw MCPRPCError(code: -32601, message: "Server not available: \(serverId)")
         }
         
@@ -197,7 +266,7 @@ class MCPBridge: ObservableObject {
             } else {
                 metrics.failedRequests += 1
                 if let error = response.error {
-                    lastError = error
+                    self.lastError = error
                 }
             }
             
@@ -207,7 +276,7 @@ class MCPBridge: ObservableObject {
         } catch {
             metrics.failedRequests += 1
             let rpcError = MCPRPCError(code: -32603, message: "Internal error: \(error.localizedDescription)")
-            lastError = rpcError
+            self.lastError = rpcError
             logger.error("Request failed: \(method.rawValue) -> \(serverId): \(error)")
             throw rpcError
         }
@@ -271,7 +340,7 @@ class MCPBridge: ObservableObject {
     }
     
     func categorizeTransactions(_ transactions: [Transaction]) async throws -> [Transaction] {
-        guard let openAIServer = servers.values.first(where: { $0.info.name.contains("OpenAI") }),
+        guard let openAIServer = self.servers.values.first(where: { $0.info.name.contains("OpenAI") }),
               openAIServer.isConnected else {
             throw MCPRPCError(code: -32601, message: "Server not available: OpenAI Service")
         }
@@ -289,7 +358,7 @@ class MCPBridge: ObservableObject {
     }
     
     func processDocument(_ fileURL: URL) async throws -> DocumentProcessingResult {
-        guard let pdfServer = servers.values.first(where: { $0.info.name.contains("PDF") }),
+        guard let pdfServer = self.servers.values.first(where: { $0.info.name.contains("PDF") }),
               pdfServer.isConnected else {
             throw MCPRPCError(code: -32601, message: "Server not available: PDF Processor")
         }
@@ -321,10 +390,10 @@ class MCPBridge: ObservableObject {
     }
     
     private func performHealthChecks() async {
-        let previouslyConnected = servers.values.filter { $0.isConnected }.count
+        let previouslyConnected = self.servers.values.filter { $0.isConnected }.count
         
         await withTaskGroup(of: Void.self) { group in
-            for server in servers.values {
+            for server in self.servers.values {
                 group.addTask {
                     do {
                         _ = try await server.healthCheck()
@@ -337,11 +406,11 @@ class MCPBridge: ObservableObject {
             }
         }
         
-        let currentlyConnected = servers.values.filter { $0.isConnected }.count
+        let currentlyConnected = self.servers.values.filter { $0.isConnected }.count
         
         if currentlyConnected != previouslyConnected {
             updateConnectionStatus()
-            logger.info("Connection status changed: \(currentlyConnected)/\(self.servers.count) servers connected")
+            logger.info("Connection status changed: \(currentlyConnected)/\(self.self.servers.count) servers connected")
         }
         
         metrics.updateUptime()
@@ -349,45 +418,35 @@ class MCPBridge: ObservableObject {
     
     // MARK: - Server Discovery
     
-    func discoverServers(portRange: ClosedRange<Int> = 8000...8010) async {
-        logger.info("Discovering MCP servers on ports \(portRange)...")
+    /// Initialize known MCP servers (stdio-based)
+    func initializeServers() async {
+        logger.info("🔍 Initializing MCP servers...")
         
-        await withTaskGroup(of: MCPServerInfo?.self) { group in
-            for port in portRange {
-                group.addTask {
-                    await self.tryDiscoverServer(port: port)
-                }
-            }
-            
-            for await serverInfo in group {
-                if let info = serverInfo {
-                    let connection = HTTPConnection(host: "127.0.0.1", port: Int(info.homepage?.components(separatedBy: ":").last ?? "8000") ?? 8000)
-                    let capabilities = MCPCapabilities(methods: [], notifications: [], features: [:])
-                    let server = MCPServer(info: info, connection: connection, capabilities: capabilities)
-                    
-                    await MainActor.run {
-                        self.registerServer(server)
-                        self.logger.info("Discovered server: \(info.name)")
-                    }
-                }
-            }
-        }
-    }
-    
-    private func tryDiscoverServer(port: Int) async -> MCPServerInfo? {
-        do {
-            let url = URL(string: "http://127.0.0.1:\(port)/info")!
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            if let httpResponse = response as? HTTPURLResponse,
-               httpResponse.statusCode == 200 {
-                return try JSONDecoder().decode(MCPServerInfo.self, from: data)
-            }
-        } catch {
-            // Server not found on this port
+        // Check if servers are already initialized
+        if !self.servers.isEmpty {
+            logger.info("⚠️ MCP servers already initialized, skipping...")
+            return
         }
         
-        return nil
+        // Clear any existing servers
+        self.servers.removeAll()
+        
+        // Create servers using factory methods
+        // Financial Analyzer
+        let financialAnalyzer = MCPServer.financialAnalyzer()
+        self.servers[financialAnalyzer.id] = financialAnalyzer
+        
+        // OpenAI Service
+        let openAIService = MCPServer.openAIService()
+        self.servers[openAIService.id] = openAIService
+        
+        // PDF Processor
+        let pdfProcessor = MCPServer.pdfProcessor()
+        self.servers[pdfProcessor.id] = pdfProcessor
+        
+        logger.info("✅ Initialized \(self.servers.count) MCP servers")
+        
+        updateConnectionStatus()
     }
     
     // MARK: - Metrics & Utilities
@@ -411,73 +470,99 @@ class MCPBridge: ObservableObject {
             )
         }
     }
-}
-
-// MARK: - Supporting Types
-
-struct MCPAnalysisResult: Codable {
-    let type: String
-    let title: String
-    let description: String
-    let confidence: Double
-    let data: [String: AnyCodable]
-    let timestamp: Date
-    var serverId: String?
     
-    init(type: String, title: String, description: String, confidence: Double, data: [String: AnyCodable] = [:], timestamp: Date = Date()) {
-        self.type = type
-        self.title = title
-        self.description = description
-        self.confidence = confidence
-        self.data = data
-        self.timestamp = timestamp
-    }
-}
-
-struct DocumentProcessingResult: Codable {
-    let transactions: [Transaction]
-    let metadata: ProcessingMetadata
-    let extractedTables: [[String: String]]?
-    let ocrText: String?
-    let confidence: Double
+    // MARK: - MCPServerLauncher Convenience Methods
     
-    struct ProcessingMetadata: Codable {
-        let filename: String
-        let processedAt: Date
-        let transactionCount: Int
-        let processingTime: TimeInterval
-        let method: String
-    }
-}
-
-struct ServerStatus {
-    let isConnected: Bool
-    let lastHealthCheck: Date?
-    let metrics: ServerStatusMetrics
-    let connectionState: String
-}
-
-struct ServerStatusMetrics {
-    let requestCount: Int
-    let successRate: Double
-    let averageResponseTime: TimeInterval
-}
-
-// MARK: - Extensions
-
-extension MCPServer.ConnectionState {
-    var description: String {
-        switch self {
-        case .disconnected:
-            return "Disconnected"
-        case .connecting:
-            return "Connecting"
-        case .connected:
-            return "Connected"
-        case .reconnecting:
-            return "Reconnecting"
-        case .error(let error):
-            return "Error: \(error.message)"
+    /// Connect to existing server process launched by MCPServerLauncher
+    func connectToExistingServer(type: ServerType) async throws {
+        let serverId = type.rawValue
+        
+        // Check if server already exists and is connected
+        if let existingServer = self.servers[serverId] {
+            if existingServer.isConnected {
+                logger.info("✅ Server \(serverId) already connected in MCPBridge")
+                return
+            } else {
+                logger.info("🔗 Connecting to existing server \(serverId)...")
+                try await existingServer.connect()
+                return
+            }
         }
+        
+        // Server doesn't exist, we should not create new processes here
+        logger.warning("⚠️ Server \(serverId) not found in MCPBridge. Use MCPServerLauncher to start the process first.")
+    }
+    
+    /// Add a new server configuration for MCPServerLauncher (creates new process)
+    func addServer(type: ServerType, customId: String? = nil) async throws {
+        let serverId = customId ?? type.rawValue
+        
+        // Check if server already exists - use existing one instead of creating new
+        if let existingServer = self.servers[serverId] {
+            logger.info("⚠️ Server \(serverId) already exists in MCPBridge, connecting existing server...")
+            
+            // Only connect if not already connected
+            if !existingServer.isConnected {
+                try await existingServer.connect()
+            }
+            return
+        }
+        
+        let server: MCPServer
+        switch type {
+        case .financialAnalyzer:
+            server = MCPServer.financialAnalyzer()
+        case .openAIService:
+            server = MCPServer.openAIService()
+        case .pdfProcessor:
+            server = MCPServer.pdfProcessor()
+        case .custom:
+            throw MCPRPCError(code: -32600, message: "Custom server type requires custom configuration")
+        }
+        
+        registerServer(server)
+        try await server.connect()
+    }
+    
+    /// Remove a server by type for MCPServerLauncher
+    func removeServer(type: ServerType) async {
+        if let server = getServer(type: type) {
+            await unregisterServer(id: server.id)
+        }
+    }
+    
+    /// Get detailed server status for MCPServerLauncher
+    func getServerStatus(type: ServerType) -> ServerStatusInfo? {
+        guard let server = getServer(type: type) else { return nil }
+        
+        return ServerStatusInfo(
+            type: type,
+            isConnected: server.isConnected,
+            connectionState: server.connectionState.description,
+            lastHealthCheck: server.lastHealthCheck,
+            metrics: ServerStatusMetrics(
+                requestCount: server.metrics.requestCount,
+                successRate: server.metrics.successRate,
+                averageResponseTime: server.metrics.averageResponseTime
+            ),
+            capabilities: server.capabilities.methods.map { $0.rawValue }
+        )
+    }
+    
+    /// Get all server statuses for MCPServerLauncher
+    func getAllServerStatuses() -> [ServerStatusInfo] {
+        return ServerType.allCases.compactMap { type in
+            getServerStatus(type: type)
+        }
+    }
+    
+    /// Check if all required servers are available
+    func areRequiredServersAvailable(_ types: [ServerType]) -> Bool {
+        return types.allSatisfy { isServerAvailable($0) }
+    }
+    
+    /// Get server capabilities for MCPServerLauncher
+    func getServerCapabilities(type: ServerType) -> [String]? {
+        return getServer(type: type)?.capabilities.methods.map { $0.rawValue }
     }
 }

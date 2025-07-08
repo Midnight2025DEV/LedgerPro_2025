@@ -6,6 +6,11 @@ struct LedgerProApp: App {
     @StateObject private var apiService = APIService()
     @StateObject private var categoryService = CategoryService.shared
     
+    init() {
+        // Setup MCP servers if needed
+        MCPServerLauncher.setupMCPServersIfNeeded()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

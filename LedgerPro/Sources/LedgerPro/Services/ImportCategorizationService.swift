@@ -29,7 +29,9 @@ class ImportCategorizationService {
                     originalAmount: transaction.originalAmount,
                     originalCurrency: transaction.originalCurrency,
                     exchangeRate: transaction.exchangeRate,
-                    hasForex: transaction.hasForex
+                    hasForex: transaction.hasForex,
+                    wasAutoCategorized: true,
+                    categorizationMethod: "merchant_rule"
                 )
                 
                 categorized.append((updatedTransaction, category, confidence))

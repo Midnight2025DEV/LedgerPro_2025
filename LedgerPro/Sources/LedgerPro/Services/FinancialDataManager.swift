@@ -480,6 +480,15 @@ class FinancialDataManager: ObservableObject {
         // Update the transaction in the array
         transactions[index] = updatedTransaction
         
+        // NEW: Learn from this categorization
+        Task {
+            await learnFromCategorization(
+                transaction: updatedTransaction,
+                oldCategory: oldCategory,
+                newCategory: newCategory
+            )
+        }
+        
         // Update summary and save
         updateSummary()
         saveData()
@@ -490,6 +499,145 @@ class FinancialDataManager: ObservableObject {
     /// Update the category of a transaction using Category object (for new category system)
     func updateTransactionCategory(transactionId: String, newCategory: Category) {
         updateTransactionCategory(transactionId: transactionId, newCategory: newCategory.name)
+    }
+    
+    // MARK: - Learning Integration
+    
+    /// Learn from user categorization to improve future suggestions
+    @MainActor
+    private func learnFromCategorization(transaction: Transaction, oldCategory: String, newCategory: String) async {
+        // Get the merchant name from the transaction
+        let merchantName = extractMerchantName(from: transaction.description)
+        
+        // Get CategoryService and RuleStorageService instances
+        let categoryService = CategoryService.shared
+        let ruleStorage = RuleStorageService.shared
+        
+        // Check if there was an existing rule that suggested the old category
+        let (suggestedCategory, _) = categoryService.suggestCategory(for: transaction)
+        
+        if let suggestedCategory = suggestedCategory {
+            // There was a suggestion
+            if suggestedCategory.name == newCategory {
+                // User confirmed the suggestion - increase confidence
+                if var matchingRule = findMatchingRule(for: transaction) {
+                    matchingRule.recordMatch()
+                    ruleStorage.updateRule(matchingRule)
+                    print("✅ Rule confidence increased for: \(merchantName)")
+                }
+            } else if suggestedCategory.name == oldCategory {
+                // User corrected the suggestion
+                if var matchingRule = findMatchingRule(for: transaction) {
+                    matchingRule.recordCorrection()
+                    ruleStorage.updateRule(matchingRule)
+                    print("📝 Rule confidence decreased for: \(merchantName)")
+                }
+            }
+        }
+        
+        // Create a new rule if none exists for this merchant and it's a meaningful pattern
+        if !hasRuleForMerchant(merchantName) && shouldCreateRule(for: merchantName, transaction: transaction) {
+            await createMerchantRule(
+                merchantName: merchantName,
+                category: newCategory,
+                transaction: transaction
+            )
+        }
+    }
+    
+    /// Helper to extract clean merchant name
+    private func extractMerchantName(from description: String) -> String {
+        // Use similar logic to Transaction's displayMerchantName
+        if description.contains("UBER") {
+            return "UBER"
+        } else if description.contains("WAL-MART") || description.contains("WALMART") {
+            return "WALMART"
+        } else if description.contains("CHEVRON") {
+            return "CHEVRON"
+        } else if description.contains("NETFLIX") {
+            return "NETFLIX"
+        } else if description.contains("AMAZON") {
+            return "AMAZON"
+        } else if description.contains("STARBUCKS") {
+            return "STARBUCKS"
+        }
+        
+        // For other merchants, take first 1-3 meaningful words
+        let words = description.components(separatedBy: .whitespaces)
+            .filter { !$0.isEmpty && $0.count > 2 }
+            .prefix(2)
+        
+        return words.joined(separator: " ").uppercased()
+    }
+    
+    /// Find a rule that matches this transaction
+    private func findMatchingRule(for transaction: Transaction) -> CategoryRule? {
+        let allRules = RuleStorageService.shared.allRules
+        
+        return allRules.first { rule in
+            rule.matches(transaction: transaction)
+        }
+    }
+    
+    /// Check if we already have a rule for this merchant
+    private func hasRuleForMerchant(_ merchantName: String) -> Bool {
+        let allRules = RuleStorageService.shared.allRules
+        
+        return allRules.contains { rule in
+            if let exact = rule.merchantExact {
+                return exact.localizedCaseInsensitiveCompare(merchantName) == .orderedSame
+            }
+            if let contains = rule.merchantContains {
+                return merchantName.localizedCaseInsensitiveContains(contains)
+            }
+            return false
+        }
+    }
+    
+    /// Determine if we should create a rule for this merchant
+    private func shouldCreateRule(for merchantName: String, transaction: Transaction) -> Bool {
+        // Don't create rules for very generic or short merchant names
+        if merchantName.count < 3 || merchantName.contains("UNKNOWN") {
+            return false
+        }
+        
+        // Don't create rules for one-time transactions (transfers, payments, etc.)
+        let description = transaction.description.lowercased()
+        let skipPatterns = ["payment", "transfer", "xfer", "pymt", "deposit", "withdrawal", "atm"]
+        
+        for pattern in skipPatterns {
+            if description.contains(pattern) {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
+    /// Create a merchant-specific rule from user categorization
+    private func createMerchantRule(merchantName: String, category: String, transaction: Transaction) async {
+        // Find the category object
+        guard let categoryObj = CategoryService.shared.categories.first(where: { $0.name == category }) else {
+            print("❌ Category not found: \(category)")
+            return
+        }
+        
+        // Create a merchant-based rule
+        var newRule = CategoryRule(
+            categoryId: categoryObj.id,
+            ruleName: "Auto: \(merchantName)"
+        )
+        
+        // Set rule properties
+        newRule.merchantContains = merchantName
+        newRule.amountSign = transaction.amount < 0 ? .negative : .positive
+        newRule.priority = 75 // User-generated rules get medium priority
+        newRule.confidence = 0.75 // Start with reasonable confidence
+        newRule.isActive = true
+        
+        // Save the rule
+        RuleStorageService.shared.saveRule(newRule)
+        print("🎯 Created new merchant rule: \(merchantName) → \(category)")
     }
 }
 

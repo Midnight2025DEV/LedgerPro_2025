@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import AppKit
 
 struct FileUploadView: View {
     @EnvironmentObject private var apiService: APIService
@@ -71,7 +72,6 @@ struct FileUploadView: View {
             }
         }
         .padding(32)
-        .frame(width: 700, height: 500)
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             print("🎯 STEP 2: FileUploadView appeared")
@@ -81,6 +81,24 @@ struct FileUploadView: View {
                 ImportSummaryView(result: result) {
                     showingImportSummary = false
                     dismiss()
+                }
+                // 1️⃣ Tell SwiftUI "my content area is 1200×900"
+                .frame(minWidth: 1200, idealWidth: 1200, maxWidth: 1200,
+                       minHeight: 900, idealHeight: 900, maxHeight: 900)
+                .onAppear {
+                    DispatchQueue.main.async {
+                        print("🔍 DEBUG: All windows count: \(NSApplication.shared.windows.count)")
+                        for (index, window) in NSApplication.shared.windows.enumerated() {
+                            print("🔍 Window \(index): \(window.title) - Size: \(window.frame)")
+                        }
+                        
+                        if let sheet = NSApplication.shared.windows.last {
+                            print("🔍 Sheet BEFORE: \(sheet.frame)")
+                            sheet.setContentSize(NSSize(width: 1200, height: 900))
+                            sheet.styleMask.remove(.resizable)
+                            print("🔍 Sheet AFTER: \(sheet.frame)")
+                        }
+                    }
                 }
             }
         }
@@ -129,7 +147,7 @@ struct FileUploadView: View {
                         .foregroundColor(.secondary)
                 }
             )
-            .frame(height: 200)
+            .frame(minHeight: 200)
             .onTapGesture {
                 selectFile()
             }
@@ -179,29 +197,78 @@ struct FileUploadView: View {
     }
     
     private var processingView: some View {
-        VStack(spacing: 20) {
-            ProgressView(value: processingProgress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .scaleEffect(1.2)
+        VStack(spacing: 24) {
+            // Progress Bar
+            VStack(spacing: 8) {
+                ProgressView(value: processingProgress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .scaleEffect(1.2)
+                
+                Text("\(Int(processingProgress * 100))% Complete")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
             
+            // Current Step
             VStack(spacing: 8) {
                 Text("Processing...")
                     .font(.headline)
                 
                 Text(processingStatus)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
                     .multilineTextAlignment(.center)
+                    .fontWeight(.medium)
+            }
+            
+            // Processing Steps Indicator
+            HStack(spacing: 12) {
+                ProcessingStepView(title: "Upload", isCompleted: processingProgress > 0.1, isCurrent: processingProgress <= 0.1)
+                ProcessingStepView(title: "Extract", isCompleted: processingProgress > 0.3, isCurrent: processingProgress > 0.1 && processingProgress <= 0.3)
+                ProcessingStepView(title: "Analyze", isCompleted: processingProgress > 0.7, isCurrent: processingProgress > 0.3 && processingProgress <= 0.7)
+                ProcessingStepView(title: "Categorize", isCompleted: processingProgress >= 1.0, isCurrent: processingProgress > 0.7)
             }
             
             if let jobId = currentJobId {
                 Text("Job ID: \(jobId)")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .monospaced()
             }
         }
         .padding()
+    }
+    
+    private struct ProcessingStepView: View {
+        let title: String
+        let isCompleted: Bool
+        let isCurrent: Bool
+        
+        var body: some View {
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(isCompleted ? Color.green : (isCurrent ? Color.blue : Color.gray.opacity(0.3)))
+                        .frame(width: 24, height: 24)
+                    
+                    if isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .fontWeight(.bold)
+                    } else if isCurrent {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                
+                Text(title)
+                    .font(.caption2)
+                    .foregroundColor(isCompleted ? .green : (isCurrent ? .blue : .secondary))
+                    .fontWeight(isCurrent ? .medium : .regular)
+            }
+        }
     }
     
     private func selectFile() {
@@ -476,7 +543,8 @@ struct ErrorDisplayView: View {
                 }
             }
             .padding(32)
-            .frame(width: 600, height: 400)
+            .frame(minWidth: 800, maxWidth: .infinity,
+                   minHeight: 600, maxHeight: .infinity)
             .navigationTitle("Error Details")
         }
     }
@@ -486,102 +554,354 @@ struct ImportSummaryView: View {
     let result: ImportResult
     let onDismiss: () -> Void
     
+    @State private var showingCategorizedDetails = false
+    @State private var showingUncategorizedDetails = false
+    
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 48))
+        VStack {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 24) {
+                    // Header
+                    headerSection
+                    
+                    // Stats grid - simple layout without geometry calculations
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: 20) {
+                        statBoxes
+                    }
+                    
+                    // Progress section
+                    progressSection
+                    
+                    // Transaction details
+                    transactionDetailsSection
+                    
+                    Spacer(minLength: 20)
+                    
+                    // Action buttons
+                    actionButtonsSection
+                }
+                .frame(maxWidth: 1100) // FIXED WIDTH - ChatGPT's key fix
+                .padding(32)
+            }
+            .frame(maxWidth: .infinity)
+            .clipped()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(NSColor.windowBackgroundColor))
+        .navigationTitle("Import Summary")
+    }
+    
+    private var headerSection: some View {
+        VStack(spacing: 12) {
+            Image(systemName: result.totalTransactions > 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .font(.system(size: 48))
+                .foregroundColor(result.totalTransactions > 0 ? .green : .orange)
+            
+            Text(result.totalTransactions > 0 ? "Import Complete!" : "Import Completed with Issues")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(result.totalTransactions > 0 ? 
+                 "Your transactions have been imported and auto-categorized" :
+                 "No transactions were found in the uploaded file")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+    
+    
+    @ViewBuilder
+    private var statBoxes: some View {
+        StatBox(
+            title: "Total",
+            value: "\(result.totalTransactions)",
+            color: .blue,
+            icon: "list.bullet"
+        )
+        
+        StatBox(
+            title: "Categorized",
+            value: "\(result.categorizedCount)",
+            subtitle: "\(Int(result.successRate * 100))%",
+            color: .green,
+            icon: "checkmark.circle"
+        )
+        
+        StatBox(
+            title: "High Confidence",
+            value: "\(result.highConfidenceCount)",
+            color: .purple,
+            icon: "star.fill"
+        )
+        
+        StatBox(
+            title: "Need Review",
+            value: "\(result.uncategorizedCount)",
+            color: .orange,
+            icon: "exclamationmark.triangle"
+        )
+    }
+    
+    private var progressSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Categorization Rate")
+                    .font(.headline)
+                Spacer()
+                Text("\(Int(result.successRate * 100))%")
+                    .font(.headline)
+                    .foregroundColor(result.successRate > 0.8 ? .green : result.successRate > 0.6 ? .orange : .red)
+            }
+            
+            ProgressView(value: result.successRate)
+                .progressViewStyle(LinearProgressViewStyle(tint: result.successRate > 0.8 ? .green : result.successRate > 0.6 ? .orange : .red))
+                .scaleEffect(1.2)
+            
+            // Success rate insights
+            Text(successRateInsight)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .italic()
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(12)
+    }
+    
+    private var insightsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Quick Insights")
+                .font(.headline)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                if result.highConfidenceCount > 0 {
+                    Label("\(result.highConfidenceCount) transactions categorized with high confidence", systemImage: "star.fill")
+                        .font(.caption)
+                        .foregroundColor(.purple)
+                }
+                
+                if result.uncategorizedCount > 0 {
+                    Label("\(result.uncategorizedCount) transactions need manual review", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+                
+                if result.categorizedCount == result.totalTransactions && result.totalTransactions > 0 {
+                    Label("Perfect! All transactions were categorized", systemImage: "checkmark.seal.fill")
+                        .font(.caption)
                         .foregroundColor(.green)
+                }
+            }
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(12)
+    }
+    
+    private var transactionDetailsSection: some View {
+        VStack(spacing: 16) {
+            if result.totalTransactions == 0 {
+                // Empty state - compatible with macOS 13.0+
+                VStack(spacing: 16) {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
                     
-                    Text("Import Complete!")
+                    Text("No Transactions Found")
                         .font(.title2)
-                        .fontWeight(.bold)
+                        .fontWeight(.semibold)
                     
-                    Text("Your transactions have been imported and auto-categorized")
+                    Text("The uploaded file didn't contain any recognizable transactions. Try uploading a different file or check the file format.")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                }
-                
-                // Summary Stats
-                VStack(spacing: 16) {
-                    HStack(spacing: 20) {
-                        StatBox(
-                            title: "Total",
-                            value: "\(result.totalTransactions)",
-                            color: .blue,
-                            icon: "list.bullet"
-                        )
-                        
-                        StatBox(
-                            title: "Categorized",
-                            value: "\(result.categorizedCount)",
-                            subtitle: "\(Int(result.successRate * 100))%",
-                            color: .green,
-                            icon: "checkmark.circle"
-                        )
-                        
-                        StatBox(
-                            title: "High Confidence",
-                            value: "\(result.highConfidenceCount)",
-                            color: .purple,
-                            icon: "star.fill"
-                        )
-                        
-                        StatBox(
-                            title: "Need Review",
-                            value: "\(result.uncategorizedCount)",
-                            color: .orange,
-                            icon: "exclamationmark.triangle"
-                        )
-                    }
+                        .padding(.horizontal)
                     
-                    // Progress Bar
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Categorization Rate")
-                                .font(.headline)
-                            Spacer()
-                            Text("\(Int(result.successRate * 100))%")
-                                .font(.headline)
-                                .foregroundColor(.green)
+                    Button("Upload Different File") {
+                        onDismiss()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .frame(minHeight: 200)
+                .padding()
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(12)
+            } else {
+                // Categorized transactions
+                if !result.categorizedTransactions.isEmpty {
+                    DisclosureGroup("Categorized Transactions (\(result.categorizedCount))", isExpanded: $showingCategorizedDetails) {
+                        LazyVStack(spacing: 8) {
+                            ForEach(Array(result.categorizedTransactions.prefix(10).enumerated()), id: \.offset) { index, item in
+                                let (transaction, category, confidence) = item
+                                ImportTransactionRowView(transaction: transaction, category: category, confidence: confidence)
+                            }
+                            
+                            if result.categorizedTransactions.count > 10 {
+                                Text("... and \(result.categorizedTransactions.count - 10) more")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 8)
+                            }
                         }
-                        
-                        ProgressView(value: result.successRate)
-                            .progressViewStyle(LinearProgressViewStyle(tint: .green))
-                            .scaleEffect(1.2)
+                        .padding(.top, 8)
                     }
                     .padding()
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(12)
                 }
                 
-                Spacer()
-                
-                // Action Buttons
-                VStack(spacing: 12) {
-                    Button("Continue") {
-                        onDismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    
-                    if result.uncategorizedCount > 0 {
-                        Button("Review Uncategorized (\(result.uncategorizedCount))") {
-                            // Future enhancement: Navigate to transaction list filtered by uncategorized
-                            // For now, returns to main view where user can manually review
-                            onDismiss()
+                // Uncategorized transactions
+                if !result.uncategorizedTransactions.isEmpty {
+                    DisclosureGroup("Uncategorized Transactions (\(result.uncategorizedCount))", isExpanded: $showingUncategorizedDetails) {
+                        LazyVStack(spacing: 8) {
+                            ForEach(Array(result.uncategorizedTransactions.prefix(10).enumerated()), id: \.offset) { index, transaction in
+                                ImportTransactionRowView(transaction: transaction, category: nil, confidence: nil)
+                            }
+                            
+                            if result.uncategorizedTransactions.count > 10 {
+                                Text("... and \(result.uncategorizedTransactions.count - 10) more")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 8)
+                            }
                         }
-                        .buttonStyle(.bordered)
+                        .padding(.top, 8)
+                    }
+                    .padding()
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(12)
+                }
+            }
+        }
+    }
+    
+    private var actionButtonsSection: some View {
+        VStack(spacing: 12) {
+            Button("Continue to Dashboard") {
+                onDismiss()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            
+            if result.uncategorizedCount > 0 {
+                Button("Review Uncategorized (\(result.uncategorizedCount))") {
+                    onDismiss()
+                    
+                    // Navigate to Transactions tab with uncategorized filter
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        // Find ContentView and update its state
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("NavigateToUncategorized"),
+                            object: nil,
+                            userInfo: ["count": result.uncategorizedCount]
+                        )
+                    }
+                }
+                .buttonStyle(.bordered)
+            }
+            
+            if result.totalTransactions == 0 {
+                Button("Try Different File") {
+                    onDismiss()
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+    
+    
+    private var successRateInsight: String {
+        switch result.successRate {
+        case 0.9...1.0:
+            return "Excellent! Most transactions were automatically categorized."
+        case 0.7..<0.9:
+            return "Good categorization rate. A few transactions need review."
+        case 0.5..<0.7:
+            return "Moderate success. Consider reviewing categorization rules."
+        case 0.1..<0.5:
+            return "Low categorization rate. Manual review recommended."
+        default:
+            return "No transactions were automatically categorized."
+        }
+    }
+}
+
+struct ImportTransactionRowView: View {
+    let transaction: Transaction
+    let category: Category?
+    let confidence: Double?
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Transaction type icon
+            Image(systemName: transaction.isIncome ? "plus.circle.fill" : "minus.circle.fill")
+                .foregroundColor(transaction.isIncome ? .green : .red)
+                .font(.system(size: 16))
+            
+            // Transaction details
+            VStack(alignment: .leading, spacing: 2) {
+                Text(transaction.description)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+                
+                HStack {
+                    Text(transaction.formattedDate, style: .date)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    if let category = category {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(category.name)
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    } else {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(transaction.category)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
             }
-            .padding(32)
-            .frame(width: 600, height: 500)
-            .navigationTitle("Import Summary")
+            
+            Spacer()
+            
+            // Amount and confidence
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(transaction.displayAmount)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(transaction.isIncome ? .green : .primary)
+                
+                if let confidence = confidence {
+                    HStack(spacing: 2) {
+                        Image(systemName: confidence > 0.8 ? "star.fill" : confidence > 0.6 ? "star.leadinghalf.filled" : "star")
+                            .font(.system(size: 8))
+                            .foregroundColor(confidence > 0.8 ? .purple : confidence > 0.6 ? .orange : .gray)
+                        
+                        Text("\(Int(confidence * 100))%")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Text("Uncategorized")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                }
+            }
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+        .cornerRadius(8)
     }
 }
 
