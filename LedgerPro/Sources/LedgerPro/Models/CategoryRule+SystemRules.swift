@@ -243,6 +243,210 @@ extension CategoryRule {
             ).with {
                 $0.regexPattern = "TRANSFER|XFER|ACH"
                 $0.confidence = 0.75
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transfers,
+                ruleName: "Capital One Mobile Transfer",
+                priority: 105
+            ).with {
+                $0.regexPattern = "CAPITAL ONE MOBILE(?!.*PAYMENT)"
+                $0.confidence = 0.95
+            }
+        ])
+        
+        // Enhanced AI & Tech Services Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.subscriptions,
+                ruleName: "Claude AI",
+                priority: 90
+            ).with {
+                $0.merchantContains = "CLAUDE"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.subscriptions,
+                ruleName: "Anthropic",
+                priority: 90
+            ).with {
+                $0.merchantContains = "ANTHROPIC"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.subscriptions,
+                ruleName: "OpenAI",
+                priority: 90
+            ).with {
+                $0.merchantContains = "OPENAI"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.subscriptions,
+                ruleName: "ChatGPT",
+                priority: 90
+            ).with {
+                $0.merchantContains = "CHATGPT"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.subscriptions,
+                ruleName: "Google Services",
+                priority: 85
+            ).with {
+                $0.merchantContains = "GOOGLE"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.education,
+                ruleName: "Coursera",
+                priority: 85
+            ).with {
+                $0.merchantContains = "COURSERA"
+                $0.confidence = 0.85
+            }
+        ])
+        
+        // Enhanced Food & Coffee Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Rifle Coffee",
+                priority: 90
+            ).with {
+                $0.merchantContains = "RIFLE COFFEE"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Panera",
+                priority: 90
+            ).with {
+                $0.merchantContains = "PANERA"
+                $0.confidence = 0.9
+            }
+        ])
+        
+        // Enhanced Transportation & Parking Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "Parking",
+                priority: 85
+            ).with {
+                $0.merchantContains = "PARKING"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "76 Gas",
+                priority: 85
+            ).with {
+                $0.regexPattern = "76\\s"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "PY Transport",
+                priority: 80
+            ).with {
+                $0.regexPattern = "PY\\s"
+                $0.confidence = 0.8
+            }
+        ])
+        
+        // Mexican Stores Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "OXXO",
+                priority: 85
+            ).with {
+                $0.merchantContains = "OXXO"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.groceries,
+                ruleName: "Carniceria",
+                priority: 85
+            ).with {
+                $0.merchantContains = "CARNICERIA"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.groceries,
+                ruleName: "Fruteria",
+                priority: 85
+            ).with {
+                $0.merchantContains = "FRUTERIA"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.groceries,
+                ruleName: "Carn Store",
+                priority: 80
+            ).with {
+                $0.regexPattern = "CARN\\s"
+                $0.confidence = 0.8
+            }
+        ])
+        
+        // Hotel & Lodging Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.lodging,
+                ruleName: "Motel",
+                priority: 90
+            ).with {
+                $0.merchantContains = "MOTEL"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.lodging,
+                ruleName: "Hotel",
+                priority: 90
+            ).with {
+                $0.merchantContains = "HOTEL"
+                $0.confidence = 0.9
+            }
+        ])
+        
+        // Enhanced Entertainment & Streaming Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.entertainment,
+                ruleName: "Crunchyroll",
+                priority: 90
+            ).with {
+                $0.merchantContains = "CRUNCHYROLL"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.entertainment,
+                ruleName: "Netflix",
+                priority: 90
+            ).with {
+                $0.merchantContains = "NETFLIX"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.entertainment,
+                ruleName: "YouTube",
+                priority: 85
+            ).with {
+                $0.merchantContains = "YOUTUBE"
+                $0.confidence = 0.85
+            }
+        ])
+        
+        // Financial Services Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.business,
+                ruleName: "PayPal",
+                priority: 80
+            ).with {
+                $0.merchantContains = "PAYPAL"
+                $0.confidence = 0.8
             }
         ])
         

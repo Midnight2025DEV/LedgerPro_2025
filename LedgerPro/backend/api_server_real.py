@@ -32,7 +32,10 @@ from pydantic import BaseModel
 
 # Import the real CamelotProcessor and CSV processor
 from processors.python.camelot_processor import CamelotFinancialProcessor
-from processors.python.csv_processor import process_csv_file
+from processors.python.csv_processor_enhanced import EnhancedCSVProcessor
+
+# Use enhanced processor for better CSV handling
+enhanced_processor = EnhancedCSVProcessor()
 
 # Initialize thread pool executor for CPU-intensive tasks
 executor = ThreadPoolExecutor(max_workers=2)
@@ -228,12 +231,12 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
             },
         )
 
-        # Process the CSV file using executor
-        print(f"🔄 Processing {filename} with CSV processor...")
+        # Process the CSV file using enhanced processor
+        print(f"🔄 Processing {filename} with enhanced CSV processor...")
         try:
             result = await asyncio.wait_for(
                 asyncio.get_event_loop().run_in_executor(
-                    executor, process_csv_file, temp_path
+                    executor, enhanced_processor.process_csv_file, temp_path
                 ),
                 timeout=30.0,  # 30 second timeout for CSV
             )
@@ -280,12 +283,14 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
 
                 # Add foreign currency fields if present
                 if transaction.get("has_forex"):
-                    transaction_data.update({
-                        "original_amount": transaction.get("original_amount"),
-                        "original_currency": transaction.get("original_currency"),
-                        "exchange_rate": transaction.get("exchange_rate"),
-                        "has_forex": True,
-                    })
+                    transaction_data.update(
+                        {
+                            "original_amount": transaction.get("original_amount"),
+                            "original_currency": transaction.get("original_currency"),
+                            "exchange_rate": transaction.get("exchange_rate"),
+                            "has_forex": True,
+                        }
+                    )
 
                 transactions.append(transaction_data)
 
@@ -442,12 +447,14 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
                 # Add foreign currency fields if present
                 if transaction.get("has_forex"):
                     print(f"✅ ADDING FOREX DATA to {desc}")
-                    transaction_data.update({
-                        "original_amount": transaction.get("original_amount"),
-                        "original_currency": transaction.get("original_currency"),
-                        "exchange_rate": transaction.get("exchange_rate"),
-                        "has_forex": True,
-                    })
+                    transaction_data.update(
+                        {
+                            "original_amount": transaction.get("original_amount"),
+                            "original_currency": transaction.get("original_currency"),
+                            "exchange_rate": transaction.get("exchange_rate"),
+                            "has_forex": True,
+                        }
+                    )
                 else:
                     print(f"❌ NO FOREX DATA for {desc}")
 

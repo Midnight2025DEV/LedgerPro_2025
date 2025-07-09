@@ -190,7 +190,17 @@ extension Category {
         let housing = UUID(uuidString: "00000000-0000-0000-0000-000000000021")!
         let transportation = UUID(uuidString: "00000000-0000-0000-0000-000000000022")!
         let foodDining = UUID(uuidString: "00000000-0000-0000-0000-000000000023")!
+        let utilities = UUID(uuidString: "00000000-0000-0000-0000-000000000024")!
+        let healthcare = UUID(uuidString: "00000000-0000-0000-0000-000000000025")!
         let shopping = UUID(uuidString: "00000000-0000-0000-0000-000000000031")!
+        let entertainment = UUID(uuidString: "00000000-0000-0000-0000-000000000032")!
+        let travel = UUID(uuidString: "00000000-0000-0000-0000-000000000033")!
+        let education = UUID(uuidString: "00000000-0000-0000-0000-000000000034")!
+        let personalCare = UUID(uuidString: "00000000-0000-0000-0000-000000000035")!
+        let business = UUID(uuidString: "00000000-0000-0000-0000-000000000036")!
+        let groceries = UUID(uuidString: "00000000-0000-0000-0000-000000000046")!
+        let subscriptions = UUID(uuidString: "00000000-0000-0000-0000-000000000047")!
+        let lodging = UUID(uuidString: "00000000-0000-0000-0000-000000000048")!
         let creditCardPayment = UUID(uuidString: "00000000-0000-0000-0000-000000000052")!
     }
     
