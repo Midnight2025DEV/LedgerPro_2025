@@ -94,14 +94,14 @@ class CategoryService: ObservableObject {
     
     /// Initialize default system categories on first run
     func initializeSystemCategories() async throws {
-        print("🚀 Initializing system categories...")
+        AppLogger.shared.info("Initializing system categories...")
         
         let systemCategories = Category.systemCategories
         
         // Save system categories
         try saveCategoriesToStorage(systemCategories)
         
-        print("✅ Initialized \(systemCategories.count) system categories")
+        AppLogger.shared.info("Initialized \(systemCategories.count) system categories")
     }
     
     // MARK: - CRUD Operations
@@ -122,7 +122,7 @@ class CategoryService: ObservableObject {
         // Reload and reorganize
         await loadCategories()
         
-        print("✅ Created category: \(newCategory.name)")
+        AppLogger.shared.info("Created category: \(newCategory.name)")
     }
     
     /// Update an existing category
@@ -144,7 +144,7 @@ class CategoryService: ObservableObject {
         // Reload and reorganize
         await loadCategories()
         
-        print("✅ Updated category: \(updatedCategory.name)")
+        AppLogger.shared.info("Updated category: \(updatedCategory.name)")
     }
     
     /// Delete a category (if not system category)
@@ -168,7 +168,7 @@ class CategoryService: ObservableObject {
         // Reload and reorganize
         await loadCategories()
         
-        print("✅ Deleted category: \(category.name)")
+        AppLogger.shared.info("Deleted category: \(category.name)")
     }
     
     // MARK: - Storage Operations
@@ -178,9 +178,9 @@ class CategoryService: ObservableObject {
             let encoder = JSONEncoder()
             let data = try encoder.encode(categories)
             userDefaults.set(data, forKey: categoriesKey)
-            print("💾 Saved \(categories.count) categories to storage")
+            AppLogger.shared.info("Saved \(categories.count) categories to storage")
         } catch {
-            print("❌ Failed to save categories: \(error)")
+            AppLogger.shared.error("Failed to save categories: \(error)")
             throw CategoryServiceError.saveFailed(error)
         }
     }
@@ -236,7 +236,7 @@ class CategoryService: ObservableObject {
     
     /// Reload categories from system definitions (useful after updating systemCategories)
     func reloadCategories() async throws {
-        print("🔄 Reloading categories from system definitions...")
+        AppLogger.shared.info("Reloading categories from system definitions...")
         
         // Clear existing categories
         await MainActor.run {
@@ -252,7 +252,7 @@ class CategoryService: ObservableObject {
         // Reload from storage
         await loadCategories()
         
-        print("✅ Categories reloaded successfully")
+        AppLogger.shared.info("Categories reloaded successfully")
     }
     
     /// Reset all categories (for testing)
@@ -265,7 +265,7 @@ class CategoryService: ObservableObject {
         
         await loadCategories()
         
-        print("🔄 Categories reset and reinitialized")
+        AppLogger.shared.info("Categories reset and reinitialized")
     }
 }
 

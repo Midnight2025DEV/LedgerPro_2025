@@ -35,7 +35,7 @@ extension CategoryRule {
                 ruleName: "Gas Stations",
                 priority: 95
             ).with {
-                $0.regexPattern = "SHELL|CHEVRON|EXXON|MOBIL|BP|CITGO|SUNOCO|TEXACO|GAS|FUEL"
+                $0.regexPattern = "SHELL|CHEVRON|EXXON(?!.*MOBILE)|BP|CITGO|SUNOCO|TEXACO|76.*GAS|COMPANIA GAS|GAS STATION"
                 $0.confidence = 0.85
             }
         ])
@@ -202,11 +202,27 @@ extension CategoryRule {
             ).with {
                 $0.regexPattern = "ELECTRIC|GAS COMPANY|WATER|COMCAST|VERIZON|AT&T|SPECTRUM|INTERNET|CABLE|UTILITY"
                 $0.confidence = 0.8
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.housing,
+                ruleName: "Real Estate",
+                priority: 85
+            ).with {
+                $0.regexPattern = "INMOBILIARIO|REAL ESTATE|PROPERTY|REALTY"
+                $0.confidence = 0.8
             }
         ])
         
         // Credit Card Payment Rules
         rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.creditCardPayment,
+                ruleName: "Capital One Payments",
+                priority: 100
+            ).with {
+                $0.merchantContains = "CAPITAL ONE"
+                $0.confidence = 0.95
+            },
             CategoryRule(
                 categoryId: Category.systemCategoryIds.creditCardPayment,
                 ruleName: "Credit Card Payments",

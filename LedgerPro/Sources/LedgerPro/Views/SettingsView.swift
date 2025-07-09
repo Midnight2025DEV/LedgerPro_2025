@@ -369,7 +369,7 @@ struct SettingsView: View {
                 isExporting = false
                 exportProgress = 0.0
                 // Handle error
-                print("Export failed: \(error)")
+                AppLogger.shared.error("Export failed: \(error)")
             }
         }
     }
@@ -413,7 +413,7 @@ struct SettingsView: View {
                 let backupData = try generateJSON()
                 try backupData.write(to: url)
             } catch {
-                print("Backup failed: \(error)")
+                AppLogger.shared.error("Backup failed: \(error)")
             }
         }
     }

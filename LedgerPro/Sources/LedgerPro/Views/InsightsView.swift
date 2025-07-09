@@ -231,7 +231,7 @@ struct InsightsView: View {
             do {
                 aiInsights = try JSONDecoder().decode([AIInsight].self, from: data)
             } catch {
-                print("Failed to load insights: \(error)")
+                AppLogger.shared.error("Failed to load insights: \(error)")
             }
         }
     }
@@ -241,7 +241,7 @@ struct InsightsView: View {
             let data = try JSONEncoder().encode(aiInsights)
             UserDefaults.standard.set(data, forKey: "ai_insights")
         } catch {
-            print("Failed to save insights: \(error)")
+            AppLogger.shared.error("Failed to save insights: \(error)")
         }
     }
 }
@@ -877,7 +877,7 @@ struct CategorySpendingCharts: View {
             let categoryObject = categoryService.categories.first { $0.name == categoryName }
                 ?? categoryService.categories.first { $0.name.lowercased().contains(categoryName.lowercased()) }
                 ?? categoryService.categories.first { categoryName.lowercased().contains($0.name.lowercased()) }
-            print("🔍 Category: '\(categoryName)'")
+            AppLogger.shared.debug("Category: '\(categoryName)'")
             print("   Found object: \(categoryObject?.name ?? "NOT FOUND")")
             print("   Available categories containing this word:")
             for cat in categoryService.categories where cat.name.lowercased().contains(categoryName.lowercased()) {
@@ -885,7 +885,7 @@ struct CategorySpendingCharts: View {
             }
             
             if categoryObject == nil {
-                print("⚠️ Creating missing category: \(categoryName)")
+                AppLogger.shared.warning("Creating missing category: \(categoryName)")
                 // You might want to create the category here or use a default
             }
             
@@ -895,7 +895,7 @@ struct CategorySpendingCharts: View {
                 categoryObject: categoryObject
             )
             
-            print("🎨 Category: \(categoryName), Color: \(categorySpending.color), Icon: \(categorySpending.icon)")
+            AppLogger.shared.debug("Category: \(categoryName), Color: \(categorySpending.color), Icon: \(categorySpending.icon)")
             
             return categorySpending
         }

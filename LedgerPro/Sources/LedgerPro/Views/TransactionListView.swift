@@ -404,12 +404,14 @@ struct DistributedTransactionRowView: View {
                         .fontWeight(.semibold)
                         .lineLimit(1)
                     
-                    // DEBUG: Print forex data to console
-                    let _ = print("🔍 Transaction: \(merchantName)")
-                    let _ = print("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
-                    let _ = print("   - originalAmount: \(transaction.originalAmount ?? 0)")
-                    let _ = print("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-                    let _ = print("   - hasForex: \(transaction.hasForex ?? false)")
+                    // DEBUG: Log forex data outside view builder
+                    let _ = {
+                        AppLogger.shared.debug("Transaction: \(merchantName)")
+                        AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
+                        AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
+                        AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
+                        AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
+                    }()
                     
                     // Simplified conditional check for forex data
                     if let originalCurrency = transaction.originalCurrency,
@@ -417,7 +419,7 @@ struct DistributedTransactionRowView: View {
                        let originalAmount = transaction.originalAmount,
                        originalAmount > 0 {
                         
-                        let _ = print("✅ SHOWING FOREX DATA for \(merchantName)")
+                        let _ = AppLogger.shared.debug("SHOWING FOREX DATA for \(merchantName)")
                         
                         // Build display string
                         let forexText = buildForexText(currency: originalCurrency, amount: originalAmount, rate: transaction.exchangeRate)
@@ -427,7 +429,7 @@ struct DistributedTransactionRowView: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     } else {
-                        let _ = print("❌ NO FOREX DATA for \(merchantName)")
+                        let _ = AppLogger.shared.debug("NO FOREX DATA for \(merchantName)")
                         // Show merchant location or generic subtitle when no forex data
                         Text(merchantLocation.isEmpty ? "Transaction Details" : merchantLocation)
                             .font(.caption)

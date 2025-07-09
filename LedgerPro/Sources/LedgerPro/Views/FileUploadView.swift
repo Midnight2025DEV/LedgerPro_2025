@@ -177,7 +177,7 @@ struct FileUploadView: View {
                     if let file = selectedFile {
                         // Clean up temporary file
                         try? FileManager.default.removeItem(at: file)
-                        print("🗑️ Cleaned up temporary file: \(file.lastPathComponent)")
+                        AppLogger.shared.debug("Cleaned up temporary file: \(file.lastPathComponent)")
                     }
                     selectedFile = nil
                 } label: {
@@ -288,7 +288,7 @@ struct FileUploadView: View {
             // Start accessing the security scoped resource
             print("🎯 STEP 8: Attempting to access security scoped resource")
             guard url.startAccessingSecurityScopedResource() else {
-                print("❌ STEP 8 FAILED: Failed to start accessing security scoped resource")
+                AppLogger.shared.error("Failed to start accessing security scoped resource")
                 errorMessage = "Cannot access the selected file. Please ensure the file is not in a restricted location and try again."
                 showingError = true
                 return
@@ -358,9 +358,9 @@ struct FileUploadView: View {
         // File should be a temporary copy, so no security scoped resource needed
         print("🎯 STEP 20: Using temporary file copy for upload")
         
-        print("✅ Starting upload for file: \(file.lastPathComponent)")
-        print("📁 File path: \(file.path)")
-        print("📏 File exists: \(FileManager.default.fileExists(atPath: file.path))")
+        AppLogger.shared.info("Starting upload for file: \(file.lastPathComponent)")
+        AppLogger.shared.debug("File path: \(file.path)")
+        AppLogger.shared.debug("File exists: \(FileManager.default.fileExists(atPath: file.path))")
         
         isProcessing = true
         processingStatus = "Uploading file..."
@@ -381,7 +381,7 @@ struct FileUploadView: View {
                 }
                 
                 // Upload file
-                print("📤 Calling apiService.uploadFile...")
+                AppLogger.shared.debug("Calling apiService.uploadFile...")
                 let uploadResponse = try await apiService.uploadFile(file)
                 currentJobId = uploadResponse.jobId
                 print("✅ Upload response received, jobId: \(uploadResponse.jobId)")
@@ -403,14 +403,14 @@ struct FileUploadView: View {
                     }
                     
                     // Get transaction results
-                    print("📊 Getting transaction results...")
+                    AppLogger.shared.debug("Getting transaction results...")
                     let results = try await apiService.getTransactions(uploadResponse.jobId)
                     print("✅ Retrieved \(results.transactions.count) transactions")
                     
                     // Debug: Check if any transactions have forex data
                     let forexTransactions = results.transactions.filter { $0.hasForex == true }
                     if !forexTransactions.isEmpty {
-                        print("💱 Found \(forexTransactions.count) foreign currency transactions in API response:")
+                        AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions in API response")
                         for transaction in forexTransactions {
                             print("  - \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
                         }
@@ -424,7 +424,7 @@ struct FileUploadView: View {
                     }
                     
                     // Auto-categorize transactions
-                    print("🤖 Auto-categorizing \(results.transactions.count) transactions...")
+                    AppLogger.shared.info("Auto-categorizing \(results.transactions.count) transactions...")
                     let categorizationService = ImportCategorizationService()
                     let categorizedResult = categorizationService.categorizeTransactions(results.transactions)
                     print("✅ Auto-categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions")
