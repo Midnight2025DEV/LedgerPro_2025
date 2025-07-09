@@ -44,6 +44,22 @@ extension CategoryRule {
         rules.append(contentsOf: [
             CategoryRule(
                 categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Uber Eats",
+                priority: 110  // Higher than Uber transportation
+            ).with {
+                $0.merchantContains = "UBER EATS"
+                $0.confidence = 0.95
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Food Delivery Services",
+                priority: 105
+            ).with {
+                $0.regexPattern = "DOORDASH|GRUBHUB|POSTMATES|SEAMLESS"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
                 ruleName: "Starbucks",
                 priority: 100
             ).with {

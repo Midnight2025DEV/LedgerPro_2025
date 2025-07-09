@@ -10,6 +10,8 @@ let testTransactions = [
     ("YELLOW CAB NYC", -32.00, "transportation"),
     
     // Food & Dining  
+    ("UBER EATS *ORDER", -23.45, "foodDining"),
+    ("DOORDASH ORDER", -19.87, "foodDining"),
     ("STARBUCKS #1234", -5.47, "foodDining"),
     ("MCDONALD'S F12345", -8.93, "foodDining"),
     ("CHIPOTLE MEXICAN GRILL", -12.85, "foodDining"),
@@ -51,12 +53,15 @@ for (description, amount, expectedCategory) in testTransactions {
     // Simulate rule matching (simplified)
     var matched = false
     
-    // Check our patterns
-    if description.contains("UBER") || description.contains("LYFT") || description.contains("TAXI") || description.contains("CAB") || description.contains("SHELL") || description.contains("CHEVRON") || description.contains("GAS") {
-        print("   ✅ Matched: transportation")
+    // Check our patterns (specific patterns first)
+    if description.contains("UBER EATS") || description.contains("DOORDASH") || description.contains("GRUBHUB") {
+        print("   ✅ Matched: foodDining (delivery)")
         matched = true
     } else if description.contains("STARBUCKS") || description.contains("MCDONALD") || description.contains("CHIPOTLE") || description.contains("RESTAURANT") {
         print("   ✅ Matched: foodDining")
+        matched = true
+    } else if description.contains("UBER") || description.contains("LYFT") || description.contains("TAXI") || description.contains("CAB") || description.contains("SHELL") || description.contains("CHEVRON") || description.contains("GAS") {
+        print("   ✅ Matched: transportation")
         matched = true
     } else if description.contains("AMAZON") || description.contains("WALMART") || description.contains("TARGET") || description.contains("HOME DEPOT") || description.contains("KROGER") || description.contains("CVS") || description.contains("NETFLIX") {
         print("   ✅ Matched: shopping")
