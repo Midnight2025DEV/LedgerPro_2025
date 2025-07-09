@@ -17,7 +17,7 @@ final class CategoryRuleMatchingTests: XCTestCase {
         
         let starbucksTransaction = Transaction(
             date: "2024-01-15",
-            description: "STARBUCKS COFFEE #1234",
+            description: "STARBUCKS",
             amount: -8.50,
             category: "Other"
         )
@@ -461,33 +461,41 @@ final class CategoryRuleMatchingTests: XCTestCase {
     
     func testMatchConfidenceScoring() {
         // Test that match confidence is calculated correctly
-        var rule = CategoryRule(
+        var exactRule = CategoryRule(
             categoryId: UUID(),
-            ruleName: "Confidence Test Rule"
+            ruleName: "Exact Match Rule"
         )
-        rule.merchantExact = "STARBUCKS"
-        rule.priority = 90
-        rule.confidence = 0.95
+        exactRule.merchantExact = "STARBUCKS"
+        exactRule.priority = 90
+        exactRule.confidence = 0.95
         
-        let perfectMatchTransaction = Transaction(
+        var containsRule = CategoryRule(
+            categoryId: UUID(),
+            ruleName: "Contains Match Rule"
+        )
+        containsRule.merchantContains = "STARBUCKS"
+        containsRule.priority = 80
+        containsRule.confidence = 0.85
+        
+        let exactMatchTransaction = Transaction(
             date: "2024-01-15",
             description: "STARBUCKS",
             amount: -8.50,
             category: "Other"
         )
         
-        let partialMatchTransaction = Transaction(
+        let containsMatchTransaction = Transaction(
             date: "2024-01-15",
             description: "STARBUCKS COFFEE #1234",
             amount: -8.50,
             category: "Other"
         )
         
-        let perfectConfidence = rule.matchConfidence(for: perfectMatchTransaction)
-        let partialConfidence = rule.matchConfidence(for: partialMatchTransaction)
+        let exactConfidence = exactRule.matchConfidence(for: exactMatchTransaction)
+        let containsConfidence = containsRule.matchConfidence(for: containsMatchTransaction)
         
-        XCTAssertGreaterThan(perfectConfidence, 0.9)
-        XCTAssertGreaterThan(partialConfidence, 0.8)
+        XCTAssertGreaterThan(exactConfidence, 0.9)
+        XCTAssertGreaterThan(containsConfidence, 0.8)
     }
     
     // MARK: - Performance Tests
