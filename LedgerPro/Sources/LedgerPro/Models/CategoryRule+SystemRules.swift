@@ -1,520 +1,188 @@
 import Foundation
 
 extension CategoryRule {
-    /// Comprehensive system rules for merchant categorization
-    static var systemRules: [CategoryRule] {
+    static let systemRules: [CategoryRule] = {
         var rules: [CategoryRule] = []
         
-        // MARK: - Income Rules (Highest Priority)
+        // Transportation Rules (using existing transportation ID)
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "Uber Rides",
+                priority: 100
+            ).with {
+                $0.merchantContains = "UBER"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "Lyft Rides",
+                priority: 100
+            ).with {
+                $0.merchantContains = "LYFT"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "Taxi Services",
+                priority: 90
+            ).with {
+                $0.regexPattern = "TAXI|CAB|YELLOW CAB"
+                $0.confidence = 0.8
+            }
+        ])
         
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.salary,
-            ruleName: "Direct Deposit - Payroll",
-            priority: 150
-        ).with {
-            $0.merchantContains = "DIRECT DEP"
-            $0.amountSign = .positive
-            $0.isRecurring = true
-            $0.confidence = 0.95
-        })
+        // Food & Dining Rules (using existing foodDining ID)
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Starbucks",
+                priority: 100
+            ).with {
+                $0.merchantContains = "STARBUCKS"
+                $0.confidence = 0.95
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Fast Food Chains",
+                priority: 90
+            ).with {
+                $0.regexPattern = "MCDONALD|BURGER KING|WENDY|TACO BELL|SUBWAY|CHIPOTLE|KFC|POPEYES"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Coffee Shops",
+                priority: 85
+            ).with {
+                $0.regexPattern = "COFFEE|CAFE|DUNKIN|PEET'S|TIM HORTONS"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.foodDining,
+                ruleName: "Restaurants",
+                priority: 80
+            ).with {
+                $0.regexPattern = "RESTAURANT|GRILL|KITCHEN|BISTRO|DINER|PIZZA"
+                $0.confidence = 0.8
+            }
+        ])
         
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.salary,
-            ruleName: "Payroll Deposits",
-            priority: 140
-        ).with {
-            $0.merchantContains = "PAYROLL"
-            $0.amountSign = .positive
-            $0.confidence = 0.9
-        })
+        // Shopping Rules (using existing shopping ID)
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Amazon",
+                priority: 100
+            ).with {
+                $0.merchantContains = "AMAZON"
+                $0.confidence = 0.95
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Walmart",
+                priority: 95
+            ).with {
+                $0.merchantContains = "WALMART"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Target",
+                priority: 95
+            ).with {
+                $0.merchantContains = "TARGET"
+                $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Home Improvement",
+                priority: 85
+            ).with {
+                $0.regexPattern = "HOME DEPOT|LOWE'S|LOWES|ACE HARDWARE"
+                $0.confidence = 0.85
+            }
+        ])
         
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.salary,
-            ruleName: "ACH Credit - Salary",
-            priority: 130
-        ).with {
-            $0.merchantContains = "ACH CREDIT"
-            $0.amountSign = .positive
-            $0.confidence = 0.8
-        })
+        // Income Rules (using existing salary ID for payroll)
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.salary,
+                ruleName: "Direct Deposit Salary",
+                priority: 100
+            ).with {
+                $0.regexPattern = "DIRECT DEP|PAYROLL|SALARY"
+                $0.amountSign = .positive
+                $0.isRecurring = true
+                $0.confidence = 0.95
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.income,
+                ruleName: "Deposit",
+                priority: 80
+            ).with {
+                $0.descriptionContains = "DEPOSIT"
+                $0.amountSign = .positive
+                $0.confidence = 0.7
+            }
+        ])
         
-        // MARK: - Transportation Rules
+        // Housing Rules (using existing housing ID)
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.housing,
+                ruleName: "Rent Payment",
+                priority: 95
+            ).with {
+                $0.regexPattern = "RENT|LEASE|APARTMENT|PROPERTY MGMT"
+                $0.amountMin = 500
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.housing,
+                ruleName: "Mortgage",
+                priority: 95
+            ).with {
+                $0.regexPattern = "MORTGAGE|HOME LOAN"
+                $0.amountMin = 500
+                $0.confidence = 0.9
+            }
+        ])
         
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.transportation,
-            ruleName: "Uber Rides",
-            priority: 120
-        ).with {
-            $0.merchantContains = "UBER"
-            $0.confidence = 0.95
-        })
+        // Credit Card Payment Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.creditCardPayment,
+                ruleName: "Credit Card Payments",
+                priority: 90
+            ).with {
+                $0.regexPattern = "PAYMENT|CARD PYMT|CC PAYMENT|AUTOPAY"
+                $0.amountSign = .positive
+                $0.confidence = 0.8
+            }
+        ])
         
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.transportation,
-            ruleName: "Lyft Rides",
-            priority: 120
-        ).with {
-            $0.merchantContains = "LYFT"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.transportation,
-            ruleName: "Taxi Services",
-            priority: 110
-        ).with {
-            $0.regexPattern = "(?i)(taxi|cab|yellow cab)"
-            $0.confidence = 0.85
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.transportation,
-            ruleName: "Public Transit",
-            priority: 115
-        ).with {
-            $0.regexPattern = "(?i)(metro|mta|bart|cta|transit|subway)"
-            $0.confidence = 0.9
-        })
-        
-        // MARK: - Gasoline Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Shell Gas Stations",
-            priority: 100
-        ).with {
-            $0.merchantContains = "SHELL"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Chevron Gas Stations",
-            priority: 100
-        ).with {
-            $0.merchantContains = "CHEVRON"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Exxon Mobil Gas",
-            priority: 100
-        ).with {
-            $0.regexPattern = "(?i)(exxon|mobil|exxonmobil)"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "BP Gas Stations",
-            priority: 100
-        ).with {
-            $0.merchantContains = "BP "
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Citgo Gas",
-            priority: 100
-        ).with {
-            $0.merchantContains = "CITGO"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Sunoco Gas",
-            priority: 100
-        ).with {
-            $0.merchantContains = "SUNOCO"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Texaco Gas",
-            priority: 100
-        ).with {
-            $0.merchantContains = "TEXACO"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.gasoline,
-            ruleName: "Generic Gas Stations",
-            priority: 85
-        ).with {
-            $0.regexPattern = "(?i)(gas|fuel|petroleum|76|speedway|wawa)"
-            $0.confidence = 0.8
-        })
-        
-        // MARK: - Dining Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "McDonald's",
-            priority: 100
-        ).with {
-            $0.regexPattern = "(?i)(mcdonald|mcdonalds)"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Burger King",
-            priority: 100
-        ).with {
-            $0.merchantContains = "BURGER KING"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Wendy's",
-            priority: 100
-        ).with {
-            $0.merchantContains = "WENDY"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Taco Bell",
-            priority: 100
-        ).with {
-            $0.merchantContains = "TACO BELL"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Subway Sandwiches",
-            priority: 95
-        ).with {
-            $0.merchantContains = "SUBWAY"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Chipotle",
-            priority: 100
-        ).with {
-            $0.merchantContains = "CHIPOTLE"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Starbucks Coffee",
-            priority: 100
-        ).with {
-            $0.merchantContains = "STARBUCKS"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Dunkin' Donuts",
-            priority: 100
-        ).with {
-            $0.regexPattern = "(?i)(dunkin|dunkin'|dd)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Generic Restaurants",
-            priority: 80
-        ).with {
-            $0.regexPattern = "(?i)(restaurant|cafe|diner|bistro|grill|pizza|kfc|domino)"
-            $0.confidence = 0.75
-        })
-        
-        // MARK: - Grocery Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Walmart",
-            priority: 90
-        ).with {
-            $0.merchantContains = "WALMART"
-            $0.confidence = 0.85
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Target",
-            priority: 85
-        ).with {
-            $0.merchantContains = "TARGET"
-            $0.confidence = 0.8
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Kroger",
-            priority: 100
-        ).with {
-            $0.merchantContains = "KROGER"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Safeway",
-            priority: 100
-        ).with {
-            $0.merchantContains = "SAFEWAY"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Whole Foods",
-            priority: 100
-        ).with {
-            $0.regexPattern = "(?i)(whole foods|wholefoods|wfm)"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Trader Joe's",
-            priority: 100
-        ).with {
-            $0.regexPattern = "(?i)(trader joe|traderjoe)"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Costco Wholesale",
-            priority: 95
-        ).with {
-            $0.merchantContains = "COSTCO"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Sam's Club",
-            priority: 95
-        ).with {
-            $0.regexPattern = "(?i)(sam's club|sams club)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.groceries,
-            ruleName: "Generic Supermarkets",
-            priority: 80
-        ).with {
-            $0.regexPattern = "(?i)(supermarket|grocery|food market|iga|publix|harris teeter)"
-            $0.confidence = 0.85
-        })
-        
-        // MARK: - Shopping Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Amazon",
-            priority: 100
-        ).with {
-            $0.regexPattern = "(?i)(amazon|amzn)"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Best Buy",
-            priority: 100
-        ).with {
-            $0.merchantContains = "BEST BUY"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Home Depot",
-            priority: 100
-        ).with {
-            $0.merchantContains = "HOME DEPOT"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Lowe's",
-            priority: 100
-        ).with {
-            $0.merchantContains = "LOWE"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Nike",
-            priority: 95
-        ).with {
-            $0.merchantContains = "NIKE"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Clothing Stores",
-            priority: 85
-        ).with {
-            $0.regexPattern = "(?i)(macy|nordstrom|gap|old navy|tj maxx|marshall|h&m|zara|uniqlo)"
-            $0.confidence = 0.85
-        })
-        
-        // MARK: - Utilities Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.utilities,
-            ruleName: "Electric Companies",
-            priority: 110
-        ).with {
-            $0.regexPattern = "(?i)(electric|pge|edison|duke energy|con ed|xcel)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.utilities,
-            ruleName: "Gas Utilities",
-            priority: 110
-        ).with {
-            $0.regexPattern = "(?i)(gas company|natural gas|gas utility)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.utilities,
-            ruleName: "Water Companies",
-            priority: 110
-        ).with {
-            $0.regexPattern = "(?i)(water|sewer|municipal)"
-            $0.confidence = 0.85
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.utilities,
-            ruleName: "Internet/Cable",
-            priority: 105
-        ).with {
-            $0.regexPattern = "(?i)(comcast|xfinity|verizon|at&t|spectrum|cox|charter)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.utilities,
-            ruleName: "Phone Bills",
-            priority: 105
-        ).with {
-            $0.regexPattern = "(?i)(t-mobile|tmobile|sprint|wireless)"
-            $0.confidence = 0.85
-        })
-        
-        // MARK: - Entertainment Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.entertainment,
-            ruleName: "Netflix",
-            priority: 100
-        ).with {
-            $0.merchantContains = "NETFLIX"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.entertainment,
-            ruleName: "Spotify",
-            priority: 100
-        ).with {
-            $0.merchantContains = "SPOTIFY"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.entertainment,
-            ruleName: "Movie Theaters",
-            priority: 95
-        ).with {
-            $0.regexPattern = "(?i)(amc|regal|cinemark|theater|cinema)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.entertainment,
-            ruleName: "Gaming Services",
-            priority: 90
-        ).with {
-            $0.regexPattern = "(?i)(xbox|playstation|steam|nintendo|gaming)"
-            $0.confidence = 0.85
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.entertainment,
-            ruleName: "Streaming Services",
-            priority: 95
-        ).with {
-            $0.regexPattern = "(?i)(hulu|disney|prime video|apple tv|hbo)"
-            $0.confidence = 0.9
-        })
-        
-        // MARK: - Healthcare Rules
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.healthcare,
-            ruleName: "CVS Pharmacy",
-            priority: 100
-        ).with {
-            $0.merchantContains = "CVS"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.healthcare,
-            ruleName: "Walgreens",
-            priority: 100
-        ).with {
-            $0.merchantContains = "WALGREENS"
-            $0.confidence = 0.95
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.healthcare,
-            ruleName: "Pharmacies",
-            priority: 95
-        ).with {
-            $0.regexPattern = "(?i)(pharmacy|rite aid|duane reade)"
-            $0.confidence = 0.9
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.healthcare,
-            ruleName: "Medical Services",
-            priority: 90
-        ).with {
-            $0.regexPattern = "(?i)(medical|doctor|dr\\.|hospital|clinic|urgent care)"
-            $0.confidence = 0.85
-        })
+        // Transfer Rules
+        rules.append(contentsOf: [
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transfers,
+                ruleName: "Bank Transfers",
+                priority: 85
+            ).with {
+                $0.regexPattern = "TRANSFER|XFER|ACH"
+                $0.confidence = 0.75
+            }
+        ])
         
         return rules
-    }
+    }()
 }
 
-// MARK: - Helper Extension for Rule Building
-
-extension CategoryRule {
-    /// Helper method for fluent rule configuration
-    func with(_ configure: (inout CategoryRule) -> Void) -> CategoryRule {
-        var rule = self
-        configure(&rule)
-        return rule
+// Helper extension for builder pattern
+private extension CategoryRule {
+    func with(_ block: (inout CategoryRule) -> Void) -> CategoryRule {
+        var copy = self
+        block(&copy)
+        return copy
     }
 }
