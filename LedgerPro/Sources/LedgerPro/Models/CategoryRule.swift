@@ -288,93 +288,9 @@ enum TransactionFrequency: String, Codable, CaseIterable {
 }
 
 // MARK: - Default System Rules
+// Note: System rules are now defined in CategoryRule+SystemRules.swift for better organization
 
 extension CategoryRule {
-    /// Predefined system rules for common transaction patterns
-    static let systemRules: [CategoryRule] = {
-        var rules: [CategoryRule] = []
-        
-        // Income Rules
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.salary,
-            ruleName: "Salary Deposits",
-            priority: 100
-        ).with {
-            $0.amountSign = .positive
-            $0.merchantContains = "payroll"
-            $0.isRecurring = true
-        })
-        
-        // Transportation Rules
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.transportation,
-            ruleName: "Gas Stations",
-            priority: 90
-        ).with {
-            $0.merchantContains = "chevron"
-            $0.amountSign = .negative
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.transportation,
-            ruleName: "Uber/Lyft",
-            priority: 90
-        ).with {
-            $0.merchantContains = "uber"
-            $0.amountSign = .negative
-        })
-        
-        // Food & Dining Rules
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Restaurants",
-            priority: 80
-        ).with {
-            $0.merchantContains = "restaurant"
-            $0.amountSign = .negative
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.foodDining,
-            ruleName: "Fast Food",
-            priority: 80
-        ).with {
-            $0.merchantContains = "mcdonald"
-            $0.amountSign = .negative
-        })
-        
-        // Shopping Rules
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Amazon Purchases",
-            priority: 85
-        ).with {
-            $0.merchantContains = "amazon"
-            $0.amountSign = .negative
-        })
-        
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.shopping,
-            ruleName: "Walmart",
-            priority: 85
-        ).with {
-            $0.merchantContains = "walmart"
-            $0.amountSign = .negative
-        })
-        
-        // Transfer Rules
-        rules.append(CategoryRule(
-            categoryId: Category.systemCategoryIds.creditCardPayment,
-            ruleName: "Credit Card Payments",
-            priority: 95
-        ).with {
-            $0.merchantContains = "capital one"
-            $0.descriptionContains = "payment"
-            $0.amountSign = .positive
-        })
-        
-        return rules
-    }()
     
     /// Common rule templates for popular merchants and transaction patterns
     static let commonRuleTemplates: [CategoryRule] = {
