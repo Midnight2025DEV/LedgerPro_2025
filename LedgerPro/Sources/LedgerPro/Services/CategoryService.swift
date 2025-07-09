@@ -294,6 +294,36 @@ enum CategoryServiceError: LocalizedError {
 // MARK: - Extensions for Transaction Integration
 
 extension CategoryService {
+    /// Smart merchant mappings for bulk categorization
+    static let merchantMappings: [(pattern: String, category: String)] = [
+        ("PY OTAY", "Utilities"),
+        ("CARN LA DIVINA", "Food & Dining"),
+        ("FRUTERIA", "Food & Dining"),
+        ("ANTHROPIC", "Business Services"),
+        ("CLAUDE.AI", "Business Services"),
+        ("PAYPAL.*BOOKKEEP", "Business Services"),
+        ("MOTEL LA MANSION", "Travel"),
+        ("7 ELEVEN", "Shopping"),
+        ("CHEVRON", "Transportation"),
+        ("OXXO", "Shopping"),
+        ("COURSERA", "Education"),
+        ("NETFLIX", "Entertainment"),
+        ("GOOGLE.*YOUTUBE", "Entertainment")
+    ]
+    
+    /// Suggest category for a merchant using pattern matching
+    func suggestCategoryForMerchant(_ merchant: String) -> (category: Category?, confidence: Double)? {
+        let merchantUpper = merchant.uppercased()
+        
+        for (pattern, categoryName) in Self.merchantMappings {
+            if merchantUpper.contains(pattern) {
+                if let category = categories.first(where: { $0.name == categoryName }) {
+                    return (category, 0.9)
+                }
+            }
+        }
+        return nil
+    }
     /// Find the best matching category for a transaction description
     func suggestCategory(for transactionDescription: String, amount: Double) -> Category? {
         // Create a temporary transaction for rule matching
