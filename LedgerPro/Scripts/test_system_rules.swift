@@ -52,19 +52,19 @@ for (description, amount, expectedCategory) in testTransactions {
     var matched = false
     
     // Check our patterns
-    if description.contains("UBER") || description.contains("LYFT") || description.contains("TAXI") || description.contains("CAB") {
+    if description.contains("UBER") || description.contains("LYFT") || description.contains("TAXI") || description.contains("CAB") || description.contains("SHELL") || description.contains("CHEVRON") || description.contains("GAS") {
         print("   ✅ Matched: transportation")
         matched = true
     } else if description.contains("STARBUCKS") || description.contains("MCDONALD") || description.contains("CHIPOTLE") || description.contains("RESTAURANT") {
         print("   ✅ Matched: foodDining")
         matched = true
-    } else if description.contains("AMAZON") || description.contains("WALMART") || description.contains("TARGET") || description.contains("HOME DEPOT") {
+    } else if description.contains("AMAZON") || description.contains("WALMART") || description.contains("TARGET") || description.contains("HOME DEPOT") || description.contains("KROGER") || description.contains("CVS") || description.contains("NETFLIX") {
         print("   ✅ Matched: shopping")
         matched = true
     } else if amount > 0 && (description.contains("DIRECT DEP") || description.contains("PAYROLL") || description.contains("DEPOSIT")) {
         print("   ✅ Matched: salary/income")
         matched = true
-    } else if description.contains("RENT") || description.contains("MORTGAGE") {
+    } else if description.contains("RENT") || description.contains("MORTGAGE") || description.contains("COMCAST") || description.contains("ELECTRIC") || description.contains("CABLE") {
         print("   ✅ Matched: housing")
         matched = true
     } else {

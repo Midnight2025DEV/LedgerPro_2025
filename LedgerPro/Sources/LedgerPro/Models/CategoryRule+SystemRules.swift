@@ -29,6 +29,14 @@ extension CategoryRule {
             ).with {
                 $0.regexPattern = "TAXI|CAB|YELLOW CAB"
                 $0.confidence = 0.8
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.transportation,
+                ruleName: "Gas Stations",
+                priority: 95
+            ).with {
+                $0.regexPattern = "SHELL|CHEVRON|EXXON|MOBIL|BP|CITGO|SUNOCO|TEXACO|GAS|FUEL"
+                $0.confidence = 0.85
             }
         ])
         
@@ -101,6 +109,30 @@ extension CategoryRule {
             ).with {
                 $0.regexPattern = "HOME DEPOT|LOWE'S|LOWES|ACE HARDWARE"
                 $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Grocery Stores",
+                priority: 90
+            ).with {
+                $0.regexPattern = "KROGER|SAFEWAY|PUBLIX|WEGMANS|HARRIS TEETER|GIANT|STOP SHOP"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Pharmacies",
+                priority: 85
+            ).with {
+                $0.regexPattern = "CVS|WALGREENS|RITE AID|PHARMACY"
+                $0.confidence = 0.85
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.shopping,
+                ruleName: "Subscriptions & Streaming",
+                priority: 80
+            ).with {
+                $0.regexPattern = "NETFLIX|HULU|SPOTIFY|APPLE|DISNEY|HBO|AMAZON PRIME"
+                $0.confidence = 0.8
             }
         ])
         
@@ -146,6 +178,14 @@ extension CategoryRule {
                 $0.regexPattern = "MORTGAGE|HOME LOAN"
                 $0.amountMin = 500
                 $0.confidence = 0.9
+            },
+            CategoryRule(
+                categoryId: Category.systemCategoryIds.housing,
+                ruleName: "Utilities",
+                priority: 90
+            ).with {
+                $0.regexPattern = "ELECTRIC|GAS COMPANY|WATER|COMCAST|VERIZON|AT&T|SPECTRUM|INTERNET|CABLE|UTILITY"
+                $0.confidence = 0.8
             }
         ])
         
