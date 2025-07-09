@@ -60,7 +60,7 @@ class APIService: ObservableObject {
         
         request.timeoutInterval = 30.0
         
-        print("Making request: \(method) \(url)")
+        AppLogger.shared.debug("Making request: \(method) \(url)")
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -71,7 +71,7 @@ class APIService: ObservableObject {
             
             guard httpResponse.statusCode == 200 else {
                 let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
-                print("API request failed: \(httpResponse.statusCode) - \(errorMessage)")
+                AppLogger.shared.error("API request failed: \(httpResponse.statusCode) - \(errorMessage)")
                 
                 if httpResponse.statusCode == 401 {
                     clearAuthToken()
@@ -85,20 +85,20 @@ class APIService: ObservableObject {
             // Debug: Print raw JSON for transactions endpoint
             if endpoint.contains("/transactions/") {
                 if let jsonString = String(data: data, encoding: .utf8) {
-                    print("📋 Raw JSON response preview (first 500 chars):")
-                    print(jsonString.prefix(500))
+                    AppLogger.shared.debug("Raw JSON response preview (first 500 chars):")
+                    AppLogger.shared.debug(String(jsonString.prefix(500)))
                 }
             }
             
             let result = try decoder.decode(responseType, from: data)
             
-            print("Request successful for \(endpoint)")
+            AppLogger.shared.info("Request successful for \(endpoint)")
             return result
             
         } catch let error as APIError {
             throw error
         } catch {
-            print("Network error: \(error)")
+            AppLogger.shared.error("Network error: \(error)")
             throw APIError.networkError(error.localizedDescription)
         }
     }
@@ -129,9 +129,9 @@ class APIService: ObservableObject {
             throw APIError.networkError("Invalid upload URL")
         }
         
-        print("🌐 Upload URL: \(url)")
-        print("📁 File URL: \(fileURL)")
-        print("🔒 Auth token present: \(authToken != nil)")
+        AppLogger.shared.debug("Upload URL: \(url)")
+        AppLogger.shared.debug("File URL: \(fileURL)")
+        AppLogger.shared.debug("Auth token present: \(authToken != nil)")
         
         await MainActor.run {
             isUploading = true
@@ -147,7 +147,7 @@ class APIService: ObservableObject {
         
         do {
             // First, verify file accessibility step by step
-            print("🔍 Testing file accessibility...")
+            AppLogger.shared.debug("Testing file accessibility...")
             print("🔍 File URL path: \(fileURL.path)")
             print("🔍 File URL absolute string: \(fileURL.absoluteString)")
             print("🔍 File exists at path: \(FileManager.default.fileExists(atPath: fileURL.path))")
@@ -244,15 +244,15 @@ class APIService: ObservableObject {
                 return result
             } catch {
                 print("❌ Failed to decode response: \(error)")
-                print("🔍 Raw response: \(responseString)")
+                AppLogger.shared.debug("Raw response: \(responseString)")
                 throw APIError.networkError("Failed to decode server response: \(error.localizedDescription)")
             }
             
         } catch let error as APIError {
-            print("❌ API Error: \(error.errorDescription ?? "Unknown")")
+            AppLogger.shared.error("API Error: \(error.errorDescription ?? "Unknown")")
             throw error
         } catch {
-            print("❌ Unexpected error: \(error)")
+            AppLogger.shared.error("Unexpected error: \(error)")
             throw APIError.uploadError(error.localizedDescription)
         }
     }
@@ -271,16 +271,16 @@ class APIService: ObservableObject {
         )
         
         // DEBUG: Log forex data in API response
-        print("🌐 API Response received with \(results.transactions.count) transactions")
+        AppLogger.shared.info("API Response received with \(results.transactions.count) transactions")
         let forexTransactions = results.transactions.filter { $0.originalCurrency != nil }
-        print("🌐 Transactions with forex data: \(forexTransactions.count)")
+        AppLogger.shared.info("Transactions with forex data: \(forexTransactions.count)")
         
         for transaction in forexTransactions.prefix(3) {
-            print("🌐 API Forex Transaction: \(transaction.description)")
-            print("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
-            print("   - originalAmount: \(transaction.originalAmount ?? 0)")
-            print("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-            print("   - hasForex: \(transaction.hasForex ?? false)")
+            AppLogger.shared.debug("API Forex Transaction: \(transaction.description)")
+            AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
+            AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
+            AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
+            AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
         }
         
         return results

@@ -66,7 +66,7 @@ struct ContentView: View {
                 .help("Check Backend Health")
                 
                 Button(action: { 
-                    print("🎯 STEP 1: Upload button clicked in ContentView")
+                    AppLogger.shared.debug("Upload button clicked in ContentView")
                     showingUploadSheet = true 
                 }) {
                     Image(systemName: "plus")

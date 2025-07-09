@@ -38,7 +38,7 @@ class FinancialDataManager: ObservableObject {
                 let decoder = JSONDecoder()
                 transactions = try decoder.decode([Transaction].self, from: transactionData)
             } catch {
-                print("Failed to load transactions: \(error)")
+                AppLogger.shared.error("Failed to load transactions: \(error)")
             }
         }
         
@@ -48,7 +48,7 @@ class FinancialDataManager: ObservableObject {
                 let decoder = JSONDecoder()
                 bankAccounts = try decoder.decode([BankAccount].self, from: accountData)
             } catch {
-                print("Failed to load bank accounts: \(error)")
+                AppLogger.shared.error("Failed to load bank accounts: \(error)")
             }
         }
         
@@ -58,7 +58,7 @@ class FinancialDataManager: ObservableObject {
                 let decoder = JSONDecoder()
                 uploadedStatements = try decoder.decode([UploadedStatement].self, from: statementData)
             } catch {
-                print("Failed to load uploaded statements: \(error)")
+                AppLogger.shared.error("Failed to load uploaded statements: \(error)")
             }
         }
         
@@ -159,7 +159,7 @@ class FinancialDataManager: ObservableObject {
         // Check for duplicate jobId
         let existingJobIds = Set(transactions.compactMap { $0.jobId })
         if existingJobIds.contains(jobId) {
-            print("Job \(jobId) already exists, skipping duplicate transactions")
+            AppLogger.shared.info("Job \(jobId) already exists, skipping duplicate transactions")
             isLoading = false
             return
         }
@@ -167,9 +167,9 @@ class FinancialDataManager: ObservableObject {
         // Debug: Check if any transactions have forex data
         let forexTransactions = newTransactions.filter { $0.hasForex == true }
         if !forexTransactions.isEmpty {
-            print("📈 Found \(forexTransactions.count) foreign currency transactions:")
+            AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
             for transaction in forexTransactions {
-                print("  - \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
+                AppLogger.shared.debug("Foreign transaction: \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
             }
         }
         
@@ -194,11 +194,11 @@ class FinancialDataManager: ObservableObject {
         // Add transactions with account linkage
         let transactionsWithAccounts = newTransactions.map { transaction in
             // DEBUG: Log forex data for each transaction
-            print("💾 Adding transaction: \(transaction.description)")
-            print("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
-            print("   - originalAmount: \(transaction.originalAmount ?? 0)")
-            print("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-            print("   - hasForex: \(transaction.hasForex ?? false)")
+            AppLogger.shared.debug("Adding transaction: \(transaction.description)")
+            AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
+            AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
+            AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
+            AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
             
             return Transaction(
                 id: transaction.id,
@@ -306,7 +306,7 @@ class FinancialDataManager: ObservableObject {
             "\(transaction.date)_\(transaction.description)_\(transaction.amount)"
         }
         
-        print("Removed \(transactions.count - uniqueTransactions.count) duplicate transactions")
+        AppLogger.shared.info("Removed \(transactions.count - uniqueTransactions.count) duplicate transactions")
         transactions = uniqueTransactions
         
         updateSummary()
@@ -453,7 +453,7 @@ class FinancialDataManager: ObservableObject {
     /// Update the category of a specific transaction
     func updateTransactionCategory(transactionId: String, newCategory: String) {
         guard let index = transactions.firstIndex(where: { $0.id == transactionId }) else {
-            print("❌ Transaction not found: \(transactionId)")
+            AppLogger.shared.error("Transaction not found: \(transactionId)")
             return
         }
         
@@ -493,7 +493,7 @@ class FinancialDataManager: ObservableObject {
         updateSummary()
         saveData()
         
-        print("✅ Updated transaction category: \(oldCategory) → \(newCategory)")
+        AppLogger.shared.info("Updated transaction category: \(oldCategory) → \(newCategory)")
     }
     
     /// Update the category of a transaction using Category object (for new category system)
@@ -523,14 +523,14 @@ class FinancialDataManager: ObservableObject {
                 if var matchingRule = findMatchingRule(for: transaction) {
                     matchingRule.recordMatch()
                     ruleStorage.updateRule(matchingRule)
-                    print("✅ Rule confidence increased for: \(merchantName)")
+                    AppLogger.shared.info("Rule confidence increased for: \(merchantName)")
                 }
             } else if suggestedCategory.name == oldCategory {
                 // User corrected the suggestion
                 if var matchingRule = findMatchingRule(for: transaction) {
                     matchingRule.recordCorrection()
                     ruleStorage.updateRule(matchingRule)
-                    print("📝 Rule confidence decreased for: \(merchantName)")
+                    AppLogger.shared.info("Rule confidence decreased for: \(merchantName)")
                 }
             }
         }
@@ -618,7 +618,7 @@ class FinancialDataManager: ObservableObject {
     private func createMerchantRule(merchantName: String, category: String, transaction: Transaction) async {
         // Find the category object
         guard let categoryObj = CategoryService.shared.categories.first(where: { $0.name == category }) else {
-            print("❌ Category not found: \(category)")
+            AppLogger.shared.error("Category not found: \(category)")
             return
         }
         
@@ -637,7 +637,7 @@ class FinancialDataManager: ObservableObject {
         
         // Save the rule
         RuleStorageService.shared.saveRule(newRule)
-        print("🎯 Created new merchant rule: \(merchantName) → \(category)")
+        AppLogger.shared.info("Created new merchant rule: \(merchantName) → \(category)")
     }
 }
 

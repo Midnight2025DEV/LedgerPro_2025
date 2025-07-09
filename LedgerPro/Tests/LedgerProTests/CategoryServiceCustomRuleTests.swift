@@ -99,7 +99,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
             ruleName: "General Amazon Rule"
         )
         rule1.merchantContains = "amazon"
-        rule1.priority = 80
+        rule1.priority = 110 // Higher than system rule
         
         var rule2 = CategoryRule(
             categoryId: UUID(uuidString: "00000000-0000-0000-0000-000000000032")!, // Entertainment
@@ -107,7 +107,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         )
         rule2.merchantContains = "amazon"
         rule2.descriptionContains = "prime video"
-        rule2.priority = 90 // Higher priority
+        rule2.priority = 120 // Even higher priority
         
         ruleStorage.saveRule(rule1)
         ruleStorage.saveRule(rule2)

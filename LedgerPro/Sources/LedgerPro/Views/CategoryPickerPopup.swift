@@ -126,7 +126,7 @@ struct CategoryPickerPopup: View {
     }
     
     private func createSmartRule(from query: String) {
-        print("Creating smart rule from: \(query)")
+        AppLogger.shared.info("Creating smart rule from: \(query)")
         // Implementation would create actual rule
     }
     

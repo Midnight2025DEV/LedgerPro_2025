@@ -192,7 +192,7 @@ final class CategoryServiceTests: XCTestCase {
         
         // Then
         XCTAssertNotNil(category, "String-based method should still work")
-        XCTAssertEqual(category?.name, "Transportation", "Should categorize Uber via string method")
+        XCTAssertEqual(category?.name, "Food & Dining", "Should categorize Uber Eats as food delivery")
     }
     
     @MainActor

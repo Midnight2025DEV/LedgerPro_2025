@@ -82,7 +82,7 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
             lastError = nil
             connectionStartTime = Date()
             
-            print("✅ Connected to MCP server: \(info.name)")
+            AppLogger.shared.info("Connected to MCP server: \(info.name)")
             
             // Start heartbeat monitoring after a short delay
             // The healthCheck method now has a 60-second grace period
@@ -109,7 +109,7 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
         lastError = nil
         connectionStartTime = nil
         
-        print("❌ Disconnected from MCP server: \(info.name)")
+        AppLogger.shared.info("Disconnected from MCP server: \(info.name)")
     }
     
     // MARK: - Request Handling
@@ -153,7 +153,7 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
                 
                 if attempt < maxRetries - 1 {
                     let delay = baseRetryDelay * pow(2.0, Double(attempt))
-                    print("⚠️ Request failed (attempt \(attempt + 1)/\(maxRetries)), retrying in \(delay)s: \(error)")
+                    AppLogger.shared.warning("Request failed (attempt \(attempt + 1)/\(maxRetries)), retrying in \(delay)s: \(error)")
                     try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 }
             }
@@ -175,7 +175,7 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
         // This prevents the ping issues from causing reconnections
         if isConnected {
             lastHealthCheck = Date()
-            print("💚 \(info.name) health check: Connected (uptime: \(Int(uptime))s)")
+            AppLogger.shared.info("\(info.name) health check: Connected (uptime: \(Int(uptime))s)")
             return MCPHealthStatus(
                 status: "healthy",
                 uptime: uptime,
@@ -195,7 +195,7 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
                 do {
                     _ = try await healthCheck()
                 } catch {
-                    print("⚠️ Heartbeat failed for \(info.name): \(error)")
+                    AppLogger.shared.warning("Heartbeat failed for \(info.name): \(error)")
                     lastError = error as? MCPRPCError
                     
                     // Since we're using connection-based health checks,
@@ -211,15 +211,15 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
     }
     
     private func attemptReconnection() async {
-        print("🔄 Attempting to reconnect to \(info.name)...")
+        AppLogger.shared.info("Attempting to reconnect to \(info.name)...")
         connectionState = .reconnecting
         
         do {
             await disconnect()
             try await connect()
-            print("✅ Reconnected to \(info.name)")
+            AppLogger.shared.info("Reconnected to \(info.name)")
         } catch {
-            print("❌ Reconnection failed for \(info.name): \(error)")
+            AppLogger.shared.error("Reconnection failed for \(info.name): \(error)")
             connectionState = .error(error as? MCPRPCError ?? MCPRPCError(code: -32601, message: "Server is unavailable"))
         }
     }
