@@ -16,6 +16,18 @@ struct MCPRequest: Codable {
     }
 }
 
+/// JSON-RPC 2.0 Notification Message (no response expected)
+struct MCPNotification: Codable {
+    var jsonrpc: String = "2.0"
+    let method: String
+    let params: [String: AnyCodable]?
+    
+    init(method: String, params: [String: AnyCodable]? = nil) {
+        self.method = method
+        self.params = params
+    }
+}
+
 /// JSON-RPC 2.0 Response Message
 struct MCPResponse: Codable {
     var jsonrpc: String = "2.0"

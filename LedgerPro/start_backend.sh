@@ -1,7 +1,10 @@
 #!/bin/bash
-# LedgerPro Backend Startup Script
+# LedgerPro Backend API Server Startup Script
+# Note: This starts the FastAPI backend only. MCP servers are managed by the LedgerPro app itself.
 
 echo "🚀 Starting LedgerPro Backend Server..."
+echo "📝 Note: MCP servers will auto-start when you launch the LedgerPro app"
+echo ""
 
 # Navigate to backend directory
 cd "$(dirname "$0")/backend"

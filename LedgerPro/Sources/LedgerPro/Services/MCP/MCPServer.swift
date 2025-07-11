@@ -308,7 +308,7 @@ extension MCPServer {
             fatalError("Could not find MCP servers directory")
         }
         
-        let serverPath = "\(basePath)/pdf-processor/pdf_processor_server.py"
+        let serverPath = "\(basePath)/pdf-processor/mcp_stdio_fix.py"
         
         let info = MCPServerInfo(
             name: "PDF Processor",

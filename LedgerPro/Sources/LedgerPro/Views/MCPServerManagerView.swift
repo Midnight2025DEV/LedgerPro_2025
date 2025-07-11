@@ -3,7 +3,7 @@ import SwiftUI
 /// MCP Server Manager View - Control panel for managing MCP servers
 struct MCPServerManagerView: View {
     @Binding var isPresented: Bool
-    @StateObject private var launcher = MCPServerLauncher(mcpBridge: MCPBridge())
+    @EnvironmentObject private var mcpLauncher: MCPServerLauncher
     @State private var showingAdvancedOptions = false
     @State private var selectedServerType: ServerType?
     @State private var autoLaunchEnabled = true
@@ -67,7 +67,7 @@ struct MCPServerManagerView: View {
                     ForEach(ServerType.allCases.filter { $0 != .custom }, id: \.rawValue) { serverType in
                         ServerCard(
                             serverType: serverType,
-                            launcher: launcher,
+                            mcpLauncher: mcpLauncher,
                             isSelected: selectedServerType == serverType
                         )
                         .onTapGesture {
@@ -84,17 +84,17 @@ struct MCPServerManagerView: View {
             HStack {
                 Button("Launch Core Servers") {
                     Task {
-                        try? await launcher.launchCoreServers()
+                        try? await mcpLauncher.launchCoreServers()
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(launcher.isLaunching || launcher.launchedServers.count >= 2)
+                .disabled(mcpLauncher.isLaunching || mcpLauncher.launchedServers.count >= 2)
                 
                 Button("Stop All") {
-                    launcher.stopAllServers()
+                    mcpLauncher.stopAllServers()
                 }
                 .buttonStyle(.bordered)
-                .disabled(launcher.launchedServers.isEmpty)
+                .disabled(mcpLauncher.launchedServers.isEmpty)
                 
                 Spacer()
                 
@@ -109,14 +109,14 @@ struct MCPServerManagerView: View {
         }
         .frame(width: 400, height: 500)
         .onAppear {
-            if autoLaunchEnabled && launcher.launchedServers.isEmpty && !launcher.isLaunching {
+            if autoLaunchEnabled && mcpLauncher.launchedServers.isEmpty && !mcpLauncher.isLaunching {
                 Task {
-                    try? await launcher.launchCoreServers()
+                    try? await mcpLauncher.launchCoreServers()
                 }
             }
         }
         .sheet(isPresented: $showingAdvancedOptions) {
-            AdvancedServerOptionsView(launcher: launcher)
+            AdvancedServerOptionsView(mcpLauncher: mcpLauncher)
         }
     }
     
@@ -139,7 +139,7 @@ struct MCPServerManagerView: View {
             
             Spacer()
             
-            if launcher.isLaunching {
+            if mcpLauncher.isLaunching {
                 ProgressView()
                     .controlSize(.small)
             }
@@ -157,7 +157,7 @@ struct MCPServerManagerView: View {
     }
     
     private var statusIconName: String {
-        switch launcher.launchStatus {
+        switch mcpLauncher.launchStatus {
         case .idle:
             return "moon.zzz"
         case .launching:
@@ -170,7 +170,7 @@ struct MCPServerManagerView: View {
     }
     
     private var statusColor: Color {
-        switch launcher.launchStatus {
+        switch mcpLauncher.launchStatus {
         case .idle:
             return .secondary
         case .launching:
@@ -183,7 +183,7 @@ struct MCPServerManagerView: View {
     }
     
     private var statusTitle: String {
-        switch launcher.launchStatus {
+        switch mcpLauncher.launchStatus {
         case .idle:
             return "Servers Idle"
         case .launching(let serverType):
@@ -196,7 +196,7 @@ struct MCPServerManagerView: View {
     }
     
     private var statusSubtitle: String {
-        switch launcher.launchStatus {
+        switch mcpLauncher.launchStatus {
         case .idle:
             return "Ready to launch AI services"
         case .launching:
@@ -209,7 +209,7 @@ struct MCPServerManagerView: View {
     }
     
     private var statusBackgroundColor: Color {
-        switch launcher.launchStatus {
+        switch mcpLauncher.launchStatus {
         case .idle:
             return Color.secondary.opacity(0.1)
         case .launching:
@@ -226,17 +226,17 @@ struct MCPServerManagerView: View {
 
 struct ServerCard: View {
     let serverType: ServerType
-    @ObservedObject var launcher: MCPServerLauncher
+    @ObservedObject var mcpLauncher: MCPServerLauncher
     let isSelected: Bool
     
     @State private var showingLogs = false
     
     var isRunning: Bool {
-        launcher.isServerRunning(serverType)
+        mcpLauncher.isServerRunning(serverType)
     }
     
     var healthStatus: ServerHealthStatus? {
-        launcher.getHealthStatus().first { $0.type == serverType }
+        mcpLauncher.getHealthStatus().first { $0.type == serverType }
     }
     
     var body: some View {
@@ -276,19 +276,19 @@ struct ServerCard: View {
                     HStack(spacing: 8) {
                         if isRunning {
                             Button("Stop") {
-                                launcher.stopServer(serverType)
+                                mcpLauncher.stopServer(serverType)
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                         } else {
                             Button("Start") {
                                 Task {
-                                    try? await launcher.launchServer(serverType)
+                                    try? await mcpLauncher.launchServer(serverType)
                                 }
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
-                            .disabled(launcher.isLaunching)
+                            .disabled(mcpLauncher.isLaunching)
                         }
                     }
                 }
@@ -365,7 +365,7 @@ struct ServerCard: View {
 // MARK: - Advanced Options
 
 struct AdvancedServerOptionsView: View {
-    let launcher: MCPServerLauncher
+    let mcpLauncher: MCPServerLauncher
     @Environment(\.presentationMode) private var presentationMode
     
     var body: some View {
@@ -380,7 +380,7 @@ struct AdvancedServerOptionsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Button("Perform Health Check") {
                             Task {
-                                await launcher.performHealthCheck()
+                                await mcpLauncher.performHealthCheck()
                             }
                         }
                         .buttonStyle(.bordered)

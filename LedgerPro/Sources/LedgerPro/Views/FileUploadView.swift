@@ -6,6 +6,8 @@ struct FileUploadView: View {
     @EnvironmentObject private var apiService: APIService
     @EnvironmentObject private var dataManager: FinancialDataManager
     @EnvironmentObject private var categoryService: CategoryService
+    @EnvironmentObject private var mcpBridge: MCPBridge
+    @State private var useMCPProcessing = false
     @Environment(\.dismiss) private var dismiss
     
     @State private var isDragOver = false
@@ -47,6 +49,17 @@ struct FileUploadView: View {
                 processingView
             }
             
+            // MCP Processing Toggle
+            if selectedFile != nil && !isProcessing {
+                HStack {
+                    Toggle("Use Local MCP Processing", isOn: $useMCPProcessing)
+                        .toggleStyle(SwitchToggleStyle())
+                        .help("Process documents locally using MCP servers instead of backend API")
+                    Spacer()
+                }
+                .padding(.horizontal)
+            }
+            
             // Action Buttons
             if !isProcessing {
                 HStack(spacing: 16) {
@@ -67,6 +80,12 @@ struct FileUploadView: View {
                             selectFile()
                         }
                         .buttonStyle(.borderedProminent)
+                        
+                        Button("Test MCP") {
+                            testMCPConnection()
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Test MCP server connection and capabilities")
                     }
                 }
             }
@@ -366,7 +385,7 @@ struct FileUploadView: View {
         processingStatus = "Uploading file..."
         processingProgress = 0.0
         
-        Task {
+        Task { @MainActor in
             do {
                 // Verify file size
                 let fileSize = try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
@@ -380,81 +399,98 @@ struct FileUploadView: View {
                     throw APIError.uploadError("File too large (max 100MB)")
                 }
                 
-                // Upload file
-                AppLogger.shared.debug("Calling apiService.uploadFile...")
-                let uploadResponse = try await apiService.uploadFile(file)
-                currentJobId = uploadResponse.jobId
-                print("✅ Upload response received, jobId: \(uploadResponse.jobId)")
+                // Choose processing method based on toggle
+                let transactions: [Transaction]
+                let filename: String
                 
-                await MainActor.run {
-                    processingStatus = "Processing document..."
-                    processingProgress = 0.3
+                if useMCPProcessing {
+                    // Use MCP processing
+                    await MainActor.run {
+                        processingStatus = "Processing with MCP..."
+                        processingProgress = 0.3
+                    }
+                    
+                    transactions = try await self.processPDFWithMCP(file)
+                    filename = file.lastPathComponent
+                    print("✅ MCP processed \(transactions.count) transactions")
+                } else {
+                    // Use backend API processing
+                    AppLogger.shared.debug("Calling apiService.uploadFile...")
+                    let uploadResponse = try await apiService.uploadFile(file)
+                    currentJobId = uploadResponse.jobId
+                    print("✅ Upload response received, jobId: \(uploadResponse.jobId)")
+                    
+                    await MainActor.run {
+                        processingStatus = "Processing document..."
+                        processingProgress = 0.3
+                    }
+                    
+                    // Poll for completion
+                    print("⏳ Polling for job completion...")
+                    let finalStatus = try await apiService.pollJobUntilComplete(uploadResponse.jobId)
+                    print("🔍 Final status: \(finalStatus.status)")
+                    
+                    if finalStatus.status == "completed" {
+                        await MainActor.run {
+                            processingStatus = "Retrieving results..."
+                            processingProgress = 0.8
+                        }
+                        
+                        // Get transaction results
+                        AppLogger.shared.debug("Getting transaction results...")
+                        let results = try await apiService.getTransactions(uploadResponse.jobId)
+                        transactions = results.transactions
+                        filename = results.metadata.filename
+                        print("✅ Retrieved \(transactions.count) transactions")
+                    } else {
+                        throw APIError.uploadError("Document processing failed: \(finalStatus.status)")
+                    }
                 }
                 
-                // Poll for completion
-                print("⏳ Polling for job completion...")
-                let finalStatus = try await apiService.pollJobUntilComplete(uploadResponse.jobId)
-                print("🔍 Final status: \(finalStatus.status)")
-                
-                if finalStatus.status == "completed" {
-                    await MainActor.run {
-                        processingStatus = "Retrieving results..."
-                        processingProgress = 0.8
-                    }
-                    
-                    // Get transaction results
-                    AppLogger.shared.debug("Getting transaction results...")
-                    let results = try await apiService.getTransactions(uploadResponse.jobId)
-                    print("✅ Retrieved \(results.transactions.count) transactions")
-                    
-                    // Debug: Check if any transactions have forex data
-                    let forexTransactions = results.transactions.filter { $0.hasForex == true }
-                    if !forexTransactions.isEmpty {
-                        AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions in API response")
-                        for transaction in forexTransactions {
-                            print("  - \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
-                        }
-                    } else {
-                        print("⚠️ No foreign currency transactions found in API response")
-                    }
-                    
-                    await MainActor.run {
-                        processingStatus = "Auto-categorizing transactions..."
-                        processingProgress = 0.9
-                    }
-                    
-                    // Auto-categorize transactions
-                    AppLogger.shared.info("Auto-categorizing \(results.transactions.count) transactions...")
-                    let categorizationService = ImportCategorizationService()
-                    let categorizedResult = categorizationService.categorizeTransactions(results.transactions)
-                    print("✅ Auto-categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions")
-                    
-                    await MainActor.run {
-                        processingProgress = 1.0
-                        importResult = categorizedResult
-                        
-                        // Add categorized transactions to data manager
-                        let finalTransactions = categorizedResult.categorizedTransactions.map { $0.0 } + 
-                                              categorizedResult.uncategorizedTransactions
-                        
-                        dataManager.addTransactions(
-                            finalTransactions,
-                            jobId: results.jobId,
-                            filename: results.metadata.filename
-                        )
-                        
-                        print("🎉 Upload completed successfully!")
-                        
-                        // Show import summary instead of immediately dismissing
-                        showingImportSummary = true
+                // Debug: Check if any transactions have forex data
+                let forexTransactions = transactions.filter { $0.hasForex == true }
+                if !forexTransactions.isEmpty {
+                    AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
+                    for transaction in forexTransactions {
+                        print("  - \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
                     }
                 } else {
-                    print("❌ Processing failed with status: \(finalStatus.status)")
-                    await MainActor.run {
-                        errorMessage = finalStatus.error ?? "Processing failed with status: \(finalStatus.status)"
-                        showingError = true
-                        isProcessing = false
-                    }
+                    print("⚠️ No foreign currency transactions found")
+                }
+                
+                await MainActor.run {
+                    processingStatus = "Auto-categorizing transactions..."
+                    processingProgress = 0.9
+                }
+                
+                // Auto-categorize transactions
+                AppLogger.shared.info("Auto-categorizing \(transactions.count) transactions...")
+                let categorizationService = ImportCategorizationService()
+                let categorizedResult = categorizationService.categorizeTransactions(transactions)
+                print("✅ Auto-categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions")
+                
+                await MainActor.run {
+                    processingProgress = 1.0
+                    importResult = categorizedResult
+                    
+                    // Add categorized transactions to data manager
+                    let finalTransactions = categorizedResult.categorizedTransactions.map { $0.0 } + 
+                                          categorizedResult.uncategorizedTransactions
+                    
+                    // Use jobId if available (backend processing) or generate one for MCP
+                    let jobIdForData = currentJobId ?? UUID().uuidString
+                    
+                    dataManager.addTransactions(
+                        finalTransactions,
+                        jobId: jobIdForData,
+                        filename: filename
+                    )
+                    
+                    let processingMethod = useMCPProcessing ? "MCP Local Processing" : "Backend API"
+                    print("🎉 Processing completed successfully with \(processingMethod)!")
+                    
+                    // Show import summary instead of immediately dismissing
+                    showingImportSummary = true
                 }
                 
             } catch {
@@ -497,6 +533,80 @@ struct FileUploadView: View {
             print("Error getting file size: \(error)")
         }
         return "Unknown size"
+    }
+    
+    // MARK: - MCP Processing
+    
+    private func processPDFWithMCP(_ url: URL) async throws -> [Transaction] {
+        print("🎯 Processing PDF with MCP: \(url.lastPathComponent)")
+        
+        // First ensure servers are connected (they might have disconnected after launch)
+        if !mcpBridge.areServersReady() {
+            print("🔄 Servers not ready, connecting all servers...")
+            await mcpBridge.connectAll()
+            
+            // Give servers a moment to establish connections
+            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        }
+        
+        // Use enhanced initialization check with proper timing
+        do {
+            try await mcpBridge.waitForServersToInitialize(maxAttempts: 30)
+            print("✅ All MCP servers fully initialized and ready")
+        } catch {
+            print("❌ MCP server initialization failed: \(error.localizedDescription)")
+            throw error
+        }
+        
+        print("🚀 All MCP servers ready, processing document...")
+        
+        // Process document through MCP
+        let result = try await mcpBridge.processDocument(url)
+        
+        return result.transactions
+    }
+    
+    // MARK: - MCP Testing
+    
+    private func testMCPConnection() {
+        print("🧪 Testing MCP connection...")
+        
+        Task {
+            do {
+                // Test connection
+                await mcpBridge.connectAll()
+                
+                // Wait for connection establishment
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                
+                await MainActor.run {
+                    let isConnected = mcpBridge.isConnected
+                    let serverCount = mcpBridge.servers.values.count
+                    let activeCount = mcpBridge.servers.values.filter { $0.isConnected }.count
+                    
+                    let message = """
+                    🧪 MCP Test Results:
+                    • Connected: \(isConnected ? "✅" : "❌")
+                    • Available Servers: \(serverCount)
+                    • Active Servers: \(activeCount)
+                    
+                    Server Details:
+                    \(mcpBridge.servers.values.map { "• \($0.info.name): \($0.isConnected ? "✅ Active" : "❌ Inactive")" }.joined(separator: "\n"))
+                    """
+                    
+                    errorMessage = message
+                    showingError = true
+                    
+                    print(message)
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "MCP Test Failed: \(error.localizedDescription)"
+                    showingError = true
+                    print("❌ MCP Test Error: \(error)")
+                }
+            }
+        }
     }
 }
 

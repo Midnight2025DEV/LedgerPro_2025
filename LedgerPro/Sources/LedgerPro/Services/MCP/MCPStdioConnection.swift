@@ -161,6 +161,26 @@ class MCPStdioConnection: ObservableObject {
         }
     }
     
+    func sendNotification(_ notification: MCPNotification) async throws {
+        guard isConnected else {
+            throw MCPConnectionError.notConnected
+        }
+        
+        do {
+            let encoder = JSONEncoder()
+            var notificationData = try encoder.encode(notification)
+            notificationData.append("\n".data(using: .utf8)!)
+            
+            inputPipe?.fileHandleForWriting.write(notificationData)
+            
+            logger.debug("📤 Sent notification: \(notification.method)")
+            
+        } catch {
+            logger.error("❌ Failed to encode/send MCP notification: \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
     private func initialize() async throws {
         let request = MCPRequest(
             method: .initialize,
@@ -202,33 +222,83 @@ class MCPStdioConnection: ObservableObject {
             }
         }
         
-        logger.info("✅ MCP server initialized successfully")
+        // Send "initialized" notification to complete the MCP protocol handshake
+        logger.debug("📤 Sending initialized notification...")
+        try await sendNotification(MCPNotification(method: "notifications/initialized"))
+        
+        logger.info("✅ MCP server initialized successfully with protocol handshake complete")
         logger.debug("   Server response: \(String(describing: response))")
     }
     
     private func handleOutputData(_ data: Data) {
+        // APPEND new data to buffer
         outputBuffer.append(data)
         
+        // Process all complete messages in buffer (delimited by newlines)
         while let newlineRange = outputBuffer.firstRange(of: "\n".data(using: .utf8)!) {
+            // Extract one complete message
             let messageData = outputBuffer[..<newlineRange.lowerBound]
+            
+            // Remove processed message + delimiter from buffer
             outputBuffer.removeSubrange(..<newlineRange.upperBound)
             
+            // Skip empty messages
+            if messageData.isEmpty {
+                continue
+            }
+            
+            // Validate JSON before processing
             do {
-                let decoder = JSONDecoder()
-                let response = try decoder.decode(MCPResponse.self, from: messageData)
+                // Quick validation that this is valid JSON
+                _ = try JSONSerialization.jsonObject(with: messageData, options: [])
                 
-                logger.debug("📥 Received response for id: \(response.id)")
-                
-                responseQueue.sync {
-                    if let continuation = responseHandlers.removeValue(forKey: response.id) {
-                        continuation.resume(returning: response)
-                    } else {
-                        logger.warning("⚠️ Received response with no matching request: \(response.id)")
-                    }
+                // Debug the raw message data
+                if let rawMessage = String(data: messageData, encoding: .utf8) {
+                    logger.debug("🔍 RAW MCP MESSAGE: \(String(rawMessage.prefix(500)))...")
                 }
                 
+                // Process the complete message
+                processCompleteMessage(messageData)
             } catch {
-                logger.error("❌ Failed to parse MCP response: \(error)")
+                // This might be a partial message, keep accumulating
+                logger.warning("⚠️ Received partial or invalid JSON, buffering: \(messageData.count) bytes")
+                // Put the data back at the beginning of the buffer
+                outputBuffer.insert(contentsOf: messageData, at: 0)
+                outputBuffer.insert(contentsOf: "\n".data(using: .utf8)!, at: messageData.count)
+                break  // Wait for more data
+            }
+        }
+        
+        // Check buffer size to prevent memory issues with large messages
+        if outputBuffer.count > 10_000_000 { // 10MB safety limit
+            logger.error("❌ Buffer exceeded maximum size (\(self.outputBuffer.count) bytes), clearing buffer")
+            outputBuffer.removeAll() // Reset to prevent memory issues
+        }
+    }
+    
+    private func processCompleteMessage(_ messageData: Data) {
+        do {
+            let decoder = JSONDecoder()
+            let response = try decoder.decode(MCPResponse.self, from: messageData)
+            
+            logger.debug("📥 Received response for id: \(response.id)")
+            
+            responseQueue.sync {
+                if let continuation = responseHandlers.removeValue(forKey: response.id) {
+                    continuation.resume(returning: response)
+                } else {
+                    logger.warning("⚠️ Received response with no matching request: \(response.id)")
+                }
+            }
+            
+        } catch {
+            logger.error("❌ Failed to parse MCP response: \(error)")
+            // Log detailed error information for debugging
+            if let decodingError = error as? DecodingError {
+                logger.error("🔍 DECODING ERROR DETAILS: \(decodingError.localizedDescription)")
+            }
+            if let rawMessage = String(data: messageData, encoding: .utf8) {
+                logger.error("🔍 PROBLEMATIC MESSAGE (\(messageData.count) bytes): \(String(rawMessage.prefix(300)))...")
             }
         }
     }

@@ -38,7 +38,7 @@ struct Transaction: Codable, Identifiable, Hashable {
             self.id = providedId
         } else {
             // Generate ID from date + description + amount for uniqueness
-            self.id = "\(date)_\(description.prefix(20))_\(amount)".replacingOccurrences(of: " ", with: "_")
+            self.id = "\(date)_\(description.prefix(20))_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
         }
         self.date = date
         self.description = description
@@ -68,13 +68,13 @@ struct Transaction: Codable, Identifiable, Hashable {
             let date = try container.decode(String.self, forKey: .date)
             let description = try container.decode(String.self, forKey: .description)
             let amount = try container.decode(Double.self, forKey: .amount)
-            self.id = "\(date)_\(description.prefix(20))_\(amount)".replacingOccurrences(of: " ", with: "_")
+            self.id = "\(date)_\(description.prefix(20))_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
         }
         
         self.date = try container.decode(String.self, forKey: .date)
         self.description = try container.decode(String.self, forKey: .description)
         self.amount = try container.decode(Double.self, forKey: .amount)
-        self.category = try container.decode(String.self, forKey: .category)
+        self.category = try container.decodeIfPresent(String.self, forKey: .category) ?? "Uncategorized"
         self.confidence = try container.decodeIfPresent(Double.self, forKey: .confidence)
         self.jobId = try container.decodeIfPresent(String.self, forKey: .jobId)
         self.accountId = try container.decodeIfPresent(String.self, forKey: .accountId)

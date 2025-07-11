@@ -12,7 +12,10 @@ LedgerPro/
 │   ├── requirements.txt        # Dependencies
 │   ├── processors/python/      # PDF/CSV processing
 │   └── config/                 # Configuration
-├── 🤖 mcp-servers/             # Model Context Protocol (future)
+├── 🤖 mcp-servers/             # Model Context Protocol servers (ACTIVE)
+│   ├── pdf-processor/          # Local PDF processing with AI
+│   ├── financial-analyzer/     # Advanced financial insights
+│   └── openai-service/         # AI categorization (BYOAI support)
 ├── 📄 Package.swift            # Swift package config
 └── 🚀 start_backend.sh         # Backend startup script
 ```
@@ -43,6 +46,7 @@ swift run
 - Financial insights and charts
 - Multi-account management
 - Local data storage
+- **MCP Status Indicator** - Shows server health in toolbar
 
 ### 🔧 Backend Processing
 - **PDF Analysis** - Advanced table extraction using Camelot
@@ -50,6 +54,13 @@ swift run
 - **AI Categorization** - Smart transaction categorization
 - **Duplicate Detection** - Prevents duplicate transactions
 - **Security** - File validation and secure processing
+
+### 🤖 MCP Integration (NEW!)
+- **Local AI Processing** - Process PDFs entirely on-device
+- **Smart Categorization** - AI-powered transaction categorization
+- **Financial Insights** - Advanced analysis and trend detection
+- **Privacy First** - Choose between local MCP or backend API processing
+- **Auto-start Servers** - MCP servers launch automatically with the app
 
 ## 📋 Requirements
 
@@ -102,12 +113,25 @@ curl http://127.0.0.1:8000/api/health
 - `GET /api/jobs/{job_id}` - Check processing status
 - `GET /api/transactions/{job_id}` - Get processed transactions
 
-## 🤖 Future Features (MCP Integration)
+## 🤖 MCP Processing Options
 
-The `mcp-servers/` directory contains Model Context Protocol servers for future integration:
-- Natural language financial queries
-- Advanced AI insights
-- Automated financial planning
+When uploading files, users can choose:
+- **Backend API** (Default) - Traditional server processing
+- **Local MCP Processing** - AI-powered local analysis
+  - PDF Processor - Extract transactions from bank statements
+  - Financial Analyzer - Generate insights and trends
+  - OpenAI Service - Categorize transactions (optional API key)
+
+## 🚀 MCP Server Management
+
+MCP servers start automatically when the app launches. No manual setup required!
+- Servers run as child processes of the main app
+- Status indicator shows server health in toolbar
+- Graceful shutdown when app closes
+- **Status Indicators:**
+  - 🟢 Green: All servers ready
+  - 🟠 Orange: Some servers active
+  - 🔴 Red: Servers offline
 
 ## 🔒 Security
 
@@ -115,6 +139,7 @@ The `mcp-servers/` directory contains Model Context Protocol servers for future 
 - Temporary file cleanup
 - Secure file validation
 - Rate limiting protection
+- **MCP Privacy** - All MCP processing happens locally, no data leaves your machine
 
 ## 📝 License
 
