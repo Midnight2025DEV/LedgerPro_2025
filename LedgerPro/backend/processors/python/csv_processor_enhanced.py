@@ -25,18 +25,18 @@ class EnhancedCSVProcessor:
 
         # Common column name mappings
         self.date_columns = [
-            "date", "trans_date", "trans date", "transaction_date", 
-            "transaction date", "posting_date", "posting date", 
+            "date", "trans_date", "trans date", "transaction_date",
+            "transaction date", "posting_date", "posting date",
             "post_date", "post date", "posted_date"
         ]
 
         self.description_columns = [
-            "description", "merchant", "payee", "transaction", 
+            "description", "merchant", "payee", "transaction",
             "details", "memo", "reference", "narrative"
         ]
 
         self.amount_columns = [
-            "amount", "debit", "credit", "value", 
+            "amount", "debit", "credit", "value",
             "transaction_amount", "transaction amount", "net_amount"
         ]
 
@@ -47,17 +47,17 @@ class EnhancedCSVProcessor:
     def detect_format(self, file_content: str) -> str:
         """Detect if CSV is single-header or multi-section format."""
         lines = file_content.strip().split("\n")
-        
+
         # Count potential header lines
         header_count = 0
         first_header_index = -1
-        
+
         for i, line in enumerate(lines):
             if self._is_header_line(line, strict=True):  # Use strict mode
                 if first_header_index == -1:
                     first_header_index = i
                 header_count += 1
-        
+
         # If only one header near the top, it's a standard CSV
         if header_count == 1 and first_header_index < 5:
             return "single_header"
@@ -72,25 +72,25 @@ class EnhancedCSVProcessor:
         """Determine if a line is likely a header."""
         # Split by common delimiters
         parts = re.split(r'[,;\t|]', line.lower())
-        
+
         # Clean parts
         parts = [p.strip() for p in parts if p.strip()]
-        
+
         # Header keywords
         header_keywords = [
-            "date", "trans", "post", "description", "amount", 
-            "debit", "credit", "balance", "category", "type", 
+            "date", "trans", "post", "description", "amount",
+            "debit", "credit", "balance", "category", "type",
             "merchant", "payee"
         ]
-        
+
         if strict:
             # In strict mode, require multiple keywords and no transaction-like content
             keyword_matches = sum(1 for part in parts if any(keyword == part or keyword in part.split() for keyword in header_keywords))
-            
+
             # Check if line contains transaction-like data (amounts, specific merchants)
             has_amount = any(re.match(r'^-?\$?\d+\.?\d*', part) for part in parts)
             has_merchant_names = any(len(part) > 20 for part in parts)  # Long descriptions
-            
+
             # It's a header if it has multiple keywords and no transaction data
             return keyword_matches >= 2 and not has_amount and not has_merchant_names
         else:
@@ -107,12 +107,12 @@ class EnhancedCSVProcessor:
             # Detect format
             format_type = self.detect_format(content)
             print(f"Detected format: {format_type}")
-            
+
             if format_type == "single_header":
                 return self.process_single_header_csv(file_path)
             else:
                 return self.process_multi_section_csv(content, file_path)
-                
+
         except Exception as e:
             print(f"Exception occurred: {e}")
             import traceback
@@ -130,30 +130,30 @@ class EnhancedCSVProcessor:
     def process_single_header_csv(self, file_path: str) -> Dict:
         """Process standard single-header CSV files (like Navy Federal)."""
         print("Processing as single-header CSV...")
-        
+
         transactions = []
-        
+
         with open(file_path, 'r', encoding='utf-8-sig') as f:
             # Detect delimiter
             first_line = f.readline()
             f.seek(0)
             delimiter = self._detect_delimiter(first_line)
-            
+
             # Read CSV
             reader = csv.DictReader(f, delimiter=delimiter)
             headers = reader.fieldnames
             print(f"Headers: {headers}")
-            
+
             # Map columns
             column_mapping = self.map_columns(headers)
             print(f"Column mapping: {column_mapping}")
-            
+
             row_count = 0
             for row_dict in reader:
                 row_count += 1
-                
+
                 transaction = {}
-                
+
                 # Extract date
                 if column_mapping["date"]:
                     date_str = row_dict.get(column_mapping["date"], "").strip()
@@ -163,18 +163,18 @@ class EnhancedCSVProcessor:
                         continue
                 else:
                     continue
-                
+
                 # Extract description
                 if column_mapping["description"]:
                     transaction["description"] = row_dict.get(column_mapping["description"], "Unknown").strip()
                 else:
                     transaction["description"] = "Unknown"
-                
+
                 # Extract amount
                 if column_mapping["amount"]:
                     amount_str = row_dict.get(column_mapping["amount"], "0").strip()
                     transaction["amount"] = self.parse_amount_enhanced(amount_str)
-                    
+
                     # Handle Credit/Debit indicator if present
                     if "credit debit indicator" in [h.lower() for h in headers]:
                         indicator = row_dict.get("Credit Debit Indicator", "").strip().lower()
@@ -184,21 +184,21 @@ class EnhancedCSVProcessor:
                             transaction["amount"] = abs(transaction["amount"])
                 else:
                     continue
-                
+
                 # Skip zero amounts
                 if transaction["amount"] == 0:
                     continue
-                
+
                 # Extract category
                 if column_mapping["category"]:
                     transaction["category"] = row_dict.get(column_mapping["category"], "Other").strip()
                 else:
                     transaction["category"] = self._categorize_transaction(transaction["description"])
-                
+
                 # Add metadata
                 transaction["confidence"] = 1.0
                 transaction["has_forex"] = False
-                
+
                 # Check for forex data in the row
                 if "Instructed Currency" in row_dict and row_dict["Instructed Currency"]:
                     currency = row_dict["Instructed Currency"].strip()
@@ -215,14 +215,14 @@ class EnhancedCSVProcessor:
                                     pass
                         if "original_currency" in transaction and "exchange_rate" in transaction:
                             transaction["has_forex"] = True
-                
+
                 # Store raw data
                 transaction["raw_data"] = {k: v for k, v in row_dict.items() if v.strip()}
-                
+
                 transactions.append(transaction)
-        
+
         print(f"Processed {row_count} rows, extracted {len(transactions)} transactions")
-        
+
         # Create metadata
         metadata = {
             "filename": file_path,
@@ -231,7 +231,7 @@ class EnhancedCSVProcessor:
             "total_transactions": len(transactions),
             "raw_text": f"Standard CSV file with {len(transactions)} transactions",
         }
-        
+
         return {
             "transactions": transactions,
             "metadata": metadata,
@@ -241,20 +241,20 @@ class EnhancedCSVProcessor:
     def process_multi_section_csv(self, content: str, file_path: str) -> Dict:
         """Process multi-section CSV files (original enhanced logic)."""
         print("Processing as multi-section CSV...")
-        
+
         # Original multi-section detection logic
         sections = self.detect_sections(content)
         print(f"Detected {len(sections)} sections")
-        
+
         all_transactions = []
-        
+
         # Process each section
         for i, section in enumerate(sections):
             print(f"\nProcessing section {i+1}:")
             section_transactions = self.process_section(section)
             all_transactions.extend(section_transactions)
             print(f"Extracted {len(section_transactions)} transactions from section {i+1}")
-        
+
         # Create metadata
         metadata = {
             "filename": file_path,
@@ -264,7 +264,7 @@ class EnhancedCSVProcessor:
             "raw_text": f"Multi-section CSV with {len(all_transactions)} transactions",
             "sections_processed": len(sections),
         }
-        
+
         return {
             "transactions": all_transactions,
             "metadata": metadata,
@@ -362,16 +362,16 @@ class EnhancedCSVProcessor:
     def _detect_delimiter(self, line: str) -> str:
         """Detect CSV delimiter."""
         delimiters = [',', ';', '\t', '|']
-        
+
         # Count occurrences of each delimiter
         delimiter_counts = {}
         for delimiter in delimiters:
             delimiter_counts[delimiter] = line.count(delimiter)
-        
+
         # Return the delimiter with the most occurrences
         if delimiter_counts:
             return max(delimiter_counts, key=delimiter_counts.get)
-        
+
         return ','  # Default to comma
 
     def map_columns(self, headers: List[str]) -> Dict[str, str]:
@@ -382,7 +382,7 @@ class EnhancedCSVProcessor:
 
         # Map date column
         mapping["date"] = next(
-            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.date_columns)), 
+            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.date_columns)),
             None
         )
 
@@ -391,18 +391,18 @@ class EnhancedCSVProcessor:
             (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.description_columns)),
             None,
         )
-        
+
         # Special handling for Navy Federal format
         if "Description" in headers:
             mapping["description"] = "Description"
 
         # Map amount column
         mapping["amount"] = next(
-            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.amount_columns)), 
+            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.amount_columns)),
             None
         )
 
-        # Map category column  
+        # Map category column
         mapping["category"] = next(
             (headers[i] for i, h in enumerate(headers_lower) if any(c in h for c in self.category_columns)),
             None,
