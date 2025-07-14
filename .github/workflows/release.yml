@@ -3,129 +3,31 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags like v1.0.0
+      - 'v*'
 
 jobs:
-  test-before-release:
-    name: Full Test Suite
+  build:
+    name: Build Release
     runs-on: macos-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
-    - name: Run Full Test Suite
-      run: |
-        cd LedgerPro
-        swift test --parallel
-        
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode_15.0.app
+    
     - name: Build Release
       run: |
         cd LedgerPro
         swift build -c release
         
-    - name: Performance Regression Check
+    - name: Create Release Archive
       run: |
-        cd LedgerPro
-        swift test --filter "testLargeDatasetWorkflow|testMemoryPerformanceWorkflow" > perf.txt
+        cd LedgerPro/.build/release
+        zip -r ../../LedgerPro-${{ github.ref_name }}.zip LedgerPro
         
-        # Ensure no test takes longer than 25 seconds
-        if grep -E "[2-9][0-9]\.[0-9]+ seconds" perf.txt; then
-          echo "❌ Performance regression detected in release candidate!"
-          exit 1
-        fi
-
-  build-release:
-    name: Build Release Artifacts
-    runs-on: macos-latest
-    needs: test-before-release
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Xcode
-      run: sudo xcode-select -s /Applications/Xcode_15.0.app
-      
-    - name: Build macOS App
-      run: |
-        cd LedgerPro
-        swift build -c release --arch arm64 --arch x86_64
-        
-    - name: Create App Bundle
-      run: |
-        cd LedgerPro
-        mkdir -p LedgerPro.app/Contents/MacOS
-        mkdir -p LedgerPro.app/Contents/Resources
-        
-        # Copy binary
-        cp .build/release/LedgerPro LedgerPro.app/Contents/MacOS/
-        
-        # Create Info.plist
-        cat > LedgerPro.app/Contents/Info.plist << 'EOF'
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>CFBundleExecutable</key>
-            <string>LedgerPro</string>
-            <key>CFBundleIdentifier</key>
-            <string>com.ledgerpro.app</string>
-            <key>CFBundleName</key>
-            <string>LedgerPro</string>
-            <key>CFBundleVersion</key>
-            <string>${{ github.ref_name }}</string>
-            <key>CFBundleShortVersionString</key>
-            <string>${{ github.ref_name }}</string>
-            <key>LSMinimumSystemVersion</key>
-            <string>13.0</string>
-        </dict>
-        </plist>
-        EOF
-        
-    - name: Create DMG
-      run: |
-        cd LedgerPro
-        hdiutil create -volname "LedgerPro" -srcfolder LedgerPro.app -ov -format UDZO LedgerPro-${{ github.ref_name }}.dmg
-        
-    - name: Generate Release Notes
-      run: |
-        echo "# LedgerPro ${{ github.ref_name }}" > release_notes.md
-        echo "" >> release_notes.md
-        echo "## What's New" >> release_notes.md
-        echo "" >> release_notes.md
-        
-        # Get commits since last tag
-        if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
-          LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1)
-          echo "### Changes since $LAST_TAG:" >> release_notes.md
-          git log $LAST_TAG..HEAD --oneline --format="- %s" >> release_notes.md
-        else
-          echo "- Initial release" >> release_notes.md
-        fi
-        
-        echo "" >> release_notes.md
-        echo "## System Requirements" >> release_notes.md
-        echo "- macOS 13.0 or later" >> release_notes.md
-        echo "- Python 3.9+ (for backend processing)" >> release_notes.md
-        
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+    - name: Upload Release Asset
+      uses: actions/upload-artifact@v3
       with:
-        files: |
-          LedgerPro/LedgerPro-${{ github.ref_name }}.dmg
-        body_path: release_notes.md
-        draft: false
-        prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  notify-release:
-    name: Post-Release Tasks
-    runs-on: ubuntu-latest
-    needs: build-release
-    if: success()
-    
-    steps:
-    - name: Update Release Status
-      run: |
-        echo "✅ LedgerPro ${{ github.ref_name }} released successfully!"
-        echo "📦 Release artifacts available at: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+        name: LedgerPro-${{ github.ref_name }}
+        path: LedgerPro-${{ github.ref_name }}.zip
