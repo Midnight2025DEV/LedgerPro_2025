@@ -8,7 +8,7 @@ on:
 jobs:
   update-swift-dependencies:
     name: Update Swift Dependencies
-    runs-on: macos-latest
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v3

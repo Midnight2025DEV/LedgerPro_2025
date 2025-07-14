@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Run Tests
-    runs-on: macos-latest
+    runs-on: macos-14
     continue-on-error: true  # Don't fail CI for known issues
     
     steps:
@@ -43,7 +43,7 @@ jobs:
 
   critical-tests:
     name: Critical Tests Only
-    runs-on: macos-latest
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v4

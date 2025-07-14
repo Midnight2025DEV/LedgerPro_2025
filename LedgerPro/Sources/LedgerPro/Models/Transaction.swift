@@ -93,7 +93,7 @@ struct Transaction: Codable, Identifiable, Hashable {
     // MARK: - Safe String Operations
     
     /// Safely truncate description to prevent range errors
-    private static func safeTruncateDescription(_ description: String, maxLength: Int) -> String {
+    static func safeTruncateDescription(_ description: String, maxLength: Int) -> String {
         // Handle empty or invalid strings
         guard !description.isEmpty else { return "empty" }
         
@@ -108,7 +108,7 @@ struct Transaction: Codable, Identifiable, Hashable {
     }
     
     /// Safely take first N components from description
-    private static func safePrefix<T>(_ collection: [T], count: Int) -> [T] {
+    static func safePrefix<T>(_ collection: [T], count: Int) -> [T] {
         guard count > 0 else { return [] }
         guard !collection.isEmpty else { return [] }
         

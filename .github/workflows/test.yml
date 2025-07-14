@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: CI / swift-tests
-    runs-on: macos-14  # Fixed: Use specific version instead of macos-latest
+    runs-on: macos-14  # Fixed: Use specific version instead of macos-14
     
     steps:
     - uses: actions/checkout@v4
@@ -110,7 +110,7 @@ jobs:
 
   performance:
     name: Performance Tests
-    runs-on: macos-14  # Fixed: Use specific version instead of macos-latest
+    runs-on: macos-14  # Fixed: Use specific version instead of macos-14
     
     steps:
     - uses: actions/checkout@v4
@@ -162,7 +162,7 @@ jobs:
 
   lint:
     name: Code Quality
-    runs-on: macos-14  # Fixed: Use specific version instead of macos-latest
+    runs-on: macos-14  # Fixed: Use specific version instead of macos-14
     
     steps:
     - uses: actions/checkout@v4

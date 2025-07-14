@@ -8,7 +8,7 @@ on:
 jobs:
   track-failing-tests:
     name: Monitor Failing Tests
-    runs-on: macos-latest
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v3
@@ -65,7 +65,7 @@ jobs:
 
   test-isolation:
     name: Test in Isolation
-    runs-on: macos-latest
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v3
