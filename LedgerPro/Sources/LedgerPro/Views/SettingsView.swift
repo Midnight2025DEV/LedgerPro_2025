@@ -311,16 +311,16 @@ struct SettingsView: View {
         .onAppear {
             loadSettings()
         }
-        .onChange(of: backendURL) { _ in
+        .onChange(of: backendURL) {
             saveSettings()
         }
-        .onChange(of: enableNotifications) { _ in
+        .onChange(of: enableNotifications) {
             saveSettings()
         }
-        .onChange(of: autoUpload) { _ in
+        .onChange(of: autoUpload) {
             saveSettings()
         }
-        .onChange(of: dataRetentionDays) { _ in
+        .onChange(of: dataRetentionDays) {
             saveSettings()
         }
     }

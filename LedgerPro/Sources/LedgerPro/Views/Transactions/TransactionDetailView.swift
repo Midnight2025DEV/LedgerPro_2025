@@ -286,7 +286,7 @@ struct TransactionDetailView: View {
                 }
             }
         }
-        .onChange(of: selectedCategory) { category in
+        .onChange(of: selectedCategory) { _, category in
             if let category = category {
                 // Update the transaction category
                 dataManager.updateTransactionCategory(

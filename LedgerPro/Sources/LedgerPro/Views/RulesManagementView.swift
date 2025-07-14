@@ -96,18 +96,18 @@ struct RulesTabView: View {
             HStack {
                 TextField("Search rules...", text: $viewModel.searchText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .onChange(of: viewModel.searchText) { _ in
+                    .onChange(of: viewModel.searchText) {
                         viewModel.applyFilters()
                     }
                 
                 Menu("Filter") {
                     Toggle("Active Only", isOn: $viewModel.filterActive)
-                        .onChange(of: viewModel.filterActive) { _ in
+                        .onChange(of: viewModel.filterActive) {
                             viewModel.applyFilters()
                         }
                     
                     Toggle("Custom Only", isOn: $viewModel.filterCustomOnly)
-                        .onChange(of: viewModel.filterCustomOnly) { _ in
+                        .onChange(of: viewModel.filterCustomOnly) {
                             viewModel.applyFilters()
                         }
                     
@@ -116,7 +116,7 @@ struct RulesTabView: View {
                             Text(order.rawValue).tag(order)
                         }
                     }
-                    .onChange(of: viewModel.sortOrder) { _ in
+                    .onChange(of: viewModel.sortOrder) {
                         viewModel.applyFilters()
                     }
                 }
@@ -555,13 +555,13 @@ struct RuleBuilderView: View {
                 testTransactions = ruleViewModel.getSampleTransactions()
                 updateMatchingTransactions()
             }
-            .onChange(of: builder.ruleName) { _ in updateMatchingTransactions() }
-            .onChange(of: builder.merchantContains) { _ in updateMatchingTransactions() }
-            .onChange(of: builder.merchantExact) { _ in updateMatchingTransactions() }
-            .onChange(of: builder.descriptionContains) { _ in updateMatchingTransactions() }
-            .onChange(of: builder.amountMin) { _ in updateMatchingTransactions() }
-            .onChange(of: builder.amountMax) { _ in updateMatchingTransactions() }
-            .onChange(of: builder.amountSign) { _ in updateMatchingTransactions() }
+            .onChange(of: builder.ruleName) { updateMatchingTransactions() }
+            .onChange(of: builder.merchantContains) { updateMatchingTransactions() }
+            .onChange(of: builder.merchantExact) { updateMatchingTransactions() }
+            .onChange(of: builder.descriptionContains) { updateMatchingTransactions() }
+            .onChange(of: builder.amountMin) { updateMatchingTransactions() }
+            .onChange(of: builder.amountMax) { updateMatchingTransactions() }
+            .onChange(of: builder.amountSign) { updateMatchingTransactions() }
         }
     }
     
