@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class MerchantDatabaseRangeTest: XCTestCase {
     var merchantDatabase: MerchantDatabase!
     

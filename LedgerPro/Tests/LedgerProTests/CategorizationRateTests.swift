@@ -5,7 +5,7 @@ final class CategorizationRateTests: XCTestCase {
     var categorizationService: ImportCategorizationService!
     var categoryService: CategoryService!
     
-    @MainActor
+    
     override func setUp() async throws {
         try await super.setUp()
         categoryService = CategoryService.shared
@@ -15,7 +15,7 @@ final class CategorizationRateTests: XCTestCase {
         categorizationService = ImportCategorizationService()
     }
     
-    @MainActor
+    
     func testEnhancedCategorizationRate() {
         // Given - Real world transaction examples that should be categorized with new rules
         let transactions = [
@@ -106,7 +106,7 @@ final class CategorizationRateTests: XCTestCase {
         XCTAssertTrue(categorizedDescriptions.contains { $0.contains("PARKING") }, "Parking should be categorized")
     }
     
-    @MainActor
+    
     func testSpecificNewRules() {
         // Test individual new rules to ensure they're working
         let testCases: [(description: String, expectedCategory: String)] = [

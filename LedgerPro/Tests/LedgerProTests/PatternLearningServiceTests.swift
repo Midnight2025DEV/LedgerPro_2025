@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class PatternLearningServiceTests: XCTestCase {
     var sut: PatternLearningService!
     var mockTransaction: Transaction!

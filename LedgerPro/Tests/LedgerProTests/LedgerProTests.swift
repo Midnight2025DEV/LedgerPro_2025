@@ -53,7 +53,7 @@ final class LedgerProTests: XCTestCase {
         XCTAssertFalse(expense.isIncome)
     }
     
-    @MainActor
+    
     func testAPIServiceInitialization() {
         let apiService = APIService()
         XCTAssertFalse(apiService.isHealthy)

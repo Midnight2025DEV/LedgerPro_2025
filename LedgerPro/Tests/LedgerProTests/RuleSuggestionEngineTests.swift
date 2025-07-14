@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class RuleSuggestionEngineTests: XCTestCase {
     
     private var suggestionEngine: RuleSuggestionEngine!

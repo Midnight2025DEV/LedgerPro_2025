@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class FinancialDataManagerTests: XCTestCase {
     var sut: FinancialDataManager!
     var testTransactions: [Transaction]!

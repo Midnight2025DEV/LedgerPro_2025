@@ -5,13 +5,13 @@ import XCTest
 final class RuleViewModelTests: XCTestCase {
     var viewModel: RuleViewModel!
     
-    @MainActor
+    
     override func setUp() async throws {
         try await super.setUp()
         viewModel = RuleViewModel()
     }
     
-    @MainActor
+    
     func test_init_loadsAllRules() {
         // Then
         XCTAssertFalse(viewModel.rules.isEmpty)
@@ -21,7 +21,7 @@ final class RuleViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.isLoading == false)
     }
     
-    @MainActor
+    
     func test_filterRules_byActiveStatus() {
         // Given
         viewModel.filterActive = true
@@ -33,7 +33,7 @@ final class RuleViewModelTests: XCTestCase {
         XCTAssertTrue(filtered.allSatisfy { $0.isActive })
     }
     
-    @MainActor
+    
     func test_createRule_fromTransaction() {
         // Given
         let transaction = Transaction(
@@ -55,7 +55,7 @@ final class RuleViewModelTests: XCTestCase {
 
 // MARK: - Rule Builder Tests
 final class RuleBuilderTests: XCTestCase {
-    @MainActor
+    
     func test_ruleValidation_requiresName() {
         // Given
         let builder = RuleBuilder()
@@ -68,7 +68,7 @@ final class RuleBuilderTests: XCTestCase {
         XCTAssertEqual(builder.validationErrors.first, "Rule name is required")
     }
     
-    @MainActor
+    
     func test_testRule_againstTransactions() {
         // Given
         let builder = RuleBuilder()
@@ -90,7 +90,7 @@ final class RuleBuilderTests: XCTestCase {
         XCTAssertTrue(matches.allSatisfy { $0.description.contains("AMAZON") })
     }
     
-    @MainActor
+    
     func test_ruleBuilder_amountRangeValidation() {
         // Given
         let builder = RuleBuilder()
@@ -107,7 +107,7 @@ final class RuleBuilderTests: XCTestCase {
         XCTAssertTrue(builder.validationErrors.contains("Minimum amount cannot be greater than maximum amount"))
     }
     
-    @MainActor
+    
     func test_ruleBuilder_complexRuleMatching() {
         // Given
         let builder = RuleBuilder()

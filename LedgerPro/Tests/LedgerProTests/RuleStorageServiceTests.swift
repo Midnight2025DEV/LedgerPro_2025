@@ -5,7 +5,7 @@ final class RuleStorageServiceTests: XCTestCase {
     var storageService: RuleStorageService!
     var testFileName: String!
     
-    @MainActor
+    
     override func setUp() async throws {
         try await super.setUp()
         // Create unique test filename for each test
@@ -14,14 +14,14 @@ final class RuleStorageServiceTests: XCTestCase {
         storageService = RuleStorageService(testFileName: testFileName)
     }
     
-    @MainActor
+    
     override func tearDown() async throws {
         // Clean up test file
         storageService.cleanupTestFile()
         try await super.tearDown()
     }
     
-    @MainActor
+    
     func testSaveAndLoadCustomRule() {
         // Given
         var customRule = CategoryRule(
@@ -47,7 +47,7 @@ final class RuleStorageServiceTests: XCTestCase {
         XCTAssertEqual(newStorageService.customRules.first?.ruleName, "Target Stores")
     }
     
-    @MainActor
+    
     func testUpdateCustomRule() {
         // Given
         var customRule = CategoryRule(
@@ -69,7 +69,7 @@ final class RuleStorageServiceTests: XCTestCase {
         XCTAssertEqual(storageService.customRules.first?.merchantContains, "UPDATED")
     }
     
-    @MainActor
+    
     func testDeleteCustomRule() {
         // Given
         var rule1 = CategoryRule(
@@ -97,7 +97,7 @@ final class RuleStorageServiceTests: XCTestCase {
         XCTAssertEqual(storageService.customRules.first?.ruleName, "Rule 2")
     }
     
-    @MainActor
+    
     func testAllRulesIncludesSystemAndCustom() {
         // Given
         var customRule = CategoryRule(
@@ -116,7 +116,7 @@ final class RuleStorageServiceTests: XCTestCase {
         XCTAssertTrue(allRules.contains { $0.ruleName.contains("Uber") })
     }
     
-    @MainActor
+    
     func testPersistenceAcrossInstances() {
         // Given
         var rule1 = CategoryRule(

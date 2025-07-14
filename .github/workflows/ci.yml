@@ -8,23 +8,37 @@ on:
 
 jobs:
   swift-tests:
-    runs-on: macos-latest
+    runs-on: macos-13  # Use macOS 13 runner
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Select Xcode version
-      run: sudo xcode-select --switch /Applications/Xcode_15.2.app/Contents/Developer
+      run: |
+        sudo xcode-select --switch /Applications/Xcode_15.0.app/Contents/Developer
+        xcodebuild -version
+        swift --version
+    
+    - name: Clean build
+      run: |
+        cd LedgerPro
+        rm -rf .build
+        rm -rf .swiftpm
+    
+    - name: Resolve dependencies
+      run: |
+        cd LedgerPro
+        swift package resolve
     
     - name: Build Swift package
       run: |
         cd LedgerPro
-        swift build
+        swift build --verbose
     
     - name: Run Swift tests
       run: |
         cd LedgerPro
-        swift test
+        swift test --verbose
 
   python-tests:
     runs-on: ubuntu-latest
@@ -40,38 +54,23 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ghostscript libpoppler-cpp-dev
+        sudo apt-get install -y ghostscript libpoppler-cpp-dev python3-tk python3-dev
+        sudo apt-get install -y libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
     
     - name: Install Python dependencies
       run: |
         cd LedgerPro/backend
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
+        pip install opencv-python-headless==4.8.0.74
         pip install -r requirements.txt
-        pip install pytest flake8  # Ensure test tools are installed
-    
-    - name: Debug - Show environment
-      run: |
-        cd LedgerPro/backend
-        echo "=== Python version ==="
-        python --version
-        echo "=== Installed packages ==="
-        pip list
-        echo "=== Directory structure ==="
-        ls -la
-        echo "=== Tests directory ==="
-        ls -la tests/ || echo "No tests directory"
-        echo "=== requirements.txt ==="
-        cat requirements.txt
     
     - name: Run Python tests
       run: |
         cd LedgerPro/backend
-        python -m pytest -p no:asyncio -p no:anyio tests/ -v --tb=short || echo "Tests failed but continuing"
-      continue-on-error: true
+        python -m pytest tests/ -v --tb=short
     
-    - name: Run minimal linting
+    - name: Run linting
       run: |
         cd LedgerPro/backend
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || echo "Critical errors only"
+        flake8 . --config=.flake8 --statistics
       continue-on-error: true
-EOF < /dev/null

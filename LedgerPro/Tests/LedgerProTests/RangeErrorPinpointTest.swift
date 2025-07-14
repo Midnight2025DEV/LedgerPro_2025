@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class RangeErrorPinpointTest: XCTestCase {
     var financialManager: FinancialDataManager!
     var importService: ImportCategorizationService!

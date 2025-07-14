@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class CategoryServiceTests: XCTestCase {
     var sut: CategoryService!
     var testCategories: [LedgerPro.Category]!

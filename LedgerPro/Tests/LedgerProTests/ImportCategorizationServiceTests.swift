@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class ImportCategorizationServiceTests: XCTestCase {
     var sut: ImportCategorizationService!
     var mockTransactions: [Transaction]!

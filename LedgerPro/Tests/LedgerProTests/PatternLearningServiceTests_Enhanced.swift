@@ -1,7 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
-@MainActor
+
 final class PatternLearningServiceEnhancedTests: XCTestCase {
     var sut: PatternLearningService!
     var mockCategories: [LedgerPro.Category]!

@@ -5,7 +5,7 @@ final class EndToEndCategorizationTest: XCTestCase {
     var categorizationService: ImportCategorizationService!
     var categoryService: CategoryService!
     
-    @MainActor
+    
     override func setUp() async throws {
         try await super.setUp()
         categoryService = CategoryService.shared
@@ -15,7 +15,7 @@ final class EndToEndCategorizationTest: XCTestCase {
         categorizationService = ImportCategorizationService()
     }
     
-    @MainActor
+    
     func testComprehensiveEnhancedCategorization() {
         // These are the EXACT transactions from our CSV test, with backend categories
         let transactions = [

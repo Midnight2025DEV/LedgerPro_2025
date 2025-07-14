@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "LedgerPro",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v13)  // Changed from .v14 to .v13 for CI compatibility
     ],
     products: [
         .executable(name: "LedgerPro", targets: ["LedgerPro"])
