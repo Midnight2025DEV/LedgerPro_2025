@@ -3,3 +3,4 @@ max-line-length = 88
 extend-ignore = E203,W503,E722,F541,E231,D200,D400,D401,D205,F401,E501,I101,I201,I100,D101,D102,D104,D107,D403,B008,B007,B001,F841,SIM105,SIM102,SIM110,SIM910
 exclude = venv,__pycache__,.git,.pytest_cache,*.egg-info
 per-file-ignores = __init__.py:F401
+EOF < /dev/null

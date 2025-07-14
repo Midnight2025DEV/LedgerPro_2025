@@ -61,31 +61,16 @@ jobs:
     - name: Run Python linting
       run: |
         cd LedgerPro/backend
-        if [ -f ".flake8" ]; then
-          flake8 . || echo "Linting issues found (non-blocking)"
-        else
-          echo "No flake8 config found, skipping"
-        fi
+        flake8 . --exit-zero --statistics
       continue-on-error: true
     
     - name: Run Python tests
       run: |
         cd LedgerPro/backend
-        if [ -d "tests" ] && [ -n "$(find tests -name 'test_*.py' -print -quit)" ]; then
-          pytest tests/ -v
-        else
-          echo "Warning: No test files found in tests/"
-          exit 1
-        fi
+        pytest tests/ -v
     
-    - name: Upload coverage to Codecov
-      if: success()
+    - name: Test Summary
+      if: always()
       run: |
-        cd LedgerPro/backend
-        if [ -f ".coverage" ]; then
-          echo "Coverage data found, would upload to Codecov here"
-        else
-          echo "No coverage data generated"
-        fi
-      continue-on-error: true
+        echo "CI run complete. Check individual step results above."
 EOF < /dev/null
