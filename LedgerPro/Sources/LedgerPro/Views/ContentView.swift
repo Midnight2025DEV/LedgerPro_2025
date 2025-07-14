@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var healthCheckMessage = ""
     @State private var showingCategoryTest = false
     @State private var showingRulesWindow = false
+    @State private var showingLearningWindow = false
     @State private var selectedTransactionFilter: TransactionFilter = .all
     @State private var shouldNavigateToTransactions = false
     
@@ -54,6 +55,12 @@ struct ContentView: View {
                 }
                 .help("Manage Rules")
                 
+                Button(action: { showingLearningWindow = true }) {
+                    Image(systemName: "brain")
+                        .foregroundColor(.blue)
+                }
+                .help("Learning Analytics")
+                
                 Button(action: { showingCategoryTest = true }) {
                     Image(systemName: "folder.badge.gearshape")
                         .foregroundColor(.blue)
@@ -85,6 +92,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingRulesWindow) {
             RulesManagementView()
+        }
+        .sheet(isPresented: $showingLearningWindow) {
+            LearningAnalyticsView()
         }
         .sheet(isPresented: $showingCategoryTest) {
             NavigationStack {

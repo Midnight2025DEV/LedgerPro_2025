@@ -487,6 +487,14 @@ class FinancialDataManager: ObservableObject {
                 oldCategory: oldCategory,
                 newCategory: newCategory
             )
+            
+            // Enhanced pattern learning
+            PatternLearningService.shared.recordCorrection(
+                transaction: updatedTransaction,
+                originalCategory: oldCategory,
+                newCategory: newCategory,
+                confidence: updatedTransaction.confidence
+            )
         }
         
         // Update summary and save

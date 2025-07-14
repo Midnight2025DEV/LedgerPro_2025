@@ -47,6 +47,17 @@ extension String {
         return String(self.prefix(length)) + "..."
     }
     
+    /// Safe UTF-8 data conversion that throws instead of force unwrapping
+    func safeUTF8Data() throws -> Data {
+        guard let data = self.data(using: .utf8) else {
+            throw EncodingError.invalidValue(self, EncodingError.Context(
+                codingPath: [],
+                debugDescription: "Failed to encode string as UTF-8: \(self)"
+            ))
+        }
+        return data
+    }
+    
     func sanitizedForFilename() -> String {
         let invalidCharacters = CharacterSet(charactersIn: ":/\\?%*|\"<>")
         return self.components(separatedBy: invalidCharacters).joined(separator: "_")

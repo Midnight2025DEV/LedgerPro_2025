@@ -244,11 +244,11 @@ class MCPService: ObservableObject {
         let filename = fileURL.lastPathComponent
         
         var body = Data()
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+        body.append(try "--\(boundary)\r\n".safeUTF8Data())
+        body.append(try "Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".safeUTF8Data())
+        body.append(try "Content-Type: application/octet-stream\r\n\r\n".safeUTF8Data())
         body.append(fileData)
-        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        body.append(try "\r\n--\(boundary)--\r\n".safeUTF8Data())
         
         request.httpBody = body
         

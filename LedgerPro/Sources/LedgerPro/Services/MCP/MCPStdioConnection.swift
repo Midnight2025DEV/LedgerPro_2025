@@ -6,6 +6,9 @@ import OSLog
 @MainActor
 class MCPStdioConnection: ObservableObject {
     
+    // Safe newline data constant to avoid force unwrapping
+    private static let newlineData = "\n".data(using: .utf8) ?? Data([0x0A])
+    
     private var process: Process?
     private var inputPipe: Pipe?
     private var outputPipe: Pipe?
@@ -81,9 +84,14 @@ class MCPStdioConnection: ObservableObject {
             }
         }
         
-        try process.run()
-        isConnected = true
-        logger.info("✅ Connected to \(self.serverName)")
+        do {
+            try process.run()
+            isConnected = true
+            logger.info("✅ Connected to \(self.serverName)")
+        } catch {
+            logger.error("❌ Failed to start MCP server process: \(error.localizedDescription)")
+            throw MCPConnectionError.launchFailed(error.localizedDescription)
+        }
         
         // Only initialize if not already initialized
         if !isInitialized {
@@ -139,7 +147,7 @@ class MCPStdioConnection: ObservableObject {
             do {
                 let encoder = JSONEncoder()
                 var requestData = try encoder.encode(request)
-                requestData.append("\n".data(using: .utf8)!)
+                requestData.append(try "\n".safeUTF8Data())
                 
                 inputPipe?.fileHandleForWriting.write(requestData)
                 
@@ -169,7 +177,7 @@ class MCPStdioConnection: ObservableObject {
         do {
             let encoder = JSONEncoder()
             var notificationData = try encoder.encode(notification)
-            notificationData.append("\n".data(using: .utf8)!)
+            notificationData.append(try "\n".safeUTF8Data())
             
             inputPipe?.fileHandleForWriting.write(notificationData)
             
@@ -235,7 +243,7 @@ class MCPStdioConnection: ObservableObject {
         outputBuffer.append(data)
         
         // Process all complete messages in buffer (delimited by newlines)
-        while let newlineRange = outputBuffer.firstRange(of: "\n".data(using: .utf8)!) {
+        while let newlineRange = outputBuffer.firstRange(of: Self.newlineData) {
             // Extract one complete message
             let messageData = outputBuffer[..<newlineRange.lowerBound]
             
@@ -264,7 +272,7 @@ class MCPStdioConnection: ObservableObject {
                 logger.warning("⚠️ Received partial or invalid JSON, buffering: \(messageData.count) bytes")
                 // Put the data back at the beginning of the buffer
                 outputBuffer.insert(contentsOf: messageData, at: 0)
-                outputBuffer.insert(contentsOf: "\n".data(using: .utf8)!, at: messageData.count)
+                outputBuffer.insert(contentsOf: Self.newlineData, at: messageData.count)
                 break  // Wait for more data
             }
         }

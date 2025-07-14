@@ -42,10 +42,10 @@ enum ServerType: String, CaseIterable {
 /// Server configuration for MCPServerLauncher
 struct ServerConfiguration {
     let name: String
-    let factory: () -> MCPServer
+    let factory: () -> MCPServer?
     let description: String
     
-    func createServer() -> MCPServer {
+    func createServer() -> MCPServer? {
         return factory()
     }
 }

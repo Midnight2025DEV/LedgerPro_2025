@@ -148,10 +148,14 @@ class MCPBridge: ObservableObject {
             MCPServer.financialAnalyzer(),
             MCPServer.openAIService(),
             MCPServer.pdfProcessor()
-        ]
+        ].compactMap { $0 } // Filter out nil values
         
         for server in defaultServers {
             self.servers[server.id] = server
+        }
+        
+        if defaultServers.count < 3 {
+            logger.warning("⚠️ Could not initialize all MCP servers. Only \(defaultServers.count)/3 servers available.")
         }
     }
     
@@ -524,18 +528,27 @@ class MCPBridge: ObservableObject {
         // Clear any existing servers
         self.servers.removeAll()
         
-        // Create servers using factory methods
+        // Create servers using factory methods with nil checking
         // Financial Analyzer
-        let financialAnalyzer = MCPServer.financialAnalyzer()
-        self.servers[financialAnalyzer.id] = financialAnalyzer
+        if let financialAnalyzer = MCPServer.financialAnalyzer() {
+            self.servers[financialAnalyzer.id] = financialAnalyzer
+        } else {
+            logger.warning("⚠️ Failed to initialize Financial Analyzer server")
+        }
         
         // OpenAI Service
-        let openAIService = MCPServer.openAIService()
-        self.servers[openAIService.id] = openAIService
+        if let openAIService = MCPServer.openAIService() {
+            self.servers[openAIService.id] = openAIService
+        } else {
+            logger.warning("⚠️ Failed to initialize OpenAI Service server")
+        }
         
         // PDF Processor
-        let pdfProcessor = MCPServer.pdfProcessor()
-        self.servers[pdfProcessor.id] = pdfProcessor
+        if let pdfProcessor = MCPServer.pdfProcessor() {
+            self.servers[pdfProcessor.id] = pdfProcessor
+        } else {
+            logger.warning("⚠️ Failed to initialize PDF Processor server")
+        }
         
         logger.info("✅ Initialized \(self.servers.count) MCP servers")
         
@@ -604,11 +617,20 @@ class MCPBridge: ObservableObject {
         let server: MCPServer
         switch type {
         case .financialAnalyzer:
-            server = MCPServer.financialAnalyzer()
+            guard let financialAnalyzer = MCPServer.financialAnalyzer() else {
+                throw MCPRPCError(code: -32601, message: "Failed to create Financial Analyzer server - MCP directory not found")
+            }
+            server = financialAnalyzer
         case .openAIService:
-            server = MCPServer.openAIService()
+            guard let openAIService = MCPServer.openAIService() else {
+                throw MCPRPCError(code: -32601, message: "Failed to create OpenAI Service server - MCP directory not found")
+            }
+            server = openAIService
         case .pdfProcessor:
-            server = MCPServer.pdfProcessor()
+            guard let pdfProcessor = MCPServer.pdfProcessor() else {
+                throw MCPRPCError(code: -32601, message: "Failed to create PDF Processor server - MCP directory not found")
+            }
+            server = pdfProcessor
         case .custom:
             throw MCPRPCError(code: -32600, message: "Custom server type requires custom configuration")
         }

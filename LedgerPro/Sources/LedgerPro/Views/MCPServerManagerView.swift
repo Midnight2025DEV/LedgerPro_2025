@@ -403,7 +403,9 @@ struct AdvancedServerOptionsView: View {
                             .foregroundColor(.secondary)
                         
                         Button("Open Console") {
-                            NSWorkspace.shared.open(URL(string: "x-apple.systemlogger:")!)
+                            if let consoleURL = URL(string: "x-apple.systemlogger:") {
+                                NSWorkspace.shared.open(consoleURL)
+                            }
                         }
                         .buttonStyle(.bordered)
                     }

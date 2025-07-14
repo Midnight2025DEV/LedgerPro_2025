@@ -425,17 +425,23 @@ extension CategoryInsights {
         }.sorted { $0.totalAmount > $1.totalAmount }.prefix(5).map { $0 }
         
         // Calculate percentages
-        let percentOfTotalSpending = totalSpending != nil && totalSpending! > 0 ?
-            Double(truncating: (totalSpent / totalSpending! * 100) as NSDecimalNumber) : 0.0
+        let percentOfTotalSpending: Double = {
+            guard let totalSpending = totalSpending, totalSpending > 0 else { return 0.0 }
+            return Double(truncating: (totalSpent / totalSpending * 100) as NSDecimalNumber)
+        }()
         
-        let percentOfTotalIncome = totalIncome != nil && totalIncome! > 0 ?
-            Double(truncating: (totalSpent / totalIncome! * 100) as NSDecimalNumber) : nil
+        let percentOfTotalIncome: Double? = {
+            guard let totalIncome = totalIncome, totalIncome > 0 else { return nil }
+            return Double(truncating: (totalSpent / totalIncome * 100) as NSDecimalNumber)
+        }()
         
         // Budget calculations
-        let percentOfBudget = budgetAmount != nil && budgetAmount! > 0 ?
-            Double(truncating: (totalSpent / budgetAmount! * 100) as NSDecimalNumber) : nil
+        let percentOfBudget: Double? = {
+            guard let budgetAmount = budgetAmount, budgetAmount > 0 else { return nil }
+            return Double(truncating: (totalSpent / budgetAmount * 100) as NSDecimalNumber)
+        }()
         
-        let budgetRemaining = budgetAmount != nil ? budgetAmount! - totalSpent : nil
+        let budgetRemaining: Decimal? = budgetAmount.map { $0 - totalSpent }
         
         return CategoryInsights(
             categoryId: categoryId,

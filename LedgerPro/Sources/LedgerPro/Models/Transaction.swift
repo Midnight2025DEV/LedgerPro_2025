@@ -38,7 +38,8 @@ struct Transaction: Codable, Identifiable, Hashable {
             self.id = providedId
         } else {
             // Generate ID from date + description + amount for uniqueness
-            self.id = "\(date)_\(description.prefix(20))_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
+            let safeDescription = description.isEmpty ? "empty" : String(description.prefix(min(20, description.count)))
+            self.id = "\(date)_\(safeDescription)_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
         }
         self.date = date
         self.description = description
@@ -68,7 +69,8 @@ struct Transaction: Codable, Identifiable, Hashable {
             let date = try container.decode(String.self, forKey: .date)
             let description = try container.decode(String.self, forKey: .description)
             let amount = try container.decode(Double.self, forKey: .amount)
-            self.id = "\(date)_\(description.prefix(20))_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
+            let safeDescription = description.isEmpty ? "empty" : String(description.prefix(min(20, description.count)))
+            self.id = "\(date)_\(safeDescription)_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
         }
         
         self.date = try container.decode(String.self, forKey: .date)
@@ -233,15 +235,20 @@ struct UploadedStatement: Codable, Identifiable {
 extension Transaction {
     static let categoryColors: [String: String] = [
         "Groceries": "green",
-        "Food & Dining": "orange",
+        "Food & Dining": "orange", 
         "Transportation": "blue",
         "Shopping": "purple",
         "Entertainment": "pink",
-        "Bills & Utilities": "red",
+        "Utilities": "red",        // Fixed: was "Bills & Utilities"
         "Healthcare": "mint",
         "Travel": "teal",
         "Income": "green",
-        "Deposits": "green",
+        "Transfers": "blue",       // Added: for payment/transfer category
+        "Business": "orange",      // Added: business expense category
+        "Education": "purple",     // Added: education category
+        "Insurance": "red",        // Added: insurance category
+        "Subscriptions": "pink",   // Added: subscription category
+        "Lodging": "teal",         // Added: lodging category
         "Other": "gray"
     ]
     
@@ -251,8 +258,8 @@ extension Transaction {
     
     // Helper to identify payment/transfer transactions
     var isPaymentOrTransfer: Bool {
-        // Check category
-        if category == "Payment" || category == "Transfer" {
+        // Check category - use correct system category name
+        if category == "Transfers" || category == "Credit Card Payment" {
             return true
         }
         
@@ -285,7 +292,8 @@ extension Transaction {
         } else if description.contains("FARM") {
             return "Farm Roma Hipodromo"
         }
-        return description.components(separatedBy: " ").prefix(4).joined(separator: " ")
+        let components = description.components(separatedBy: " ")
+        return Array(components.prefix(min(4, components.count))).joined(separator: " ")
     }
     
     var displayDetailAmount: String {

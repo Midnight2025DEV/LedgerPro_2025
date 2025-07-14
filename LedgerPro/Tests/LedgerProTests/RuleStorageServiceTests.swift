@@ -3,15 +3,22 @@ import XCTest
 
 final class RuleStorageServiceTests: XCTestCase {
     var storageService: RuleStorageService!
+    var testFileName: String!
     
     @MainActor
     override func setUp() async throws {
         try await super.setUp()
-        storageService = RuleStorageService.shared
-        // Clear any existing custom rules
-        storageService.customRules.forEach { rule in
-            storageService.deleteRule(id: rule.id)
-        }
+        // Create unique test filename for each test
+        testFileName = "test_rules_\(UUID().uuidString).json"
+        // Create isolated test instance with unique filename
+        storageService = RuleStorageService(testFileName: testFileName)
+    }
+    
+    @MainActor
+    override func tearDown() async throws {
+        // Clean up test file
+        storageService.cleanupTestFile()
+        try await super.tearDown()
     }
     
     @MainActor
@@ -34,8 +41,8 @@ final class RuleStorageServiceTests: XCTestCase {
         XCTAssertEqual(storageService.customRules.first?.ruleName, "Target Stores")
         XCTAssertEqual(storageService.customRules.first?.merchantContains, "TARGET")
         
-        // Test persistence by creating new instance
-        let newStorageService = RuleStorageService()
+        // Test persistence by creating new instance with same test file
+        let newStorageService = RuleStorageService(testFileName: testFileName)
         XCTAssertEqual(newStorageService.customRules.count, 1)
         XCTAssertEqual(newStorageService.customRules.first?.ruleName, "Target Stores")
     }
@@ -123,8 +130,8 @@ final class RuleStorageServiceTests: XCTestCase {
         // When
         storageService.saveRule(rule1)
         
-        // Create new instance and verify
-        let freshStorageService = RuleStorageService()
+        // Create new instance with same test file and verify
+        let freshStorageService = RuleStorageService(testFileName: testFileName)
         
         // Then
         XCTAssertEqual(freshStorageService.customRules.count, 1)

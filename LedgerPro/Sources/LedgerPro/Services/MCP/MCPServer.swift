@@ -235,9 +235,10 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
 // MARK: - Predefined Server Configurations
 
 extension MCPServer {
-    static func financialAnalyzer() -> MCPServer {
+    static func financialAnalyzer() -> MCPServer? {
         guard let basePath = MCPServerLauncher.getMCPServersBasePath() else {
-            fatalError("Could not find MCP servers directory")
+            AppLogger.shared.error("Could not find MCP servers directory for Financial Analyzer")
+            return nil
         }
         
         let serverPath = "\(basePath)/financial-analyzer/analyzer_server.py"
@@ -269,9 +270,10 @@ extension MCPServer {
         return MCPServer(info: info, connection: connection, capabilities: capabilities)
     }
     
-    static func openAIService() -> MCPServer {
+    static func openAIService() -> MCPServer? {
         guard let basePath = MCPServerLauncher.getMCPServersBasePath() else {
-            fatalError("Could not find MCP servers directory")
+            AppLogger.shared.error("Could not find MCP servers directory for OpenAI Service")
+            return nil
         }
         
         let serverPath = "\(basePath)/openai-service/openai_server.py"
@@ -303,9 +305,10 @@ extension MCPServer {
         return MCPServer(info: info, connection: connection, capabilities: capabilities)
     }
     
-    static func pdfProcessor() -> MCPServer {
+    static func pdfProcessor() -> MCPServer? {
         guard let basePath = MCPServerLauncher.getMCPServersBasePath() else {
-            fatalError("Could not find MCP servers directory")
+            AppLogger.shared.error("Could not find MCP servers directory for PDF Processor")
+            return nil
         }
         
         let serverPath = "\(basePath)/pdf-processor/mcp_stdio_fix.py"
