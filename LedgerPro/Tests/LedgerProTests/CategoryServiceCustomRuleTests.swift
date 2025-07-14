@@ -2,6 +2,7 @@ import XCTest
 @testable import LedgerPro
 import Foundation
 
+@MainActor
 final class CategoryServiceCustomRuleTests: XCTestCase {
     var categoryService: CategoryService!
     var ruleStorage: RuleStorageService!
