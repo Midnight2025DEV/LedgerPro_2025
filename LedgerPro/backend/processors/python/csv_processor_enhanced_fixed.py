@@ -25,23 +25,44 @@ class EnhancedCSVProcessor:
 
         # Common column name mappings
         self.date_columns = [
-            "date", "trans_date", "trans date", "transaction_date",
-            "transaction date", "posting_date", "posting date",
-            "post_date", "post date", "posted_date"
+            "date",
+            "trans_date",
+            "trans date",
+            "transaction_date",
+            "transaction date",
+            "posting_date",
+            "posting date",
+            "post_date",
+            "post date",
+            "posted_date",
         ]
 
         self.description_columns = [
-            "description", "merchant", "payee", "transaction",
-            "details", "memo", "reference", "narrative"
+            "description",
+            "merchant",
+            "payee",
+            "transaction",
+            "details",
+            "memo",
+            "reference",
+            "narrative",
         ]
 
         self.amount_columns = [
-            "amount", "debit", "credit", "value",
-            "transaction_amount", "transaction amount", "net_amount"
+            "amount",
+            "debit",
+            "credit",
+            "value",
+            "transaction_amount",
+            "transaction amount",
+            "net_amount",
         ]
 
         self.category_columns = [
-            "category", "type", "transaction_type", "transaction type"
+            "category",
+            "type",
+            "transaction_type",
+            "transaction type",
         ]
 
     def detect_format(self, file_content: str) -> str:
@@ -71,37 +92,59 @@ class EnhancedCSVProcessor:
     def _is_header_line(self, line: str, strict: bool = False) -> bool:
         """Determine if a line is likely a header."""
         # Split by common delimiters
-        parts = re.split(r'[,;\t|]', line.lower())
+        parts = re.split(r"[,;\t|]", line.lower())
 
         # Clean parts
         parts = [p.strip() for p in parts if p.strip()]
 
         # Header keywords
         header_keywords = [
-            "date", "trans", "post", "description", "amount",
-            "debit", "credit", "balance", "category", "type",
-            "merchant", "payee"
+            "date",
+            "trans",
+            "post",
+            "description",
+            "amount",
+            "debit",
+            "credit",
+            "balance",
+            "category",
+            "type",
+            "merchant",
+            "payee",
         ]
 
         if strict:
             # In strict mode, require multiple keywords and no transaction-like content
-            keyword_matches = sum(1 for part in parts if any(keyword == part or keyword in part.split() for keyword in header_keywords))
+            keyword_matches = sum(
+                1
+                for part in parts
+                if any(
+                    keyword == part or keyword in part.split()
+                    for keyword in header_keywords
+                )
+            )
 
             # Check if line contains transaction-like data (amounts, specific merchants)
-            has_amount = any(re.match(r'^-?\$?\d+\.?\d*', part) for part in parts)
-            has_merchant_names = any(len(part) > 20 for part in parts)  # Long descriptions
+            has_amount = any(re.match(r"^-?\$?\d+\.?\d*", part) for part in parts)
+            has_merchant_names = any(
+                len(part) > 20 for part in parts
+            )  # Long descriptions
 
             # It's a header if it has multiple keywords and no transaction data
             return keyword_matches >= 2 and not has_amount and not has_merchant_names
         else:
             # Non-strict mode for multi-section detection
-            keyword_matches = sum(1 for part in parts if any(keyword in part for keyword in header_keywords))
+            keyword_matches = sum(
+                1
+                for part in parts
+                if any(keyword in part for keyword in header_keywords)
+            )
             return keyword_matches >= 2
 
     def process_csv_file(self, file_path: str) -> Dict:
         """Main processing method that auto-detects format."""
         try:
-            with open(file_path, 'r', encoding='utf-8-sig') as f:
+            with open(file_path, "r", encoding="utf-8-sig") as f:
                 content = f.read()
 
             # Detect format
@@ -116,6 +159,7 @@ class EnhancedCSVProcessor:
         except Exception as e:
             print(f"Exception occurred: {e}")
             import traceback
+
             traceback.print_exc()
             return {
                 "transactions": [],
@@ -133,7 +177,7 @@ class EnhancedCSVProcessor:
 
         transactions = []
 
-        with open(file_path, 'r', encoding='utf-8-sig') as f:
+        with open(file_path, "r", encoding="utf-8-sig") as f:
             # Detect delimiter
             first_line = f.readline()
             f.seek(0)
@@ -166,7 +210,9 @@ class EnhancedCSVProcessor:
 
                 # Extract description
                 if column_mapping["description"]:
-                    transaction["description"] = row_dict.get(column_mapping["description"], "Unknown").strip()
+                    transaction["description"] = row_dict.get(
+                        column_mapping["description"], "Unknown"
+                    ).strip()
                 else:
                     transaction["description"] = "Unknown"
 
@@ -177,7 +223,9 @@ class EnhancedCSVProcessor:
 
                     # Handle Credit/Debit indicator if present
                     if "credit debit indicator" in [h.lower() for h in headers]:
-                        indicator = row_dict.get("Credit Debit Indicator", "").strip().lower()
+                        indicator = (
+                            row_dict.get("Credit Debit Indicator", "").strip().lower()
+                        )
                         if indicator == "debit":
                             transaction["amount"] = -abs(transaction["amount"])
                         elif indicator == "credit":
@@ -191,21 +239,30 @@ class EnhancedCSVProcessor:
 
                 # Extract category
                 if column_mapping["category"]:
-                    transaction["category"] = row_dict.get(column_mapping["category"], "Other").strip()
+                    transaction["category"] = row_dict.get(
+                        column_mapping["category"], "Other"
+                    ).strip()
                 else:
-                    transaction["category"] = self._categorize_transaction(transaction["description"])
+                    transaction["category"] = self._categorize_transaction(
+                        transaction["description"]
+                    )
 
                 # Add metadata
                 transaction["confidence"] = 1.0
                 transaction["has_forex"] = False
 
                 # Check for forex data in the row
-                if "Instructed Currency" in row_dict and row_dict["Instructed Currency"]:
+                if (
+                    "Instructed Currency" in row_dict
+                    and row_dict["Instructed Currency"]
+                ):
                     currency = row_dict["Instructed Currency"].strip()
                     if currency and currency != "USD":
                         transaction["original_currency"] = currency
                         if "Instructed Amount" in row_dict:
-                            transaction["original_amount"] = self.parse_amount_enhanced(row_dict["Instructed Amount"])
+                            transaction["original_amount"] = self.parse_amount_enhanced(
+                                row_dict["Instructed Amount"]
+                            )
                         if "Currency Exchange Rate" in row_dict:
                             rate_str = row_dict["Currency Exchange Rate"].strip()
                             if rate_str:
@@ -213,11 +270,16 @@ class EnhancedCSVProcessor:
                                     transaction["exchange_rate"] = float(rate_str)
                                 except:
                                     pass
-                        if "original_currency" in transaction and "exchange_rate" in transaction:
+                        if (
+                            "original_currency" in transaction
+                            and "exchange_rate" in transaction
+                        ):
                             transaction["has_forex"] = True
 
                 # Store raw data
-                transaction["raw_data"] = {k: v for k, v in row_dict.items() if v.strip()}
+                transaction["raw_data"] = {
+                    k: v for k, v in row_dict.items() if v.strip()
+                }
 
                 transactions.append(transaction)
 
@@ -253,7 +315,9 @@ class EnhancedCSVProcessor:
             print(f"\nProcessing section {i+1}:")
             section_transactions = self.process_section(section)
             all_transactions.extend(section_transactions)
-            print(f"Extracted {len(section_transactions)} transactions from section {i+1}")
+            print(
+                f"Extracted {len(section_transactions)} transactions from section {i+1}"
+            )
 
         # Create metadata
         metadata = {
@@ -288,11 +352,13 @@ class EnhancedCSVProcessor:
             if self._is_header_line(line, strict=False):
                 # Save previous section if it exists
                 if current_section:
-                    sections.append({
-                        "header": current_section[0],
-                        "data": current_section[1:],
-                        "start_line": i - len(current_section) + 1,
-                    })
+                    sections.append(
+                        {
+                            "header": current_section[0],
+                            "data": current_section[1:],
+                            "start_line": i - len(current_section) + 1,
+                        }
+                    )
 
                 # Start new section
                 current_section = [line]
@@ -302,11 +368,13 @@ class EnhancedCSVProcessor:
 
         # Add final section
         if current_section:
-            sections.append({
-                "header": current_section[0],
-                "data": current_section[1:],
-                "start_line": len(lines) - len(current_section) + 1,
-            })
+            sections.append(
+                {
+                    "header": current_section[0],
+                    "data": current_section[1:],
+                    "start_line": len(lines) - len(current_section) + 1,
+                }
+            )
 
         return sections
 
@@ -316,9 +384,21 @@ class EnhancedCSVProcessor:
 
         # Extended date formats
         formats = [
-            "%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%d/%m/%Y", "%Y/%m/%d",
-            "%b %d, %Y", "%B %d, %Y", "%d %b %Y", "%d %B %Y",
-            "%m/%d/%y", "%m-%d-%y", "%b %d", "%B %d", "%m/%d", "%m-%d",
+            "%Y-%m-%d",
+            "%m/%d/%Y",
+            "%m-%d-%Y",
+            "%d/%m/%Y",
+            "%Y/%m/%d",
+            "%b %d, %Y",
+            "%B %d, %Y",
+            "%d %b %Y",
+            "%d %B %Y",
+            "%m/%d/%y",
+            "%m-%d-%y",
+            "%b %d",
+            "%B %d",
+            "%m/%d",
+            "%m-%d",
         ]
 
         for fmt in formats:
@@ -340,19 +420,19 @@ class EnhancedCSVProcessor:
             return 0.0
 
         # Remove currency symbols, spaces, and other non-numeric characters
-        cleaned = re.sub(r'[^\d\.\-\+,\(\)]', '', amount_str)
+        cleaned = re.sub(r"[^\d\.\-\+,\(\)]", "", amount_str)
 
         # Handle parentheses for negative amounts
-        if '(' in cleaned and ')' in cleaned:
-            cleaned = '-' + cleaned.replace('(', '').replace(')', '')
+        if "(" in cleaned and ")" in cleaned:
+            cleaned = "-" + cleaned.replace("(", "").replace(")", "")
 
         # Remove commas (thousand separators)
-        cleaned = cleaned.replace(',', '')
+        cleaned = cleaned.replace(",", "")
 
         # Handle multiple decimal points (keep only the last one)
-        if cleaned.count('.') > 1:
-            parts = cleaned.split('.')
-            cleaned = ''.join(parts[:-1]) + '.' + parts[-1]
+        if cleaned.count(".") > 1:
+            parts = cleaned.split(".")
+            cleaned = "".join(parts[:-1]) + "." + parts[-1]
 
         try:
             return float(cleaned)
@@ -361,7 +441,7 @@ class EnhancedCSVProcessor:
 
     def _detect_delimiter(self, line: str) -> str:
         """Detect CSV delimiter."""
-        delimiters = [',', ';', '\t', '|']
+        delimiters = [",", ";", "\t", "|"]
 
         # Count occurrences of each delimiter
         delimiter_counts = {}
@@ -372,7 +452,7 @@ class EnhancedCSVProcessor:
         if delimiter_counts:
             return max(delimiter_counts, key=delimiter_counts.get)
 
-        return ','  # Default to comma
+        return ","  # Default to comma
 
     def map_columns(self, headers: List[str]) -> Dict[str, str]:
         """Map CSV headers to standard column names."""
@@ -382,13 +462,21 @@ class EnhancedCSVProcessor:
 
         # Map date column
         mapping["date"] = next(
-            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.date_columns)),
-            None
+            (
+                headers[i]
+                for i, h in enumerate(headers_lower)
+                if any(d in h for d in self.date_columns)
+            ),
+            None,
         )
 
         # Map description column
         mapping["description"] = next(
-            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.description_columns)),
+            (
+                headers[i]
+                for i, h in enumerate(headers_lower)
+                if any(d in h for d in self.description_columns)
+            ),
             None,
         )
 
@@ -398,13 +486,21 @@ class EnhancedCSVProcessor:
 
         # Map amount column
         mapping["amount"] = next(
-            (headers[i] for i, h in enumerate(headers_lower) if any(d in h for d in self.amount_columns)),
-            None
+            (
+                headers[i]
+                for i, h in enumerate(headers_lower)
+                if any(d in h for d in self.amount_columns)
+            ),
+            None,
         )
 
         # Map category column
         mapping["category"] = next(
-            (headers[i] for i, h in enumerate(headers_lower) if any(c in h for c in self.category_columns)),
+            (
+                headers[i]
+                for i, h in enumerate(headers_lower)
+                if any(c in h for c in self.category_columns)
+            ),
             None,
         )
 
@@ -416,10 +512,43 @@ class EnhancedCSVProcessor:
 
         # Enhanced category rules
         categories = {
-            "Food & Dining": ["restaurant", "cafe", "coffee", "food", "dining", "eat", "pizza", "uber eats", "doordash"],
-            "Shopping": ["amazon", "walmart", "target", "store", "shop", "mall", "retail"],
-            "Transportation": ["uber", "lyft", "gas", "fuel", "parking", "toll", "transit"],
-            "Entertainment": ["movie", "theater", "concert", "game", "netflix", "spotify"],
+            "Food & Dining": [
+                "restaurant",
+                "cafe",
+                "coffee",
+                "food",
+                "dining",
+                "eat",
+                "pizza",
+                "uber eats",
+                "doordash",
+            ],
+            "Shopping": [
+                "amazon",
+                "walmart",
+                "target",
+                "store",
+                "shop",
+                "mall",
+                "retail",
+            ],
+            "Transportation": [
+                "uber",
+                "lyft",
+                "gas",
+                "fuel",
+                "parking",
+                "toll",
+                "transit",
+            ],
+            "Entertainment": [
+                "movie",
+                "theater",
+                "concert",
+                "game",
+                "netflix",
+                "spotify",
+            ],
             "Utilities": ["electric", "water", "gas", "internet", "phone", "utility"],
             "Payment": ["payment", "transfer", "deposit", "credit", "paypal"],
             "ATM": ["atm withdrawal", "atm deposit", "cash withdrawal"],
@@ -458,9 +587,13 @@ def main():
     if result["transactions"]:
         print(f"\nFirst few transactions:")
         for i, transaction in enumerate(result["transactions"][:5]):
-            print(f"{i+1}. {transaction['date']} - {transaction['description']} - ${transaction['amount']:.2f}")
+            print(
+                f"{i+1}. {transaction['date']} - {transaction['description']} - ${transaction['amount']:.2f}"
+            )
             if transaction.get("has_forex"):
-                print(f"   Forex: {transaction['original_amount']} {transaction['original_currency']} @ {transaction['exchange_rate']}")
+                print(
+                    f"   Forex: {transaction['original_amount']} {transaction['original_currency']} @ {transaction['exchange_rate']}"
+                )
 
 
 if __name__ == "__main__":

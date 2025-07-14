@@ -14,7 +14,7 @@ def analyze_csv_structure(file_path):
     print(f"🔍 Analyzing CSV structure: {file_path}")
     print("=" * 80)
 
-    with open(file_path, 'r', encoding='utf-8-sig') as f:
+    with open(file_path, "r", encoding="utf-8-sig") as f:
         lines = f.readlines()
 
     print(f"Total lines: {len(lines)}")
@@ -27,7 +27,7 @@ def analyze_csv_structure(file_path):
 
     # Try to detect sections
     processor = EnhancedCSVProcessor()
-    content = ''.join(lines)
+    content = "".join(lines)
     sections = processor.detect_sections(content)
 
     print(f"\nDetected {len(sections)} sections:")
@@ -37,7 +37,7 @@ def analyze_csv_structure(file_path):
         print(f"  Data rows: {len(section['data'])}")
         print(f"  Start line: {section['start_line']}")
 
-        if section['data']:
+        if section["data"]:
             print(f"  First data row: {section['data'][0][:100]}...")
 
 
@@ -53,17 +53,19 @@ def test_navy_federal_processing(file_path):
     print(f"  Status: {result['status']}")
     print(f"  Total transactions: {len(result['transactions'])}")
 
-    if result['transactions']:
+    if result["transactions"]:
         print(f"\nFirst 5 transactions:")
-        for i, txn in enumerate(result['transactions'][:5]):
+        for i, txn in enumerate(result["transactions"][:5]):
             print(f"\n  Transaction {i+1}:")
             print(f"    Date: {txn['date']}")
             print(f"    Description: {txn['description']}")
             print(f"    Amount: ${txn['amount']:.2f}")
             print(f"    Category: {txn['category']}")
-            if txn.get('has_forex'):
-                print(f"    Forex: {txn['original_amount']} {txn['original_currency']} @ {txn['exchange_rate']}")
-            if txn.get('raw_data'):
+            if txn.get("has_forex"):
+                print(
+                    f"    Forex: {txn['original_amount']} {txn['original_currency']} @ {txn['exchange_rate']}"
+                )
+            if txn.get("raw_data"):
                 print(f"    Raw data keys: {list(txn['raw_data'].keys())}")
 
     return result
@@ -89,6 +91,6 @@ if __name__ == "__main__":
     print(f"  Actual transactions: {len(result['transactions'])}")
     print(f"  Success rate: {len(result['transactions'])/1013*100:.1f}%")
 
-    if len(result['transactions']) < 100:
+    if len(result["transactions"]) < 100:
         print("\n❌ CRITICAL: Processing failed to extract expected transactions!")
         print("   The CSV format may need special handling.")

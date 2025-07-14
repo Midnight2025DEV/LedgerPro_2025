@@ -1,16 +1,19 @@
 """Basic tests to validate CI/CD pipeline"""
+
 import pytest
 
 
 def test_import_fastapi():
     """Test that FastAPI can be imported"""
     import fastapi
+
     assert fastapi.__version__
 
 
 def test_import_camelot():
     """Test that Camelot can be imported"""
     import camelot
+
     assert camelot
 
 
@@ -22,11 +25,11 @@ def test_basic_math():
 
 class TestPlaceholder:
     """Placeholder test class for structure"""
-    
+
     def test_placeholder_passes(self):
         """This test always passes"""
         assert True
-    
+
     def test_placeholder_with_fixture(self):
         """Test with basic fixture usage"""
         test_data = {"key": "value"}
