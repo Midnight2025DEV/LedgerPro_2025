@@ -116,7 +116,7 @@ struct RulesTabView: View {
                             Text(order.rawValue).tag(order)
                         }
                     }
-                    .onChange(of: viewModel.sortOrder) { _ in
+                    .onChange(of: viewModel.sortOrder) {
                         viewModel.applyFilters()
                     }
                 }
