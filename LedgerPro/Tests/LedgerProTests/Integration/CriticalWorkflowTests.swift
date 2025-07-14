@@ -41,16 +41,31 @@ final class CriticalWorkflowTests: XCTestCase {
     // MARK: - Critical Workflow 1: Import → Categorize → Display
     
     func testCompleteImportWorkflow() async throws {
-        // TODO: Fix range error in financialManager.addTransactions
-        // Temporarily skipping this test to avoid blocking other tests
+        // FIXED: Range errors resolved in Transaction model
         
         let transactions = [
-            Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized")
+            Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized"),
+            Transaction(id: "test2", date: "2024-01-02", description: "STARBUCKS", amount: -5.75, category: "Uncategorized"),
+            Transaction(id: "test3", date: "2024-01-03", description: "PAYCHECK", amount: 3000.00, category: "Uncategorized")
         ]
         
-        // Basic categorization test that works
+        // Step 1: Categorize transactions
         let categorized = importService.categorizeTransactions(transactions)
-        XCTAssertEqual(categorized.totalTransactions, 1)
+        XCTAssertEqual(categorized.totalTransactions, 3)
+        
+        // Step 2: Import to FinancialDataManager (should work without range errors)
+        let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
+        financialManager.addTransactions(allTransactions, jobId: "complete-import", filename: "test_import.csv")
+        
+        // Step 3: Verify import success
+        XCTAssertEqual(financialManager.transactions.count, 3)
+        XCTAssertEqual(financialManager.uploadedStatements.count, 1)
+        
+        // Step 4: Verify summary calculation
+        let summary = financialManager.summary
+        XCTAssertGreaterThan(summary.totalIncome, 0)
+        XCTAssertGreaterThan(summary.totalExpenses, 0)
+        XCTAssertEqual(summary.transactionCount, 3)
     }
     
     // MARK: - Critical Workflow 2: User Correction → Pattern Learning → Rule Creation
@@ -189,13 +204,12 @@ final class CriticalWorkflowTests: XCTestCase {
         // Step 1: Categorize all transactions
         let categorized = importService.categorizeTransactions(transactions)
         
-        // Step 2: Save to database (skip to avoid range error for now)
-        // TODO: Fix range error in financialManager.addTransactions
+        // Step 2: Save to database (now works with range error fixes)
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         XCTAssertEqual(allTransactions.count, 500, "Should preserve all transactions")
         
-        // Skip actual saving for now to avoid the range error
-        // financialManager.addTransactions(allTransactions, jobId: "large-import", filename: "large_dataset.csv")
+        // Import all transactions (this should work now)
+        financialManager.addTransactions(allTransactions, jobId: "large-import", filename: "large_dataset.csv")
         
         // Step 3: Calculate summary
         let summary = financialManager.summary
@@ -204,9 +218,9 @@ final class CriticalWorkflowTests: XCTestCase {
         let duration = Date().timeIntervalSince(startTime)
         XCTAssertLessThan(duration, 15.0, "Large dataset processing too slow")
         
-        // Step 5: Verify data integrity (adjusted for skipped save)
-        // Would be 500 if we saved them
-        XCTAssertEqual(summary.transactionCount, 0) // Empty since we didn't save
+        // Step 5: Verify data integrity
+        XCTAssertEqual(summary.transactionCount, 500)
+        XCTAssertEqual(financialManager.transactions.count, 500)
         
         // Step 6: Verify categorization occurred
         XCTAssertGreaterThanOrEqual(categorized.categorizedCount, 0, "Should categorize some transactions")
@@ -216,22 +230,89 @@ final class CriticalWorkflowTests: XCTestCase {
     // MARK: - Critical Workflow 5: Error Recovery
     
     func testErrorRecoveryWorkflow() async throws {
-        // Minimal test to avoid range error
-        XCTAssertTrue(true, "Basic test passes")
+        // Test recovery from various error conditions
+        
+        // Step 1: Test with empty description (edge case)
+        let edgeCaseTransaction = Transaction(
+            id: "edge_case",
+            date: "2024-01-01",
+            description: "",  // Empty description
+            amount: -10.0,
+            category: "Test"
+        )
+        
+        // Should handle empty description gracefully
+        financialManager.addTransactions([edgeCaseTransaction], jobId: "edge-case", filename: "edge.csv")
+        XCTAssertEqual(financialManager.transactions.count, 1)
+        
+        // Step 2: Test with very long description (another edge case)
+        let longDescription = String(repeating: "A", count: 1000)
+        let longDescTransaction = Transaction(
+            id: "long_desc",
+            date: "2024-01-02",
+            description: longDescription,
+            amount: -20.0,
+            category: "Test"
+        )
+        
+        // Should handle long description gracefully
+        financialManager.addTransactions([longDescTransaction], jobId: "long-desc", filename: "long.csv")
+        XCTAssertEqual(financialManager.transactions.count, 2)
+        
+        // Step 3: Test duplicate job ID handling
+        let duplicateTransaction = Transaction(
+            id: "duplicate",
+            date: "2024-01-03",
+            description: "DUPLICATE TEST",
+            amount: -30.0,
+            category: "Test"
+        )
+        
+        // First import should succeed
+        financialManager.addTransactions([duplicateTransaction], jobId: "duplicate-test", filename: "dup1.csv")
+        XCTAssertEqual(financialManager.transactions.count, 3)
+        
+        // Second import with same job ID should be ignored
+        financialManager.addTransactions([duplicateTransaction], jobId: "duplicate-test", filename: "dup2.csv")
+        XCTAssertEqual(financialManager.transactions.count, 3) // No change
     }
     
     // MARK: - Critical Workflow 6: Service Integration
     
     func testServiceIntegrationWorkflow() async throws {
-        // Minimal integration test
+        // Verify all services work together correctly
         XCTAssertNotNil(importService)
         XCTAssertNotNil(categoryService)
         XCTAssertNotNil(financialManager)
+        XCTAssertNotNil(patternLearning)
         
-        // Basic categorization test
+        // Test end-to-end integration
         let testTransaction = Transaction(id: "integration1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized")
+        
+        // Step 1: Categorization service
         let categorized = importService.categorizeTransactions([testTransaction])
         XCTAssertEqual(categorized.totalTransactions, 1)
+        
+        // Step 2: Financial data management
+        let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
+        financialManager.addTransactions(allTransactions, jobId: "integration-test", filename: "integration.csv")
+        XCTAssertEqual(financialManager.transactions.count, 1)
+        
+        // Step 3: Pattern learning integration
+        if let firstTransaction = financialManager.transactions.first {
+            patternLearning.recordCorrection(
+                transaction: firstTransaction,
+                originalCategory: firstTransaction.category,
+                newCategory: "Transportation"
+            )
+            
+            let patterns = patternLearning.patterns
+            XCTAssertGreaterThanOrEqual(patterns.count, 0)
+        }
+        
+        // Step 4: Category service integration
+        XCTAssertGreaterThan(categoryService.categories.count, 0)
+        XCTAssertGreaterThan(categoryService.rootCategories.count, 0)
     }
     
     // MARK: - Critical Workflow 7: Memory and Performance Under Load
@@ -256,24 +337,24 @@ final class CriticalWorkflowTests: XCTestCase {
             // Process each batch
             let categorized = importService.categorizeTransactions(batchTransactions)
             
-            // Skip saving to avoid range error for now
+            // Import all transactions (now works with range error fixes)
             let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
             XCTAssertEqual(allTransactions.count, 50, "Each batch should have 50 transactions")
             
-            // TODO: Fix range error in financialManager.addTransactions
-            // financialManager.addTransactions(allTransactions, jobId: "batch-\(batchIndex)", filename: "batch_\(batchIndex).csv")
+            financialManager.addTransactions(allTransactions, jobId: "batch-\(batchIndex)", filename: "batch_\(batchIndex).csv")
         }
         
         let processingTime = Date().timeIntervalSince(startTime)
         
-        // Verify performance (adjusted for no actual saving)
+        // Verify performance
         XCTAssertLessThan(processingTime, 20.0, "Batch processing should be reasonably fast")
         
-        // Since we didn't save transactions, just verify empty state
+        // Verify final state
         let summary = financialManager.summary
-        XCTAssertEqual(summary.transactionCount, 0)
+        XCTAssertEqual(summary.transactionCount, 250) // 5 batches × 50 transactions
+        XCTAssertEqual(financialManager.transactions.count, 250)
         
-        // Clear should work regardless
+        // Cleanup should work
         financialManager.clearAllData()
         XCTAssertEqual(financialManager.transactions.count, 0)
     }

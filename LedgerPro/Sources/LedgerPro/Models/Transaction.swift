@@ -37,8 +37,8 @@ struct Transaction: Codable, Identifiable, Hashable {
         if let providedId = id {
             self.id = providedId
         } else {
-            // Generate ID from date + description + amount for uniqueness
-            let safeDescription = description.isEmpty ? "empty" : String(description.prefix(min(20, description.count)))
+            // FIXED: Safe description handling to prevent range errors
+            let safeDescription = Self.safeTruncateDescription(description, maxLength: 20)
             self.id = "\(date)_\(safeDescription)_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
         }
         self.date = date
@@ -69,7 +69,8 @@ struct Transaction: Codable, Identifiable, Hashable {
             let date = try container.decode(String.self, forKey: .date)
             let description = try container.decode(String.self, forKey: .description)
             let amount = try container.decode(Double.self, forKey: .amount)
-            let safeDescription = description.isEmpty ? "empty" : String(description.prefix(min(20, description.count)))
+            // FIXED: Safe description handling to prevent range errors
+            let safeDescription = Self.safeTruncateDescription(description, maxLength: 20)
             self.id = "\(date)_\(safeDescription)_\(amount)_\(UUID().uuidString)".replacingOccurrences(of: " ", with: "_")
         }
         
@@ -87,6 +88,32 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.hasForex = try container.decodeIfPresent(Bool.self, forKey: .hasForex)
         self.wasAutoCategorized = try container.decodeIfPresent(Bool.self, forKey: .wasAutoCategorized)
         self.categorizationMethod = try container.decodeIfPresent(String.self, forKey: .categorizationMethod)
+    }
+    
+    // MARK: - Safe String Operations
+    
+    /// Safely truncate description to prevent range errors
+    private static func safeTruncateDescription(_ description: String, maxLength: Int) -> String {
+        // Handle empty or invalid strings
+        guard !description.isEmpty else { return "empty" }
+        
+        // Safe truncation that handles all edge cases
+        if description.count <= maxLength {
+            return description
+        } else {
+            // Use safe subscripting with String.Index
+            let endIndex = description.index(description.startIndex, offsetBy: maxLength, limitedBy: description.endIndex) ?? description.endIndex
+            return String(description[description.startIndex..<endIndex])
+        }
+    }
+    
+    /// Safely take first N components from description
+    private static func safePrefix<T>(_ collection: [T], count: Int) -> [T] {
+        guard count > 0 else { return [] }
+        guard !collection.isEmpty else { return [] }
+        
+        let actualCount = min(count, collection.count)
+        return Array(collection[0..<actualCount])
     }
     
     var formattedAmount: String {
@@ -292,8 +319,11 @@ extension Transaction {
         } else if description.contains("FARM") {
             return "Farm Roma Hipodromo"
         }
+        
+        // FIXED: Safe component handling to prevent range errors
         let components = description.components(separatedBy: " ")
-        return Array(components.prefix(min(4, components.count))).joined(separator: " ")
+        let safeComponents = Self.safePrefix(components, count: 4)
+        return safeComponents.joined(separator: " ")
     }
     
     var displayDetailAmount: String {
@@ -329,6 +359,18 @@ extension DateFormatter {
     static let fullDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .full
+        return formatter
+    }()
+}
+
+// MARK: - Safe Date Formatting Extension
+
+extension DateFormatter {
+    static let apiDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter
     }()
 }
