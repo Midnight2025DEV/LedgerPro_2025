@@ -2,6 +2,7 @@ import XCTest
 @testable import LedgerPro
 
 
+@MainActor
 final class PatternLearningTests: XCTestCase {
     var learningService: PatternLearningService!
     

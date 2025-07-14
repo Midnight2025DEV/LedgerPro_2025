@@ -2,6 +2,7 @@ import XCTest
 @testable import LedgerPro
 
 
+@MainActor
 final class APIServiceTests: XCTestCase {
     var sut: APIService!
     var testFileURL: URL!
