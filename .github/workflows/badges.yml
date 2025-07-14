@@ -1,0 +1,64 @@
+name: Status Badges
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'  # Daily
+
+jobs:
+  update-badges:
+    name: Update Status Badges
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run Core Tests
+      id: tests
+      run: |
+        cd LedgerPro
+        if swift test --filter "APIServiceTests|FinancialDataManagerTests|CriticalWorkflowTests"; then
+          echo "tests=passing" >> $GITHUB_OUTPUT
+        else
+          echo "tests=failing" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Check Build
+      id: build
+      run: |
+        cd LedgerPro
+        if swift build -c release; then
+          echo "build=passing" >> $GITHUB_OUTPUT
+        else
+          echo "build=failing" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Performance Check
+      id: performance  
+      run: |
+        cd LedgerPro
+        swift test --filter "testLargeDatasetWorkflow" > perf.txt
+        if grep -E "[2-9][0-9]\.[0-9]+ seconds" perf.txt; then
+          echo "performance=slow" >> $GITHUB_OUTPUT
+        else
+          echo "performance=fast" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create Badge Summary
+      run: |
+        echo "# LedgerPro Status" > STATUS.md
+        echo "" >> STATUS.md
+        echo "[![Tests](https://img.shields.io/badge/tests-${{ steps.tests.outputs.tests }}-${{ steps.tests.outputs.tests == 'passing' && 'green' || 'red' }})](https://github.com/${{ github.repository }}/actions)" >> STATUS.md
+        echo "[![Build](https://img.shields.io/badge/build-${{ steps.build.outputs.build }}-${{ steps.build.outputs.build == 'passing' && 'green' || 'red' }})](https://github.com/${{ github.repository }}/actions)" >> STATUS.md
+        echo "[![Performance](https://img.shields.io/badge/performance-${{ steps.performance.outputs.performance }}-${{ steps.performance.outputs.performance == 'fast' && 'green' || 'yellow' }})](https://github.com/${{ github.repository }}/actions)" >> STATUS.md
+        echo "" >> STATUS.md
+        echo "Last updated: $(date)" >> STATUS.md
+        
+    - name: Commit Status
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add STATUS.md || true
+        git commit -m "Update status badges [skip ci]" || true
+        git push || true

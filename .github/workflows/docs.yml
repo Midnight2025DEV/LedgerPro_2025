@@ -1,0 +1,151 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'LedgerPro/Sources/**/*.swift'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'LedgerPro/Sources/**/*.swift'
+
+jobs:
+  generate-docs:
+    name: Generate Documentation
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Swift-DocC
+      run: |
+        # Swift-DocC is included with Xcode 13.3+
+        xcode-select --print-path
+        
+    - name: Generate Swift Documentation
+      run: |
+        cd LedgerPro
+        
+        # Generate documentation
+        swift package generate-documentation \
+          --target LedgerPro \
+          --output-path ./docs \
+          --transform-for-static-hosting \
+          --hosting-base-path LedgerPro
+          
+    - name: Generate API Reference
+      run: |
+        cd LedgerPro
+        
+        # Create API reference
+        mkdir -p docs/api-reference
+        
+        # Generate markdown docs for key services
+        echo "# LedgerPro API Reference" > docs/api-reference/README.md
+        echo "" >> docs/api-reference/README.md
+        echo "## Core Services" >> docs/api-reference/README.md
+        echo "" >> docs/api-reference/README.md
+        
+        # Extract public interfaces
+        for service in Sources/LedgerPro/Services/*.swift; do
+          if [ -f "$service" ]; then
+            service_name=$(basename "$service" .swift)
+            echo "### $service_name" >> docs/api-reference/README.md
+            echo "" >> docs/api-reference/README.md
+            
+            # Extract public functions and classes
+            grep -E "^(public |open )?(class|struct|enum|func|var|let)" "$service" | head -10 >> docs/api-reference/README.md || true
+            echo "" >> docs/api-reference/README.md
+          fi
+        done
+        
+    - name: Create Test Coverage Report
+      run: |
+        cd LedgerPro
+        
+        # Generate test coverage
+        swift test --enable-code-coverage
+        
+        # Create coverage summary
+        mkdir -p docs/coverage
+        echo "# Test Coverage Report" > docs/coverage/README.md
+        echo "" >> docs/coverage/README.md
+        echo "Generated: $(date)" >> docs/coverage/README.md
+        echo "" >> docs/coverage/README.md
+        
+    - name: Upload Documentation Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: |
+          LedgerPro/docs/
+          
+    - name: Deploy to GitHub Pages (main branch only)
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./LedgerPro/docs
+        
+  validate-docs:
+    name: Validate Documentation
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check Documentation Coverage
+      run: |
+        cd LedgerPro
+        
+        echo "## Documentation Coverage" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Count public APIs without documentation
+        TOTAL_PUBLIC=$(grep -r "public " Sources/LedgerPro/ --include="*.swift" | wc -l)
+        DOCUMENTED=$(grep -r "/// " Sources/LedgerPro/ --include="*.swift" | wc -l)
+        
+        echo "Total public APIs: $TOTAL_PUBLIC" >> $GITHUB_STEP_SUMMARY
+        echo "Documented APIs: $DOCUMENTED" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "$TOTAL_PUBLIC" -gt 0 ]; then
+          COVERAGE=$((DOCUMENTED * 100 / TOTAL_PUBLIC))
+          echo "Documentation coverage: $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$COVERAGE" -lt 60 ]; then
+            echo "⚠️ Documentation coverage below 60%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Good documentation coverage" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+    - name: Check for TODO Comments
+      run: |
+        echo "## TODO Comments" >> $GITHUB_STEP_SUMMARY
+        TODO_COUNT=$(grep -r "TODO\|FIXME\|HACK" LedgerPro/Sources/ --include="*.swift" | wc -l)
+        echo "TODO/FIXME/HACK comments: $TODO_COUNT" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "$TODO_COUNT" -gt 10 ]; then
+          echo "⚠️ High number of TODO comments" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+    - name: Validate README
+      run: |
+        if [ ! -f "README.md" ]; then
+          echo "❌ Missing README.md" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi
+        
+        # Check for required sections
+        if ! grep -q "## Installation" README.md; then
+          echo "⚠️ README missing Installation section" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if ! grep -q "## Usage" README.md; then
+          echo "⚠️ README missing Usage section" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "✅ README validation completed" >> $GITHUB_STEP_SUMMARY

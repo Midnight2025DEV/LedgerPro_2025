@@ -1,0 +1,120 @@
+name: Python Backend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths: 
+      - 'LedgerPro/backend/**'
+      - '.github/workflows/python-backend.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'LedgerPro/backend/**'
+
+jobs:
+  python-tests:
+    name: Python Backend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ghostscript python3-tk
+        
+    - name: Install Python dependencies
+      run: |
+        cd LedgerPro/backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov bandit safety mypy black flake8
+        
+    - name: Lint with flake8
+      run: |
+        cd LedgerPro/backend
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Format check with black
+      run: |
+        cd LedgerPro/backend
+        black --check --diff .
+        
+    - name: Type check with mypy
+      run: |
+        cd LedgerPro/backend
+        mypy . --ignore-missing-imports || true
+        
+    - name: Security scan with bandit
+      run: |
+        cd LedgerPro/backend
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . || true
+        
+    - name: Check for known security vulnerabilities
+      run: |
+        cd LedgerPro/backend
+        safety check --json || true
+        
+    - name: Run tests
+      run: |
+        cd LedgerPro/backend
+        pytest --cov=. --cov-report=xml --cov-report=term-missing
+        
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./LedgerPro/backend/coverage.xml
+        flags: backend
+        name: python-${{ matrix.python-version }}
+
+  backend-integration:
+    name: Backend Integration Test
+    runs-on: macos-latest
+    needs: python-tests
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Start Backend Server
+      run: |
+        cd LedgerPro/backend
+        pip install -r requirements.txt
+        python api_server_real.py &
+        SERVER_PID=$!
+        echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+        
+        # Wait for server to start
+        sleep 10
+        
+    - name: Test Backend Health
+      run: |
+        curl -f http://127.0.0.1:8000/api/health || exit 1
+        
+    - name: Run Swift Integration Tests
+      run: |
+        cd LedgerPro
+        swift test --filter "APIServiceTests"
+        
+    - name: Stop Backend Server
+      if: always()
+      run: |
+        if [ ! -z "$SERVER_PID" ]; then
+          kill $SERVER_PID || true
+        fi
