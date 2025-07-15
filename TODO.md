@@ -1,107 +1,156 @@
-✅ CategoryPieChart interaction FIXED - overlay-based touch detection working
-- Implemented DragGesture with minimumDistance: 0 for precise click detection
-- Added proper angle calculation for donut segments
-- Fixed category colors using Color(hex:) initializer
-- Added debug logging for touch events and category selection
-- Legend items are clickable with hover effects
+# LedgerPro Development TODO
 
-✅ CategoryPieChart colors FIXED - aligned with Overview's Color.forCategory system
-- Updated all systemCategories to match Overview's color mapping exactly:
-  • Food & Dining: Green (#34C759) - matches "dining" → green
-  • Transportation: Blue (#007AFF) - matches "transportation" → blue  
-  • Shopping: Purple (#AF52DE) - matches "shopping" → purple
-  • Entertainment: Pink (#FF2D92) - matches "entertainment" → pink
-  • Housing/Utilities: Red (#FF3B30) - matches "bills/utilities" → red
-  • Healthcare: Mint (#00C7BE) - matches "healthcare" → mint
-  • Travel: Teal (#30D5C8) - matches "travel" → teal
-  • Education: Yellow (#FFCC00) - matches "education" → yellow
-  • Insurance: Orange (#FF9500) - matches "insurance" → orange
-  • Investments: Indigo (#5856D6) - matches "investment" → indigo
-  • Default categories: Gray (#8E8E93) - matches default → gray
-- Added Business category for missing transactions
-- Improved category matching with partial name matching
-- Dining now matches "Food & Dining" automatically
-- Colors now consistent between Overview and CategoryPieChart
+## ✅ RECENTLY COMPLETED
 
-✅ CategoryService ARCHITECTURE FIXED - proper app-level injection
-- Added CategoryService to LedgerProApp.swift as @StateObject
-- Converted all views from @StateObject to @EnvironmentObject for CategoryService
-- Fixed files: InsightsView, AddCategoryView, CategoryPickerPopup, TransactionListView, CategoryTestView
-- This ensures single CategoryService instance across entire app
-- Eliminates inconsistent state between views
-- CategoryService.reloadCategories() now affects all views consistently
-- Added comprehensive debug logging to categoryData computation
+### Documentation Cleanup (July 2025)
+- [x] Consolidated 15+ documentation files into 5 focused files
+- [x] Created comprehensive MCP_GUIDE.md and MCP_TROUBLESHOOTING.md
+- [x] Updated README.md with current features and architecture
+- [x] Removed outdated feature documentation files
+- [x] Established clear Git workflow requirements
 
-✅ Window Management IMPROVED - ensures proper app launch
-- Added minimum window size constraints (1200x800)
-- Added NSApplication.shared.activate(ignoringOtherApps: true) for focus
-- Window automatically centers and comes to front on launch
-- Ensures app window is visible and properly sized when launched
+### Core Features (2025)
+- [x] **Smart Categorization System** - AI-powered transaction categorization
+- [x] **Pattern Learning** - Learns from user corrections
+- [x] **Foreign Currency Detection** - Automatic forex conversion
+- [x] **Multi-Bank Support** - PDF/CSV processing for major banks
+- [x] **Comprehensive Testing** - 100+ tests with CI/CD pipeline
+- [x] **Swift 6.0 Migration** - Full async/await support
+- [x] **MCP Integration** - Model Context Protocol for AI features
 
-✅ CategoryPieChart SCOPE EXPANDED - show all categories
-- Removed .prefix(6) limit to display all spending categories
-- Updated header text from "Top 8 Categories" to "All Categories"
-- Updated debug logging to reflect all categories being shown
-- Provides complete spending breakdown instead of truncated view
+### Quality & Infrastructure
+- [x] **Git Workflow Documentation** - Mandatory PR process
+- [x] **CI/CD Pipeline** - Automated testing and quality checks
+- [x] **Memory Safety** - Eliminated force unwraps in critical services
+- [x] **Performance Optimization** - Sub-15 second processing for 500 transactions
 
-✅ Color Conflicts RESOLVED - distinct colors for all categories
-- Fixed Business: #8E8E93 (gray) → #007AFF (blue) for professional look
-- Fixed Taxes: #8E8E93 (gray) → #5856D6 (indigo) for government/official feel  
-- Fixed Investments: #5856D6 → #AF52DE (purple) to avoid conflict with Taxes
-- All categories now have unique, visually distinct colors
-- No more gray/duplicate color confusion in pie chart
+## 🚀 CURRENT PRIORITIES
 
-✅ Color.forCategory UNIFIED - single source of truth achieved
-- Updated Color.forCategory() to use CategoryService as primary source
-- Added exact match: finds categories by name (case-insensitive)
-- Added partial match: "Dining" matches "Food & Dining" automatically
-- Added legacy fallback for unmapped categories
-- Added @MainActor annotation for thread safety
-- Both Overview and CategoryPieChart now use identical color logic
-- Perfect color consistency across entire app
+### 1. Documentation & Onboarding
+- [ ] **Video Demo** - Create a 2-3 minute demo video showing key features
+- [ ] **Screenshots** - Add visual examples to README.md
+- [ ] **Getting Started Guide** - Step-by-step tutorial for new users
+- [ ] **API Documentation** - Generate OpenAPI docs from FastAPI backend
 
-✅ System Categories EXPANDED - added common missing categories
-- Added Groceries: #FFCC00 (yellow) with cart.fill icon
-- Added Subscriptions: #BF5AF2 (light purple) with repeat.circle.fill icon
-- Added Lodging: #30D5C8 (teal) with bed.double.fill icon
-- All new categories have unique colors to avoid conflicts
-- Covers more real-world spending scenarios
-- Sort orders 16-18 maintain proper category organization
+### 2. User Experience Improvements
+- [ ] **Drag & Drop Enhancement** - Visual feedback during file upload
+- [ ] **Progress Indicators** - Real-time processing progress bars
+- [ ] **Error Handling** - User-friendly error messages and recovery
+- [ ] **Keyboard Shortcuts** - macOS-native keyboard navigation
 
-✅ COLOR CONSISTENCY COMPLETE - Overview and CategoryPieChart unified
-- Overview updated to use Color.forCategory() instead of Swift Charts automatic colors
-- Both Overview and CategoryPieChart now use identical CategoryService color system
-- Eliminated automatic .foregroundStyle(by:) in favor of manual .foregroundStyle(Color.forCategory())
-- Perfect color matching across all pie charts in the application
-- Build successful - all color consistency work complete
+### 3. Advanced Features
+- [ ] **Receipt Scanning** - OCR support for paper receipts
+- [ ] **Budget Planning** - Set spending limits and track progress
+- [ ] **Investment Tracking** - Support for brokerage account imports
+- [ ] **Export Features** - CSV/PDF export of processed data
 
-## ✅ COMPLETED FEATURES
+## 🔧 TECHNICAL IMPROVEMENTS
 
-### CategoryRule Auto-Categorization System (July 2025)
-- [x] Phase 1: Rule engine integration with priority & confidence
-- [x] Phase 2: JSON persistence for custom rules  
-- [x] Phase 3: Import-time auto-categorization with UI
-- [x] 41 comprehensive tests
-- [x] Debug scripts for all phases
-- [x] Production-ready performance
+### Code Quality
+- [ ] **SwiftLint Integration** - Automated code style enforcement
+- [ ] **Python Type Hints** - Complete type annotation coverage
+- [ ] **Performance Profiling** - Identify and optimize bottlenecks
+- [ ] **Security Audit** - Comprehensive security review
 
-## 🚀 NEXT UP
+### Testing & QA
+- [ ] **UI Testing** - Automated SwiftUI interface tests
+- [ ] **Load Testing** - Test with very large datasets (5000+ transactions)
+- [ ] **Cross-platform Testing** - Verify compatibility across macOS versions
+- [ ] **Integration Tests** - End-to-end workflow validation
 
-### Option 1: Rules Management UI
-- [ ] View all active rules in dedicated window
-- [ ] Create/edit/delete custom rules
-- [ ] Test rules against sample transactions
-- [ ] Import/export rule sets
+### Architecture
+- [ ] **Modular Backend** - Split processing services into microservices
+- [ ] **Plugin System** - Support for bank-specific processing plugins
+- [ ] **Configuration Management** - User-configurable processing settings
+- [ ] **Caching Layer** - Improve performance for repeated operations
 
-### Option 2: Advanced Learning System  
-- [ ] "Learn from this month" batch learning
-- [ ] Pattern detection from corrections
-- [ ] Auto-suggest new rules
-- [ ] Confidence improvement tracking
+## 🤖 AI & MCP Enhancements
 
-### Option 3: Analytics Dashboard
-- [ ] Rule performance metrics
-- [ ] Category accuracy trends  
-- [ ] Monthly categorization reports
-- [ ] Optimization suggestions
-EOF < /dev/null
+### MCP Server Development
+- [ ] **Enhanced PDF Processor** - Support for more bank formats
+- [ ] **Financial Analyzer** - Advanced spending pattern detection
+- [ ] **Natural Language Queries** - "Show me coffee spending this month"
+- [ ] **Predictive Analytics** - Forecast spending patterns
+
+### Machine Learning
+- [ ] **Category Confidence Tuning** - Improve categorization accuracy
+- [ ] **Fraud Detection** - Identify unusual transaction patterns
+- [ ] **Smart Suggestions** - Proactive financial insights
+- [ ] **Custom Rule Learning** - Auto-generate rules from user behavior
+
+## 📱 Platform & Distribution
+
+### macOS App Store
+- [ ] **App Store Preparation** - Meet all App Store requirements
+- [ ] **Sandboxing** - Implement proper macOS sandboxing
+- [ ] **Notarization** - Apple notarization for distribution
+- [ ] **In-App Purchases** - Optional premium features
+
+### Multi-Platform
+- [ ] **iOS Companion App** - Read-only mobile companion
+- [ ] **iCloud Sync** - Secure cross-device synchronization
+- [ ] **Apple Watch** - Quick spending insights on wrist
+- [ ] **Shortcuts Integration** - Siri Shortcuts support
+
+## 🔒 Security & Privacy
+
+### Enhanced Security
+- [ ] **End-to-End Encryption** - Encrypt all stored financial data
+- [ ] **Biometric Authentication** - Touch ID/Face ID for app access
+- [ ] **Secure Backup** - Encrypted local backup system
+- [ ] **Privacy Dashboard** - Show what data is processed and stored
+
+### Compliance
+- [ ] **PCI DSS Compliance** - Meet payment card industry standards
+- [ ] **GDPR Compliance** - European data protection compliance
+- [ ] **Security Certifications** - Third-party security audits
+- [ ] **Penetration Testing** - Professional security testing
+
+## 🎯 LONG-TERM VISION
+
+### Year 1 Goals
+- [ ] **10,000+ Active Users** - Build substantial user base
+- [ ] **99.9% Uptime** - Rock-solid reliability
+- [ ] **Sub-5 Second Processing** - Ultra-fast transaction processing
+- [ ] **20+ Bank Support** - Comprehensive bank compatibility
+
+### Future Innovations
+- [ ] **AI Financial Advisor** - Personalized financial guidance
+- [ ] **Automated Bill Tracking** - Track and predict recurring expenses
+- [ ] **Tax Preparation Integration** - Export data for tax software
+- [ ] **Investment Performance Tracking** - Portfolio analytics
+
+## 📊 METRICS TO TRACK
+
+### Development Metrics
+- Test coverage: Currently 90%+, target 95%
+- Build time: Currently <2 minutes, maintain
+- Memory usage: Currently <200MB, optimize further
+- Processing speed: Currently 13.7s/500tx, target <10s
+
+### User Metrics (Future)
+- User retention: Target 80% monthly retention
+- Processing accuracy: Target 98% categorization accuracy
+- User satisfaction: Target 4.5+ star rating
+- Support tickets: Minimize to <1% of user base
+
+---
+
+## 🚨 CRITICAL NOTES
+
+### Git Workflow
+**ALWAYS follow [GIT_WORKFLOW.md](./GIT_WORKFLOW.md):**
+1. Check existing PRs: `gh pr list`
+2. Create feature branch: `git checkout -b feature/name`
+3. Make changes and test thoroughly
+4. Create PR: `gh pr create`
+5. **NEVER commit directly to main**
+
+### Quality Standards
+- All new features must include tests
+- Documentation must be updated for user-facing changes
+- Performance must not regress
+- Security must be maintained or improved
+
+### Priority Order
+Focus on current priorities before moving to future items. User experience and quality improvements take precedence over new features.
