@@ -62,6 +62,18 @@ Located in `mcp-servers/` - Model Context Protocol servers for AI-powered financ
 - `pdf-processor/` - Enhanced PDF processing
 - `openai-service/` - OpenAI integration
 
+## 🚨 CRITICAL: Git Workflow Requirements
+
+**BEFORE making ANY changes, read `GIT_WORKFLOW.md` in the root directory.**
+
+### MANDATORY RULES:
+1. **NEVER commit directly to main branch**
+2. **ALWAYS check for existing PRs first**: `gh pr list`
+3. **ALWAYS create feature branch**: `git checkout -b fix/description`
+4. **ALWAYS create PR for changes**: `gh pr create`
+
+Failure to follow this workflow requires reverting and redoing properly.
+
 ## Development Notes
 
 - Minimum macOS 13.0 required for SwiftUI features
