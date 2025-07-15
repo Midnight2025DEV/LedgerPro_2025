@@ -1,6 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
+@MainActor
 final class RuleStorageServiceTests: XCTestCase {
     var storageService: RuleStorageService!
     var testFileName: String!
@@ -11,13 +12,13 @@ final class RuleStorageServiceTests: XCTestCase {
         // Create unique test filename for each test
         testFileName = "test_rules_\(UUID().uuidString).json"
         // Create isolated test instance with unique filename
-        storageService = RuleStorageService(testFileName: testFileName)
+        storageService = await RuleStorageService(testFileName: testFileName)
     }
     
     
     override func tearDown() async throws {
         // Clean up test file
-        storageService.cleanupTestFile()
+        await storageService.cleanupTestFile()
         try await super.tearDown()
     }
     

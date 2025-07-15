@@ -1,6 +1,7 @@
 import XCTest
 @testable import LedgerPro
 
+@MainActor
 final class EndToEndCategorizationTest: XCTestCase {
     var categorizationService: ImportCategorizationService!
     var categoryService: CategoryService!
@@ -12,11 +13,11 @@ final class EndToEndCategorizationTest: XCTestCase {
         await categoryService.loadCategories()
         try await Task.sleep(for: .milliseconds(100))
         
-        categorizationService = ImportCategorizationService()
+        categorizationService = await ImportCategorizationService()
     }
     
     
-    func testComprehensiveEnhancedCategorization() {
+    func testComprehensiveEnhancedCategorization() async {
         // These are the EXACT transactions from our CSV test, with backend categories
         let transactions = [
             Transaction(date: "2025-01-15", description: "CLAUDE AI SUBSCRIPTION", amount: -20.00, category: "Other"),
@@ -40,7 +41,7 @@ final class EndToEndCategorizationTest: XCTestCase {
         ]
         
         // Run through our enhanced categorization
-        let result = categorizationService.categorizeTransactions(transactions)
+        let result = await categorizationService.categorizeTransactions(transactions)
         
         print("🔥 COMPREHENSIVE CATEGORIZATION RESULTS:")
         print("📊 Total transactions: \(result.totalTransactions)")
