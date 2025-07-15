@@ -5,18 +5,18 @@ final class CategorizationRateTests: XCTestCase {
     var categorizationService: ImportCategorizationService!
     var categoryService: CategoryService!
     
-    
+    @MainActor
     override func setUp() async throws {
         try await super.setUp()
-        categoryService = await CategoryService.shared
+        categoryService = CategoryService.shared
         await categoryService.loadCategories()
         try await Task.sleep(for: .milliseconds(100))
         
-        categorizationService = await ImportCategorizationService()
+        categorizationService = ImportCategorizationService()
     }
     
-    
-    func testEnhancedCategorizationRate() async {
+    @MainActor
+    func testEnhancedCategorizationRate() {
         // Given - Real world transaction examples that should be categorized with new rules
         let transactions = [
             // AI & Tech Services
@@ -66,7 +66,7 @@ final class CategorizationRateTests: XCTestCase {
         ]
         
         // When
-        let result = await categorizationService.categorizeTransactions(transactions)
+        let result = categorizationService.categorizeTransactions(transactions)
         
         // Then
         let successRate = result.successRate
@@ -106,8 +106,8 @@ final class CategorizationRateTests: XCTestCase {
         XCTAssertTrue(categorizedDescriptions.contains { $0.contains("PARKING") }, "Parking should be categorized")
     }
     
-    
-    func testSpecificNewRules() async {
+    @MainActor
+    func testSpecificNewRules() {
         // Test individual new rules to ensure they're working
         let testCases: [(description: String, expectedCategory: String)] = [
             ("CLAUDE AI SUBSCRIPTION", "Subscriptions"),
@@ -141,7 +141,7 @@ final class CategorizationRateTests: XCTestCase {
                 category: "Other"
             )
             
-            let result = await categorizationService.categorizeTransactions([transaction])
+            let result = categorizationService.categorizeTransactions([transaction])
             
             if result.categorizedCount > 0 {
                 let categorizedTransaction = result.categorizedTransactions[0]
