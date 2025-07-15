@@ -9,7 +9,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     
     override func setUp() async throws {
         try await super.setUp()
-        sut = ImportCategorizationService()
+        sut = await ImportCategorizationService()
         
         // Ensure CategoryService and MerchantCategorizer are loaded
         await CategoryService.shared.loadCategories()
@@ -86,7 +86,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         let emptyTransactions: [Transaction] = []
         
         // When
-        let result = sut.categorizeTransactions(emptyTransactions)
+        let result = await sut.categorizeTransactions(emptyTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 0)
@@ -100,7 +100,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     
     func testCategorizeTransactions_processesAllTransactions() async {
         // When
-        let result = sut.categorizeTransactions(mockTransactions)
+        let result = await sut.categorizeTransactions(mockTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, mockTransactions.count)
@@ -112,7 +112,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     
     func testCategorizeTransactions_assignsConfidenceScores() async {
         // When
-        let result = sut.categorizeTransactions(mockTransactions)
+        let result = await sut.categorizeTransactions(mockTransactions)
         
         // Then
         for (transaction, _, confidence) in result.categorizedTransactions {
@@ -125,7 +125,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     
     func testCategorizeTransactions_calculatesSuccessRate() async {
         // When
-        let result = sut.categorizeTransactions(mockTransactions)
+        let result = await sut.categorizeTransactions(mockTransactions)
         
         // Then
         let expectedSuccessRate = Double(result.categorizedCount) / Double(result.totalTransactions)
@@ -154,7 +154,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
             )
             
             // When
-            let result = sut.categorizeTransactions([transaction])
+            let result = await sut.categorizeTransactions([transaction])
             
             // Then
             XCTAssertEqual(result.totalTransactions, 1)
@@ -182,7 +182,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         )
         
         // When
-        let result = sut.categorizeTransactions([incomeTransaction])
+        let result = await sut.categorizeTransactions([incomeTransaction])
         
         // Then
         XCTAssertEqual(result.totalTransactions, 1)
@@ -206,7 +206,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         )
         
         // When
-        let result = sut.categorizeTransactions([highConfidenceTransaction])
+        let result = await sut.categorizeTransactions([highConfidenceTransaction])
         
         // Then
         XCTAssertEqual(result.totalTransactions, 1)
@@ -224,7 +224,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = sut.categorizeTransactions(mixedTransactions)
+        let result = await sut.categorizeTransactions(mixedTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 2)
@@ -237,7 +237,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     
     func testImportResult_calculatesCorrectly() async {
         // When
-        let result = sut.categorizeTransactions(mockTransactions)
+        let result = await sut.categorizeTransactions(mockTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, mockTransactions.count)
@@ -249,7 +249,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     
     func testImportResult_summaryMessage_isInformative() async {
         // When
-        let result = sut.categorizeTransactions(mockTransactions)
+        let result = await sut.categorizeTransactions(mockTransactions)
         
         // Then
         let summary = result.summaryMessage
@@ -284,7 +284,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = sut.categorizeTransactions(capitalOneTransactions)
+        let result = await sut.categorizeTransactions(capitalOneTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, capitalOneTransactions.count)
@@ -314,7 +314,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = sut.categorizeTransactions(chaseTransactions)
+        let result = await sut.categorizeTransactions(chaseTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, chaseTransactions.count)
@@ -349,7 +349,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = sut.categorizeTransactions(specialCharTransactions)
+        let result = await sut.categorizeTransactions(specialCharTransactions)
         
         // Then - Should not crash and should process all transactions
         XCTAssertEqual(result.totalTransactions, specialCharTransactions.count)
@@ -381,7 +381,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = sut.categorizeTransactions(emptyDescTransactions)
+        let result = await sut.categorizeTransactions(emptyDescTransactions)
         
         // Then - Should not crash
         XCTAssertEqual(result.totalTransactions, emptyDescTransactions.count)
@@ -408,7 +408,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = sut.categorizeTransactions(largeAmountTransactions)
+        let result = await sut.categorizeTransactions(largeAmountTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, largeAmountTransactions.count)
@@ -439,7 +439,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         
         // When
         let startTime = Date()
-        let result = sut.categorizeTransactions(largeBatch)
+        let result = await sut.categorizeTransactions(largeBatch)
         let duration = Date().timeIntervalSince(startTime)
         
         // Then - Should process efficiently
@@ -465,7 +465,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         
         // When
         let startTime = Date()
-        let result = sut.categorizeTransactions(largeBatch)
+        let result = await sut.categorizeTransactions(largeBatch)
         let duration = Date().timeIntervalSince(startTime)
         
         // Then - Should process large volumes efficiently
@@ -486,7 +486,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When - Process through complete workflow
-        let result = sut.categorizeTransactions(importTransactions)
+        let result = await sut.categorizeTransactions(importTransactions)
         
         // Then - Verify complete workflow
         XCTAssertEqual(result.totalTransactions, importTransactions.count)
@@ -512,8 +512,8 @@ final class ImportCategorizationServiceTests: XCTestCase {
         let batch2 = Array(mockTransactions.suffix(2))
         
         // When - Process batches separately
-        let result1 = sut.categorizeTransactions(batch1)
-        let result2 = sut.categorizeTransactions(batch2)
+        let result1 = await sut.categorizeTransactions(batch1)
+        let result2 = await sut.categorizeTransactions(batch2)
         
         // Then - Should handle all transactions correctly
         XCTAssertEqual(result1.totalTransactions, batch1.count)
@@ -535,7 +535,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         }
         
         // When
-        let result = sut.categorizeTransactions(largeDataset)
+        let result = await sut.categorizeTransactions(largeDataset)
         
         // Then - Should handle large datasets without memory issues
         XCTAssertEqual(result.totalTransactions, largeDataset.count)
@@ -543,7 +543,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         
         // Service should remain functional after large processing
         let smallBatch = [mockTransactions[0]]
-        let smallResult = sut.categorizeTransactions(smallBatch)
+        let smallResult = await sut.categorizeTransactions(smallBatch)
         XCTAssertEqual(smallResult.totalTransactions, 1)
     }
     
@@ -559,7 +559,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         )
         
         // When
-        let result = sut.categorizeTransactions([transaction])
+        let result = await sut.categorizeTransactions([transaction])
         
         // Then
         if result.categorizedCount > 0 {
@@ -591,7 +591,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         )
         
         // When
-        let result = sut.categorizeTransactions([transaction])
+        let result = await sut.categorizeTransactions([transaction])
         
         // Then - Original metadata should be preserved
         let allTransactions = result.categorizedTransactions.map { $0.0 } + result.uncategorizedTransactions
