@@ -2,6 +2,7 @@ import XCTest
 @testable import LedgerPro
 
 
+@MainActor
 final class PatternLearningServiceTests: XCTestCase {
     var sut: PatternLearningService!
     var mockTransaction: Transaction!
@@ -9,7 +10,7 @@ final class PatternLearningServiceTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         sut = PatternLearningService.shared
-        sut.clearAllData()
+        await sut.clearAllData()
         
         mockTransaction = Transaction(
             date: "2024-01-01",
@@ -20,7 +21,7 @@ final class PatternLearningServiceTests: XCTestCase {
     }
     
     override func tearDown() async throws {
-        sut.clearAllData()
+        await sut.clearAllData()
         sut = nil
         mockTransaction = nil
         try await super.tearDown()
@@ -81,7 +82,7 @@ final class PatternLearningServiceTests: XCTestCase {
         XCTAssertFalse(sut.corrections.isEmpty)
         
         // When
-        sut.clearAllData()
+        await sut.clearAllData()
         
         // Then
         XCTAssertTrue(sut.corrections.isEmpty)
