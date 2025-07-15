@@ -2,165 +2,213 @@
 
 <div align="center">
 
-[![Tests](https://github.com/Jihp760/LedgerPro/actions/workflows/test.yml/badge.svg)](https://github.com/Jihp760/LedgerPro/actions/workflows/test.yml)
-[![Security](https://github.com/Jihp760/LedgerPro/actions/workflows/security.yml/badge.svg)](https://github.com/Jihp760/LedgerPro/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/Jihp760/LedgerPro/branch/main/graph/badge.svg)](https://codecov.io/gh/Jihp760/LedgerPro)
+[![Tests](https://github.com/Midnight2025DEV/LedgerPro_2025/actions/workflows/ci.yml/badge.svg)](https://github.com/Midnight2025DEV/LedgerPro_2025/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
+[![macOS 13.0+](https://img.shields.io/badge/macOS-13.0+-brightgreen.svg)](https://developer.apple.com/macos/)
 
 **Privacy-focused financial management for Mac with AI-powered categorization**
 
-[Features](#features) • [Installation](#installation) • [Architecture](#architecture) • [Contributing](#contributing)
+[Features](#-features) • [Installation](#-quick-start) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
 </div>
 
-## 🚀 Features
+## 🌟 Features
 
 - 🔒 **100% Local Processing** - Your financial data never leaves your device
-- 🤖 **Smart Categorization** - AI learns from your corrections
-- 📈 **Pattern Learning** - Automatically improves over time
-- 🏦 **Multi-Bank Support** - Works with major bank formats
+- 🤖 **Smart Categorization** - AI learns from your corrections and improves over time
+- 📈 **Pattern Learning** - Automatically creates rules from your categorization patterns
+- 🏦 **Multi-Bank Support** - Works with PDF and CSV exports from major banks
 - 💱 **Foreign Currency** - Automatic forex detection and conversion
-
-## 📊 Project Health
-
-| Metric | Status | Target |
-|--------|--------|--------|
-| Test Coverage | 70%+ | 80% |
-| Unit Tests | 115+ | 150 |
-| Build Time | <2min | <3min |
-| Force Unwraps (Services) | 0 | 0 |
-| Security Issues | 0 | 0 |
-| Performance (500 tx) | 13.7s | <20s |
+- 📊 **Rich Analytics** - Interactive charts and spending insights
+- ⚡ **Fast Processing** - Handle 500+ transactions in under 15 seconds
 
 ## 🏗️ Architecture
 
 ```
 LedgerPro/
-├── SwiftUI App (Mac)         # Native Mac application
-├── MCP Bridge                # JSON-RPC communication
-├── MCP Servers               # Local processing servers
-│   ├── PDF Processor         # Bank statement parsing
-│   ├── Financial Analyzer    # Insights & trends
-│   └── OpenAI Service        # Optional categorization
-└── Core Services             # Business logic
-    ├── FinancialDataManager  # Transaction management
-    ├── CategoryService       # Categorization engine
-    ├── PatternLearningService # AI learning
-    └── ImportCategorization  # Import workflows
+├── 📱 SwiftUI macOS App        # Native Mac application
+├── 🚀 Python Backend          # FastAPI server for processing
+│   ├── PDF Processing         # Camelot-based table extraction
+│   ├── CSV Processing         # Multi-bank CSV support
+│   └── API Server            # RESTful processing endpoints
+├── 🤖 MCP Servers             # AI-powered analysis (optional)
+│   ├── PDF Processor         # Advanced document parsing
+│   ├── Financial Analyzer    # Spending pattern analysis
+│   └── OpenAI Service        # Natural language categorization
+└── 💾 Local Storage          # Secure local data management
 ```
 
-## 🧪 Testing
+## 🚀 Quick Start
 
-We maintain comprehensive test coverage:
-
+### 1. Start the Backend Server
 ```bash
-# Run all tests
-./Scripts/run_all_tests.sh
-
-# Run specific test suites
-swift test --filter FinancialDataManagerTests
-swift test --filter PatternLearningServiceTests
-swift test --filter CriticalWorkflowTests
-
-# Check coverage
-swift test --enable-code-coverage
-open .build/debug/codecov/index.html
+./start_backend.sh
+# OR manually:
+cd backend && python api_server_real.py
 ```
 
-### Test Categories
+### 2. Build and Run the Mac App
+```bash
+cd LedgerPro
+swift build -c release
+swift run
+```
 
-- **Unit Tests**: Individual service testing
-- **Integration Tests**: End-to-end workflows
-- **Performance Tests**: Large dataset handling
-- **Security Tests**: Memory safety, force unwrap detection
+### 3. Upload Your Bank Statement
+- Drag & drop PDF or CSV files into the app
+- Supported formats: Capital One, Chase, Wells Fargo, Navy Federal, and more
+- Processing typically takes 5-15 seconds
 
-## 🔒 Security
+## 📋 Requirements
 
-- No force unwraps in critical services
-- Memory-safe string operations
-- Automated security scanning
-- No hardcoded secrets
+### System Requirements
+- **macOS 13.0+** (for SwiftUI app)
+- **Python 3.9+** (for backend processing)
+- **Xcode 15.0+** (for development)
 
-## 🚀 Getting Started
+### Python Dependencies
+Automatically installed via `requirements.txt`:
+- FastAPI, Uvicorn (web server)
+- Camelot-py, OpenCV (PDF processing)
+- Pandas, NumPy (data processing)
 
-### Prerequisites
+## 🔌 API Endpoints
 
-- macOS 14.0+
-- Xcode 15.0+
-- Python 3.11+ (for MCP servers)
-- Swift 6.0
+The backend server provides these endpoints:
 
-### Installation
+- `GET /api/health` - Server health check
+- `POST /api/upload` - Upload PDF/CSV files for processing
+- `GET /api/jobs/{job_id}` - Check processing status
+- `GET /api/transactions/{job_id}` - Retrieve processed transactions
 
+## 💡 Key Features
+
+### 📱 macOS App
+- **Native SwiftUI Interface** - Optimized for macOS with native controls
+- **Drag & Drop Upload** - Simply drag bank statements into the app
+- **Real-time Processing** - Watch your transactions appear as they're processed
+- **Interactive Charts** - Visual spending analysis with category breakdowns
+- **Multi-account Support** - Manage transactions from multiple bank accounts
+- **Secure Local Storage** - All data stays on your Mac
+
+### 🔧 Backend Processing
+- **Advanced PDF Analysis** - Uses Camelot for precise table extraction
+- **Multi-Bank Support** - Handles various bank statement formats
+- **Smart Categorization** - AI-powered transaction categorization
+- **Duplicate Detection** - Automatically prevents duplicate transactions
+- **Security First** - File validation and secure processing pipelines
+
+### 🤖 AI-Powered Features
+- **Pattern Learning** - Learns from your manual categorizations
+- **Rule Generation** - Automatically creates categorization rules
+- **Confidence Scoring** - Shows how confident the AI is about each categorization
+- **Continuous Improvement** - Gets better with each correction you make
+
+## 🧪 Development
+
+### Building from Source
 ```bash
 # Clone the repository
-git clone https://github.com/Jihp760/LedgerPro.git
-cd LedgerPro
+git clone https://github.com/Midnight2025DEV/LedgerPro_2025.git
+cd LedgerPro_2025
 
-# Install Python dependencies
-cd MCP-Servers
+# Set up Python backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cd ..
 
-# Build and run
+# Start backend server
+python api_server_real.py
+
+# In a new terminal, build the Mac app
+cd ../LedgerPro
 swift build
 swift run
 ```
 
-## 📈 Performance
+### Running Tests
+```bash
+# Swift tests
+cd LedgerPro && swift test
 
-Benchmarked on MacBook Pro M2:
+# Python tests
+cd backend && python -m pytest tests/ -v
+```
 
-- Import 500 transactions: 13.7s
-- Categorization accuracy: 95%+
-- Memory usage (1000 tx): <200MB
-- Pattern learning: <5s per batch
+### Development Commands
+See [CLAUDE.md](./CLAUDE.md) for comprehensive development commands and workflows.
+
+## 🤖 MCP Integration (Optional)
+
+LedgerPro supports Model Context Protocol (MCP) for advanced AI features:
+
+- **Natural Language Queries** - Ask questions about your spending
+- **Advanced Analytics** - AI-powered financial insights
+- **Custom Analysis** - Tailored financial recommendations
+
+For setup instructions, see [MCP_GUIDE.md](./MCP_GUIDE.md).
+
+## 🔒 Security & Privacy
+
+- **Local Processing Only** - No cloud uploads, all data stays on your device
+- **Temporary File Cleanup** - Uploaded files are securely deleted after processing
+- **Secure File Validation** - All uploads are validated before processing
+- **No Data Collection** - We don't collect or transmit any financial data
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Ensure tests pass (`./Scripts/run_all_tests.sh`)
-4. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-5. Push to the branch (`git push origin feature/AmazingFeature`)
-6. Open a Pull Request
+We welcome contributions! Please follow our workflow:
+
+1. **Check Existing PRs**: `gh pr list`
+2. **Create Feature Branch**: `git checkout -b feature/amazing-feature`
+3. **Follow Git Workflow**: See [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) for details
+4. **Run Tests**: Ensure all tests pass before submitting
+5. **Create Pull Request**: `gh pr create`
 
 ### Code Quality Standards
-
 - ✅ All tests must pass
-- ✅ No force unwraps in Services/
-- ✅ Test coverage must not decrease
-- ✅ Performance benchmarks must pass
-- ✅ SwiftLint warnings resolved
+- ✅ Follow Swift/Python style guidelines
+- ✅ Add tests for new features
+- ✅ Update documentation as needed
 
-## 📚 Documentation
+## 📊 Performance
 
-Full documentation available at: https://jihp760.github.io/LedgerPro
+Benchmarked on MacBook Pro M2:
+- **Import 500 transactions**: ~13.7 seconds
+- **Categorization accuracy**: 95%+
+- **Memory usage (1000 tx)**: <200MB
+- **Pattern learning**: <5 seconds per batch
 
-## 🎯 Roadmap
+## 🚧 Roadmap
 
-- [ ] Multi-account sync
-- [ ] Receipt scanning
-- [ ] Budget planning
-- [ ] Investment tracking
-- [x] Pattern learning from corrections
-- [x] Foreign currency support
-- [x] Comprehensive test coverage
-- [x] CI/CD pipeline
+- [ ] **Receipt Scanning** - OCR support for receipt processing
+- [ ] **Budget Planning** - Set and track spending budgets
+- [ ] **Investment Tracking** - Portfolio and investment account support
+- [ ] **Multi-device Sync** - Secure cloud synchronization
+- [x] **Pattern Learning** - AI learns from corrections ✅
+- [x] **Foreign Currency** - Forex detection and conversion ✅
+- [x] **Comprehensive Testing** - 100+ test coverage ✅
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 🆘 Support
 
-- Built with Swift 6.0 and SwiftUI
-- MCP (Model Context Protocol) for AI integration
-- Community contributors
+### Common Issues
+1. **Backend won't start** - Check Python version and dependencies
+2. **PDF processing fails** - Ensure PDF contains extractable tables
+3. **App won't launch** - Verify macOS 13.0+ and Xcode requirements
+
+### Getting Help
+- Check the [MCP_TROUBLESHOOTING.md](./MCP_TROUBLESHOOTING.md) for MCP-related issues
+- Review [CLAUDE.md](./CLAUDE.md) for development guidance
+- Open an issue on GitHub with detailed error information
 
 ---
 
 <div align="center">
-Made with ❤️ for privacy-conscious Mac users
+Made with ❤️ for privacy-conscious Mac users who want powerful financial management tools
 </div>
