@@ -16,7 +16,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     }
     
     @MainActor
-    func testCategorizeMixedTransactions() {
+    func testCategorizeMixedTransactions() async {
         // Given - Mix of categorizable and uncategorizable transactions
         let transactions = [
             Transaction(
@@ -46,7 +46,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = categorizationService.categorizeTransactions(transactions)
+        let result = await categorizationService.categorizeTransactions(transactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 4)
@@ -64,7 +64,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     }
     
     @MainActor
-    func testHighConfidenceTransactions() {
+    func testHighConfidenceTransactions() async {
         // Given - Transactions that should have very high confidence
         let highConfidenceTransactions = [
             Transaction(
@@ -82,7 +82,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = categorizationService.categorizeTransactions(highConfidenceTransactions)
+        let result = await categorizationService.categorizeTransactions(highConfidenceTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 2)
@@ -98,7 +98,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     }
     
     @MainActor
-    func testLowConfidenceTransactionsNotCategorized() {
+    func testLowConfidenceTransactionsNotCategorized() async {
         // Given - Transactions that should have low confidence
         let lowConfidenceTransactions = [
             Transaction(
@@ -116,7 +116,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = categorizationService.categorizeTransactions(lowConfidenceTransactions)
+        let result = await categorizationService.categorizeTransactions(lowConfidenceTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 2)
@@ -131,7 +131,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     }
     
     @MainActor
-    func testImportResultSummaryMessage() {
+    func testImportResultSummaryMessage() async {
         // Given
         let transactions = [
             Transaction(date: "2025-01-15", description: "UBER EATS", amount: -15.50, category: "Other"),
@@ -141,7 +141,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = categorizationService.categorizeTransactions(transactions)
+        let result = await categorizationService.categorizeTransactions(transactions)
         
         // Then
         let summaryMessage = result.summaryMessage
@@ -156,12 +156,12 @@ final class ImportCategorizationServiceTests: XCTestCase {
     }
     
     @MainActor
-    func testEmptyTransactionList() {
+    func testEmptyTransactionList() async {
         // Given
         let emptyTransactions: [Transaction] = []
         
         // When
-        let result = categorizationService.categorizeTransactions(emptyTransactions)
+        let result = await categorizationService.categorizeTransactions(emptyTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 0)
@@ -174,7 +174,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
     }
     
     @MainActor
-    func testRealWorldTransactionMix() {
+    func testRealWorldTransactionMix() async {
         // Given - Real-world transaction mix
         let realWorldTransactions = [
             // High confidence - should be categorized
@@ -192,7 +192,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
         ]
         
         // When
-        let result = categorizationService.categorizeTransactions(realWorldTransactions)
+        let result = await categorizationService.categorizeTransactions(realWorldTransactions)
         
         // Then
         XCTAssertEqual(result.totalTransactions, 7)
