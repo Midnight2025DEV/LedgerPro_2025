@@ -26,6 +26,9 @@ final class FinancialDataManagerTests: XCTestCase {
             createdAt: ISO8601DateFormatter().string(from: Date())
         )
         
+        // Add the test bank account to the manager so it can be found during addTransactions
+        sut.bankAccounts.append(testBankAccount)
+        
         testTransactions = [
             Transaction(
                 id: "test_1",

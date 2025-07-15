@@ -173,22 +173,37 @@ class FinancialDataManager: ObservableObject {
             }
         }
         
-        // Detect or create bank account
-        let detectedAccount = detectBankAccountFromFilename(filename, transactions: newTransactions)
+        // Check if transactions already have account IDs and find/create corresponding accounts
+        let uniqueAccountIds = Set(newTransactions.compactMap { $0.accountId })
         
-        // Check if account already exists
-        let existingAccount = bankAccounts.first { account in
-            account.institution == detectedAccount.institution &&
-            account.accountType == detectedAccount.accountType &&
-            account.lastFourDigits == detectedAccount.lastFourDigits
-        }
+        var finalAccount: BankAccount
         
-        let finalAccount: BankAccount
-        if let existing = existingAccount {
-            finalAccount = existing
+        if let firstAccountId = uniqueAccountIds.first, uniqueAccountIds.count == 1 {
+            // All transactions have the same accountId, try to find existing account
+            if let existingAccount = bankAccounts.first(where: { $0.id == firstAccountId }) {
+                finalAccount = existingAccount
+            } else {
+                // Create account based on existing accountId
+                finalAccount = createAccountFromId(firstAccountId, filename: filename)
+                bankAccounts.append(finalAccount)
+            }
         } else {
-            finalAccount = detectedAccount
-            bankAccounts.append(finalAccount)
+            // No consistent accountId, detect from filename
+            let detectedAccount = detectBankAccountFromFilename(filename, transactions: newTransactions)
+            
+            // Check if account already exists
+            let existingAccount = bankAccounts.first { account in
+                account.institution == detectedAccount.institution &&
+                account.accountType == detectedAccount.accountType &&
+                account.lastFourDigits == detectedAccount.lastFourDigits
+            }
+            
+            if let existing = existingAccount {
+                finalAccount = existing
+            } else {
+                finalAccount = detectedAccount
+                bankAccounts.append(finalAccount)
+            }
         }
         
         // Add transactions with account linkage
@@ -200,6 +215,9 @@ class FinancialDataManager: ObservableObject {
             AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
             AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
             
+            // Use existing accountId if present, otherwise use detected account
+            let accountIdToUse = transaction.accountId ?? finalAccount.id
+            
             return Transaction(
                 id: transaction.id,
                 date: transaction.date,
@@ -208,7 +226,7 @@ class FinancialDataManager: ObservableObject {
                 category: transaction.category,
                 confidence: transaction.confidence,
                 jobId: jobId,
-                accountId: finalAccount.id,
+                accountId: accountIdToUse,
                 rawData: transaction.rawData,
                 originalAmount: transaction.originalAmount,
                 originalCurrency: transaction.originalCurrency,
@@ -239,6 +257,59 @@ class FinancialDataManager: ObservableObject {
         updateSummary()
         saveData()
         isLoading = false
+    }
+    
+    private func createAccountFromId(_ accountId: String, filename: String) -> BankAccount {
+        // Try to parse account information from accountId
+        let components = accountId.components(separatedBy: "_")
+        
+        var institution = "Unknown Bank"
+        var accountName = "Account"
+        var accountType: BankAccount.AccountType = .checking
+        var lastFourDigits: String?
+        
+        // If accountId follows our pattern: institution_type_digits
+        if components.count >= 2 {
+            let institutionPart = components[0].replacingOccurrences(of: "_", with: " ").capitalized
+            
+            if institutionPart.contains("capital") {
+                institution = "Capital One"
+                accountName = "Capital One Account"
+            } else if institutionPart.contains("test") {
+                institution = "Test Bank"
+                accountName = "Test Account"
+            } else {
+                institution = institutionPart
+                accountName = "\(institutionPart) Account"
+            }
+            
+            if components.count >= 3 {
+                if let typeRaw = BankAccount.AccountType(rawValue: components[1]) {
+                    accountType = typeRaw
+                    accountName = "\(institution) \(typeRaw.displayName)"
+                }
+                
+                lastFourDigits = components.last
+            }
+        } else {
+            // Fallback: try to detect from filename
+            let detectedAccount = detectBankAccountFromFilename(filename, transactions: [])
+            institution = detectedAccount.institution
+            accountName = detectedAccount.name
+            accountType = detectedAccount.accountType
+            lastFourDigits = detectedAccount.lastFourDigits
+        }
+        
+        return BankAccount(
+            id: accountId,
+            name: accountName,
+            institution: institution,
+            accountType: accountType,
+            lastFourDigits: lastFourDigits,
+            currency: "USD",
+            isActive: true,
+            createdAt: ISO8601DateFormatter().string(from: Date())
+        )
     }
     
     private func detectBankAccountFromFilename(_ filename: String, transactions: [Transaction]) -> BankAccount {
