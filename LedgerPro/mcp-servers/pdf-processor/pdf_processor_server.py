@@ -7,6 +7,9 @@ import os
 import json
 import sys
 from pathlib import Path
+
+# Ensure stdout is unbuffered for proper MCP communication
+sys.stdout.reconfigure(line_buffering=True)
 from typing import Dict, List, Optional
 from datetime import datetime
 from mcp.server import Server, NotificationOptions
@@ -161,15 +164,25 @@ async def handle_call_tool(
         else:
             raise ValueError(f"Unknown tool: {name}")
         
+        # Convert result to JSON string with compact encoding to reduce size
+        json_str = json.dumps(result, separators=(',', ':'))
+        
+        # Log the response size for debugging
+        print(f"[DEBUG] Tool response size: {len(json_str)} bytes", file=sys.stderr)
+        
         return [types.TextContent(
             type="text",
-            text=json.dumps(result, indent=2)
+            text=json_str
         )]
         
     except Exception as e:
+        import traceback
+        error_msg = f"Error: {str(e)}\n{traceback.format_exc()}"
+        print(f"[ERROR] Tool call failed: {error_msg}", file=sys.stderr)
+        
         return [types.TextContent(
             type="text",
-            text=f"Error: {str(e)}"
+            text=json.dumps({"error": str(e), "success": False})
         )]
 
 async def detect_bank(file_path: str) -> Dict:
@@ -326,9 +339,13 @@ async def process_bank_pdf(file_path: str, bank: Optional[str] = None, processor
                 "date_range": get_date_range(transactions)
             }
         
+        # Set success flag
+        result["success"] = True
+        
     except Exception as e:
         result["error"] = str(e)
         result["transactions"] = []
+        result["success"] = False
     
     return result
 
@@ -340,7 +357,11 @@ def parse_transaction_table(table: List[List], bank: str) -> List[Dict]:
     if not table or len(table) < 2:
         return transactions
     
-    # Simple generic parser - you can enhance this with bank-specific logic
+    # Bank-specific parsing
+    if bank == "capital_one":
+        return parse_capital_one_transactions(table)
+    
+    # Generic parser for other banks
     headers = [str(h).lower() if h else "" for h in table[0]]
     
     # Find column indices
@@ -401,6 +422,112 @@ def parse_transaction_table(table: List[List], bank: str) -> List[Dict]:
         except Exception as e:
             # Skip problematic rows but continue processing
             continue
+    
+    return transactions
+
+def parse_capital_one_transactions(table: List[List]) -> List[Dict]:
+    """Parse Capital One-specific transaction format with forex support"""
+    import re
+    
+    transactions = []
+    
+    for row in table:
+        if not row or not row[0]:
+            continue
+            
+        text = str(row[0]).strip()
+        
+        # Skip simple headers but allow text blocks with transactions
+        if text.lower() in ["transactions", "transactions (continued)", "trans date post date description amount"]:
+            continue
+            
+        # Look for transaction lines with the pattern: 
+        # Month Day Month Day DESCRIPTION Amount
+        # Examples: "Apr 17 Apr 17 CAPITAL ONE MOBILE PYMTAuthDate 17-Apr - $1,000.00"
+        #          "Apr 14 Apr 15 WOOD CITY LLCHoustonTX $253.28"
+        
+        lines = text.split('\n')
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                i += 1
+                continue
+                
+            # Skip specific non-transaction lines but allow processing of forex data
+            if any(skip_phrase in line.lower() for skip_phrase in [
+                "visit capitalone", "total fees", "interest charge", "annual percentage", 
+                "your apr", "rewards summary", "trans date post date description amount",
+                "total transactions for this period", "hernandez #9581:", "payments, credits and adjustments"
+            ]):
+                i += 1
+                continue
+                
+            # Pattern to match: Month Day Month Day Description Amount
+            # This regex looks for: MMM DD MMM DD ... $amount or -$amount
+            transaction_pattern = r'^([A-Za-z]{3}\s+\d{1,2})\s+([A-Za-z]{3}\s+\d{1,2})\s+(.+?)\s+([-$]?\$?[\d,]+\.?\d*)$'
+            match = re.match(transaction_pattern, line)
+            
+            if match:
+                trans_date, post_date, description, amount_str = match.groups()
+                
+                # Clean up description - remove extra spaces and normalize
+                description = re.sub(r'\s+', ' ', description.strip())
+                
+                # Parse amount
+                amount = parse_amount(amount_str)
+                
+                # Skip if amount is 0 (invalid parse)
+                if amount == 0:
+                    i += 1
+                    continue
+                
+                transaction = {
+                    "date": post_date,  # Use post date as the primary date
+                    "transaction_date": trans_date,
+                    "post_date": post_date,
+                    "description": description,
+                    "amount": amount,
+                    "bank": "capital_one",
+                    "raw_line": line
+                }
+                
+                # Check for foreign currency data in next lines
+                # Capital One format:
+                # Apr 15 Apr 16 UBER* EATSCIUDAD DE MEXCDM $26.03
+                # $518.82
+                # MXN  
+                # 19.931617365 Exchange Rate
+                
+                if i + 3 < len(lines):
+                    next_line1 = lines[i + 1].strip()  # Original amount line
+                    next_line2 = lines[i + 2].strip()  # Currency code
+                    next_line3 = lines[i + 3].strip()  # Exchange rate line
+                    
+                    # Check if this looks like forex data
+                    original_amount_match = re.match(r'^\$?([\d,]+\.?\d*)$', next_line1)
+                    currency_match = re.match(r'^([A-Z]{3})$', next_line2)
+                    exchange_rate_match = re.search(r'([\d.]+)\s+exchange\s+rate', next_line3, re.IGNORECASE)
+                    
+                    if original_amount_match and currency_match and exchange_rate_match:
+                        # This is a foreign currency transaction
+                        original_amount = float(original_amount_match.group(1).replace(',', ''))
+                        currency_code = currency_match.group(1)
+                        exchange_rate = float(exchange_rate_match.group(1))
+                        
+                        transaction.update({
+                            "original_amount": original_amount,
+                            "original_currency": currency_code,
+                            "exchange_rate": exchange_rate,
+                            "has_forex": True
+                        })
+                        
+                        # Skip the forex lines we just processed
+                        i += 3
+                
+                transactions.append(transaction)
+            
+            i += 1
     
     return transactions
 

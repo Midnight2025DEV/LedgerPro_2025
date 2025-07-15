@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
@@ -217,8 +218,12 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.bordered)
                 
-                Link("Privacy Policy", destination: URL(string: "https://example.com/privacy")!)
-                Link("Terms of Service", destination: URL(string: "https://example.com/terms")!)
+                if let privacyURL = URL(string: "https://example.com/privacy") {
+                    Link("Privacy Policy", destination: privacyURL)
+                }
+                if let termsURL = URL(string: "https://example.com/terms") {
+                    Link("Terms of Service", destination: termsURL)
+                }
             }
             
             // Developer Tools
@@ -306,16 +311,16 @@ struct SettingsView: View {
         .onAppear {
             loadSettings()
         }
-        .onChange(of: backendURL) { _ in
+        .onChange(of: backendURL) {
             saveSettings()
         }
-        .onChange(of: enableNotifications) { _ in
+        .onChange(of: enableNotifications) {
             saveSettings()
         }
-        .onChange(of: autoUpload) { _ in
+        .onChange(of: autoUpload) {
             saveSettings()
         }
-        .onChange(of: dataRetentionDays) { _ in
+        .onChange(of: dataRetentionDays) {
             saveSettings()
         }
     }
@@ -325,7 +330,11 @@ struct SettingsView: View {
         exportProgress = 0.0
         
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.init(filenameExtension: exportFormat.fileExtension)!]
+        if let contentType = UTType(filenameExtension: exportFormat.fileExtension) {
+            panel.allowedContentTypes = [contentType]
+        } else {
+            panel.allowedContentTypes = [.data] // Fallback to generic data type
+        }
         panel.nameFieldStringValue = "financial_data.\(exportFormat.fileExtension)"
         
         if panel.runModal() == .OK, let url = panel.url {

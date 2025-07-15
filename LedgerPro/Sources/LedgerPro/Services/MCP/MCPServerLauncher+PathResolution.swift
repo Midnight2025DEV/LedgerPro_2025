@@ -29,26 +29,61 @@ extension MCPServerLauncher {
         }
     }
     
+    /// Resolve Python path for a specific server type
+    static func resolvePythonPath(for serverType: String) -> String? {
+        let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "PathResolver")
+        
+        // First try relative to app bundle
+        if let bundlePath = Bundle.main.resourcePath {
+            let serverPath = "\(bundlePath)/mcp-servers/\(serverType)/venv/bin/python"
+            if FileManager.default.fileExists(atPath: serverPath) {
+                logger.info("✅ Found bundled Python at \(serverPath)")
+                return serverPath
+            }
+        }
+        
+        // Then try relative to project root (development)
+        let projectRoot = FileManager.default.currentDirectoryPath
+        let paths = [
+            "\(projectRoot)/mcp-servers/\(serverType)/venv/bin/python",
+            "\(projectRoot)/../mcp-servers/\(serverType)/venv/bin/python",
+            // Add user's home path as fallback
+            "\(NSHomeDirectory())/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/mcp-servers/\(serverType)/venv/bin/python"
+        ]
+        
+        for path in paths {
+            if FileManager.default.fileExists(atPath: path) {
+                logger.info("✅ Found development Python at \(path)")
+                return path
+            }
+        }
+        
+        logger.warning("⚠️ Could not find Python venv for \(serverType)")
+        return nil
+    }
+
     /// Get the correct base path for MCP servers based on environment
     static func getMCPServersBasePath() -> String? {
         let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "PathResolver")
         
         switch RuntimeEnvironment.current {
         case .development:
-            // Development paths - check multiple possible locations
+            // Development paths - check multiple possible locations dynamically
+            let projectRoot = FileManager.default.currentDirectoryPath
             let devPaths = [
-                // Cursor AI project structure
-                URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-                    .appendingPathComponent("mcp-servers").path,
-                // Absolute development path
-                "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/mcp-servers",
-                // Relative to source
+                // Current working directory
+                "\(projectRoot)/mcp-servers",
+                // Parent directory (if running from subdirectory)
+                "\(projectRoot)/../mcp-servers",
+                // Relative to source file
                 URL(fileURLWithPath: #file)
                     .deletingLastPathComponent()
                     .deletingLastPathComponent()
                     .deletingLastPathComponent()
                     .deletingLastPathComponent()
-                    .appendingPathComponent("mcp-servers").path
+                    .appendingPathComponent("mcp-servers").path,
+                // User's document folder (last resort)
+                "\(NSHomeDirectory())/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/mcp-servers"
             ]
             
             for path in devPaths {
@@ -109,8 +144,17 @@ extension MCPServerLauncher {
         return FileManager.default.fileExists(atPath: fullPath)
     }
     
-    /// Get Python executable path (prefer venv)
+    /// Get Python executable path (prefer venv) - Enhanced version
     static func getPythonPath(for serverDir: String) -> String {
+        // Extract server type from directory path
+        let serverType = URL(fileURLWithPath: serverDir).lastPathComponent
+        
+        // Try the new dynamic path resolver first
+        if let dynamicPath = resolvePythonPath(for: serverType) {
+            return dynamicPath
+        }
+        
+        // Fallback to original logic
         let venvPython = "\(serverDir)/venv/bin/python3"
         let venvPythonAlt = "\(serverDir)/venv/bin/python"
         
@@ -134,6 +178,12 @@ extension MCPServerLauncher {
             throw MCPLauncherError.scriptNotFound("MCP servers directory not found")
         }
         
+        // Debug logging
+        let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "PathResolver")
+        logger.info("🔍 Debug: MCP base path resolved to: \(basePath)")
+        logger.info("🔍 Debug: Runtime environment: \(String(describing: RuntimeEnvironment.current))")
+        logger.info("🔍 Debug: Current directory: \(FileManager.default.currentDirectoryPath)")
+        
         let serverConfigs: [ServerType: (dir: String, script: String)] = [
             .financialAnalyzer: ("financial-analyzer", "analyzer_server.py"),
             .openAIService: ("openai-service", "openai_server.py"),
@@ -146,6 +196,12 @@ extension MCPServerLauncher {
         
         let serverDir = "\(basePath)/\(config.dir)"
         let scriptPath = "\(serverDir)/\(config.script)"
+        
+        // Debug logging for paths
+        logger.info("🔍 Debug: Server type: \(type.rawValue)")
+        logger.info("🔍 Debug: Server directory: \(serverDir)")
+        logger.info("🔍 Debug: Script path: \(scriptPath)")
+        logger.info("🔍 Debug: Script exists: \(FileManager.default.fileExists(atPath: scriptPath))")
         
         // Verify script exists
         guard FileManager.default.fileExists(atPath: scriptPath) else {
@@ -165,6 +221,14 @@ extension MCPServerLauncher {
         
         // Use appropriate Python executable
         let pythonPath = Self.getPythonPath(for: serverDir)
+        
+        // Debug logging for Python process
+        let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "PythonProcess")
+        logger.info("🔍 Debug: Python path: \(pythonPath)")
+        logger.info("🔍 Debug: Python exists: \(FileManager.default.fileExists(atPath: pythonPath))")
+        logger.info("🔍 Debug: Working directory: \(serverDir)")
+        logger.info("🔍 Debug: Port: \(port)")
+        
         process.executableURL = URL(fileURLWithPath: pythonPath)
         
         // Set arguments
@@ -196,19 +260,19 @@ extension MCPServerLauncher {
         process.standardOutput = outputPipe
         process.standardError = errorPipe
         
-        // Log output
-        let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "ServerProcess")
+        // Log output  
+        let processLogger = Logger(subsystem: "com.ledgerpro.mcp", category: "ServerProcess")
         outputPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty, let output = String(data: data, encoding: .utf8) {
-                logger.info("📊 \(script): \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+                processLogger.info("📊 \(script): \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
             }
         }
         
         errorPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty, let error = String(data: data, encoding: .utf8) {
-                logger.error("⚠️ \(script): \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
+                processLogger.error("⚠️ \(script): \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
             }
         }
         

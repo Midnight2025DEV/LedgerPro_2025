@@ -148,10 +148,14 @@ class MCPBridge: ObservableObject {
             MCPServer.financialAnalyzer(),
             MCPServer.openAIService(),
             MCPServer.pdfProcessor()
-        ]
+        ].compactMap { $0 } // Filter out nil values
         
         for server in defaultServers {
             self.servers[server.id] = server
+        }
+        
+        if defaultServers.count < 3 {
+            logger.warning("⚠️ Could not initialize all MCP servers. Only \(defaultServers.count)/3 servers available.")
         }
     }
     
@@ -363,19 +367,112 @@ class MCPBridge: ObservableObject {
             throw MCPRPCError(code: -32601, message: "Server not available: PDF Processor")
         }
         
-        let fileData = try Data(contentsOf: fileURL)
+        // MCP servers expect tool calls, not direct method calls
+        // The PDF processor server has a "process_bank_pdf" tool
         let params: [String: AnyCodable] = [
-            "filename": AnyCodable(fileURL.lastPathComponent),
-            "data": AnyCodable(fileData.base64EncodedString()),
-            "options": AnyCodable([
-                "extract_tables": true,
-                "ocr_enabled": true,
-                "auto_categorize": true
+            "name": AnyCodable("process_bank_pdf"),
+            "arguments": AnyCodable([
+                "file_path": fileURL.path,
+                "processor": "auto"
             ])
         ]
         
-        let response = try await sendRequest(to: pdfServer.id, method: .processDocument, params: params)
-        return try response.decodeResult(as: DocumentProcessingResult.self)
+        // Debug log the request
+        debugLogRequest("tools/call", [
+            "name": "process_bank_pdf",
+            "arguments": [
+                "file_path": fileURL.path,
+                "processor": "auto"
+            ]
+        ])
+        
+        let response = try await sendRequest(to: pdfServer.id, method: .callTool, params: params)
+        print("📡 MCP Tool Response: \(response)")        
+        // Convert the tool response to our expected format
+        if let result = response.result?.value as? [String: Any] {
+            // Handle MCP tool response structure
+            if let isError = result["isError"] as? Bool, 
+               !isError,
+               let content = result["content"] as? [[String: Any]],
+               let firstContent = content.first,
+               let jsonText = firstContent["text"] as? String {
+                
+                print("🔍 DEBUG - Raw JSON text length: \(jsonText.count)")
+                print("🔍 DEBUG - First 200 chars: \(String(jsonText.prefix(200)))")
+                print("🔍 DEBUG - JSON contains backslashes: \(jsonText.contains("\\"))")
+                
+                // Parse the JSON string from the content
+                guard let jsonData = jsonText.data(using: .utf8),
+                      let parsedResult = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+                    throw MCPRPCError(code: -32603, message: "Failed to parse PDF processor response")
+                }
+                
+                // Check if processing was successful
+                print("🔍 DEBUG - Parsed result keys: \(parsedResult.keys)")
+                print("🔍 DEBUG - Success flag: \(parsedResult["success"] ?? "nil")")
+                print("🔍 DEBUG - Has transactions: \(parsedResult["transactions"] != nil)")
+                if let transactions = parsedResult["transactions"] as? [[String: Any]] {
+                    print("🔍 DEBUG - Transaction count: \(transactions.count)")
+                    if let firstTransaction = transactions.first {
+                        print("🔍 DEBUG - First transaction: \(firstTransaction)")
+                    }
+                }
+                
+                if let success = parsedResult["success"] as? Bool, !success {
+                    let errorMessage = parsedResult["error"] as? String ?? "Unknown error"
+                    throw MCPRPCError(code: -32603, message: "PDF processing failed: \(errorMessage)")
+                }
+                
+                // Extract transactions
+                if let transactions = parsedResult["transactions"] as? [[String: Any]] {
+                    // Convert dictionary transactions to Transaction objects
+                    var transactionObjects: [Transaction] = []
+                    for (index, dict) in transactions.enumerated() {
+                        do {
+                            let data = try JSONSerialization.data(withJSONObject: dict)
+                            let transaction = try JSONDecoder().decode(Transaction.self, from: data)
+                            transactionObjects.append(transaction)
+                            
+                            // Debug forex data
+                            if let hasForex = transaction.hasForex, hasForex == true {
+                                print("💱 FOREX TRANSACTION DETECTED:")
+                                print("   Description: \(transaction.description)")
+                                print("   USD Amount: $\(transaction.amount)")
+                                print("   Original: \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "N/A")")
+                                print("   Exchange Rate: \(transaction.exchangeRate ?? 0)")
+                            }
+                        } catch {
+                            print("🔍 DEBUG - Failed to decode transaction \(index): \(error)")
+                            if index == 0 {
+                                print("🔍 DEBUG - First transaction dict: \(dict)")
+                            }
+                        }
+                    }
+                    
+                    // Extract additional metadata from response
+                    let summary = parsedResult["summary"] as? [String: Any]
+                    let transactionCount = summary?["transaction_count"] as? Int ?? transactionObjects.count
+                    
+                    let metadata = DocumentProcessingResult.ProcessingMetadata(
+                        filename: fileURL.lastPathComponent,
+                        processedAt: Date(),
+                        transactionCount: transactionCount,
+                        processingTime: 0.0, // Will be calculated by server
+                        method: "MCP PDF Processor"
+                    )
+                    
+                    return DocumentProcessingResult(
+                        transactions: transactionObjects,
+                        metadata: metadata,
+                        extractedTables: nil,
+                        ocrText: nil,
+                        confidence: 0.9
+                    )
+                }
+            }
+        }
+        
+        throw MCPRPCError(code: -32603, message: "Failed to process document response")
     }
     
     // MARK: - Health Monitoring
@@ -431,18 +528,27 @@ class MCPBridge: ObservableObject {
         // Clear any existing servers
         self.servers.removeAll()
         
-        // Create servers using factory methods
+        // Create servers using factory methods with nil checking
         // Financial Analyzer
-        let financialAnalyzer = MCPServer.financialAnalyzer()
-        self.servers[financialAnalyzer.id] = financialAnalyzer
+        if let financialAnalyzer = MCPServer.financialAnalyzer() {
+            self.servers[financialAnalyzer.id] = financialAnalyzer
+        } else {
+            logger.warning("⚠️ Failed to initialize Financial Analyzer server")
+        }
         
         // OpenAI Service
-        let openAIService = MCPServer.openAIService()
-        self.servers[openAIService.id] = openAIService
+        if let openAIService = MCPServer.openAIService() {
+            self.servers[openAIService.id] = openAIService
+        } else {
+            logger.warning("⚠️ Failed to initialize OpenAI Service server")
+        }
         
         // PDF Processor
-        let pdfProcessor = MCPServer.pdfProcessor()
-        self.servers[pdfProcessor.id] = pdfProcessor
+        if let pdfProcessor = MCPServer.pdfProcessor() {
+            self.servers[pdfProcessor.id] = pdfProcessor
+        } else {
+            logger.warning("⚠️ Failed to initialize PDF Processor server")
+        }
         
         logger.info("✅ Initialized \(self.servers.count) MCP servers")
         
@@ -511,11 +617,20 @@ class MCPBridge: ObservableObject {
         let server: MCPServer
         switch type {
         case .financialAnalyzer:
-            server = MCPServer.financialAnalyzer()
+            guard let financialAnalyzer = MCPServer.financialAnalyzer() else {
+                throw MCPRPCError(code: -32601, message: "Failed to create Financial Analyzer server - MCP directory not found")
+            }
+            server = financialAnalyzer
         case .openAIService:
-            server = MCPServer.openAIService()
+            guard let openAIService = MCPServer.openAIService() else {
+                throw MCPRPCError(code: -32601, message: "Failed to create OpenAI Service server - MCP directory not found")
+            }
+            server = openAIService
         case .pdfProcessor:
-            server = MCPServer.pdfProcessor()
+            guard let pdfProcessor = MCPServer.pdfProcessor() else {
+                throw MCPRPCError(code: -32601, message: "Failed to create PDF Processor server - MCP directory not found")
+            }
+            server = pdfProcessor
         case .custom:
             throw MCPRPCError(code: -32600, message: "Custom server type requires custom configuration")
         }
@@ -564,5 +679,40 @@ class MCPBridge: ObservableObject {
     /// Get server capabilities for MCPServerLauncher
     func getServerCapabilities(type: ServerType) -> [String]? {
         return getServer(type: type)?.capabilities.methods.map { $0.rawValue }
+    }
+
+    // DEBUG: Log the exact request being sent
+    private func debugLogRequest(_ method: String, _ params: [String: Any]?) {
+        print("🔍 DEBUG MCP Request:")
+        print("   Method: \(method)")
+        if let params = params {
+            print("   Params: \(params)")
+            if let jsonData = try? JSONSerialization.data(withJSONObject: params, options: .prettyPrinted),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("   JSON:\n\(jsonString)")
+            }
+        }
+    }
+
+    /// Check if all servers are connected AND initialized
+    func areServersReady() -> Bool {
+        guard isConnected else { return false }
+        
+        // Check each server is connected and has completed initialization
+        for server in servers.values {
+            if !server.isConnected {
+                return false
+            }
+            
+            // Check connection state is not error or disconnected
+            switch server.connectionState {
+            case .connected:
+                continue
+            case .disconnected, .connecting, .reconnecting, .error:
+                return false
+            }
+        }
+        
+        return true
     }
 }

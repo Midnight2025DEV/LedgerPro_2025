@@ -2,11 +2,12 @@ import XCTest
 @testable import LedgerPro
 import Foundation
 
+@MainActor
 final class CategoryServiceCustomRuleTests: XCTestCase {
     var categoryService: CategoryService!
     var ruleStorage: RuleStorageService!
     
-    @MainActor
+    
     override func setUp() async throws {
         try await super.setUp()
         categoryService = CategoryService.shared
@@ -22,7 +23,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(100))
     }
     
-    @MainActor
+    
     override func tearDown() async throws {
         // Clean up custom rules
         ruleStorage.customRules.forEach { rule in
@@ -31,7 +32,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         try await super.tearDown()
     }
     
-    @MainActor
+    
     func testCustomRuleOverridesSystemRule() {
         // Given - Create a custom rule for Uber with higher priority
         var customUberRule = CategoryRule(
@@ -60,7 +61,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         XCTAssertGreaterThan(confidence, 0.9, "Should have high confidence from custom rule")
     }
     
-    @MainActor
+    
     func testCustomRuleForNewMerchant() {
         // Given - Create custom rule for a merchant not in system rules
         var customRule = CategoryRule(
@@ -91,7 +92,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         XCTAssertGreaterThan(confidence, 0.8, "Should have good confidence from custom rule")
     }
     
-    @MainActor
+    
     func testMultipleCustomRulesPriority() {
         // Given - Create multiple custom rules that could match
         var rule1 = CategoryRule(
@@ -127,7 +128,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         XCTAssertEqual(category?.name, "Entertainment", "Should use higher priority rule")
     }
     
-    @MainActor
+    
     func testCustomRuleWithRegex() {
         // Given - Custom rule with regex pattern
         var regexRule = CategoryRule(
@@ -163,7 +164,7 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
         }
     }
     
-    @MainActor
+    
     func testRuleLearningFromCorrections() {
         // Given - Create a custom rule
         var learningRule = CategoryRule(

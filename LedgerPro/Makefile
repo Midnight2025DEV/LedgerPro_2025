@@ -1,7 +1,7 @@
 # LedgerPro - macOS Financial Analysis App
 # Makefile for building and managing the application
 
-.PHONY: help build run clean test deps install package lint format check-backend start-backend
+.PHONY: help build run clean test deps install package lint format check-backend start-backend check-mcp test-mcp clean-mcp mcp-setup fix-paths validate-mcp
 
 # Default target
 help:
@@ -21,10 +21,18 @@ help:
 	@echo "  start-backend  Start the backend server"
 	@echo "  setup          Complete setup (backend + dependencies)"
 	@echo ""
+	@echo "MCP Integration:"
+	@echo "  check-mcp      Check MCP server status"
+	@echo "  test-mcp       Test MCP server functionality"
+	@echo "  clean-mcp      Clean MCP server artifacts"
+	@echo "  mcp-setup      Setup MCP server development environment"
+	@echo "  fix-paths      Fix MCP configuration paths automatically"
+	@echo "  validate-mcp   Validate complete MCP setup"
+	@echo ""
 	@echo "Backend Integration:"
 	@echo "  The app requires the AI Financial Accountant backend to be running."
 	@echo "  Run 'make start-backend' or manually start:"
-	@echo "    cd ../financial_advisor && python api_server_real.py"
+	@echo "    cd backend && python api_server_real.py"
 
 # Build the application
 build:
@@ -52,8 +60,8 @@ deps:
 	@echo "Resolving Swift package dependencies..."
 	swift package resolve
 
-# Install the application to /Applications
-install: build
+# Install the application to /Applications (legacy - use enhanced install target below)
+install-app: build
 	@echo "Installing LedgerPro to Applications..."
 	@if [ -d ".build/release/LedgerPro" ]; then \
 		echo "Copying LedgerPro to /Applications..."; \
@@ -210,3 +218,65 @@ archive: package
 	@mkdir -p archives
 	@cp dist/LedgerPro.zip archives/LedgerPro-$(shell date +%Y%m%d-%H%M%S).zip
 	@echo "Archive created in archives/ directory"
+
+# MCP Server Management
+
+# Check MCP server status
+check-mcp:
+	@echo "Checking MCP server processes..."
+	@ps aux | grep -E "(analyzer|processor|openai)_server.py" | grep -v grep || echo "No MCP servers running"
+	@echo ""
+	@echo "Note: MCP servers are managed by the LedgerPro app itself."
+	@echo "They will start automatically when the app launches."
+
+# Test MCP servers
+test-mcp:
+	@echo "Testing MCP server functionality..."
+	@if [ -f "mcp-servers/test_mcp_servers.py" ]; then \
+		cd mcp-servers && python test_mcp_servers.py; \
+	else \
+		echo "MCP test script not found. Run app to test MCP integration."; \
+	fi
+
+# Clean MCP server artifacts
+clean-mcp:
+	@echo "Cleaning MCP server artifacts..."
+	@find mcp-servers -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find mcp-servers -name "*.pyc" -delete 2>/dev/null || true
+	@echo "✅ MCP artifacts cleaned"
+
+# MCP development setup
+mcp-setup:
+	@echo "Setting up MCP server development environment..."
+	@if [ -d "mcp-servers/pdf-processor" ]; then \
+		echo "Setting up PDF Processor..."; \
+		cd mcp-servers/pdf-processor && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt || echo "PDF Processor setup failed"; \
+	fi
+	@if [ -d "mcp-servers/financial-analyzer" ]; then \
+		echo "Setting up Financial Analyzer..."; \
+		cd mcp-servers/financial-analyzer && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt || echo "Financial Analyzer setup failed"; \
+	fi
+	@if [ -d "mcp-servers/openai-service" ]; then \
+		echo "Setting up OpenAI Service..."; \
+		cd mcp-servers/openai-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt || echo "OpenAI Service setup failed"; \
+	fi
+	@echo "✅ MCP servers ready for development"
+	@echo "Note: MCP servers will auto-start when you run the LedgerPro app"
+
+# Fix MCP configuration paths
+fix-paths:
+	@echo "🔧 Fixing MCP configuration paths..."
+	@./Scripts/update_mcp_config.sh
+	@echo ""
+	@echo "🔍 Validating setup..."
+	@./Scripts/validate_mcp_setup.sh
+
+# Validate MCP setup
+validate-mcp:
+	@echo "🔍 Validating MCP setup..."
+	@./Scripts/validate_mcp_setup.sh
+
+# Enhanced install target
+install: mcp-setup fix-paths validate-mcp
+	@echo "✅ LedgerPro installation complete!"
+	@echo "🚀 Ready to use MCP integration"

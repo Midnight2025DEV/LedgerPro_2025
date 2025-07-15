@@ -142,14 +142,25 @@ class RuleSuggestionEngine: ObservableObject {
         return groups
     }
     
+    // Safe regex pattern compilation with fallback to no-op regex
+    private static func safeRegex(pattern: String) -> NSRegularExpression {
+        do {
+            return try NSRegularExpression(pattern: pattern)
+        } catch {
+            AppLogger.shared.error("Failed to compile regex pattern '\(pattern)': \(error)")
+            // Return a simple regex that matches nothing as fallback
+            return (try? NSRegularExpression(pattern: "(?!.*)")) ?? NSRegularExpression()
+        }
+    }
+    
     // Pre-compiled regex patterns for better performance
-    private static let storeNumberPattern = try! NSRegularExpression(pattern: #"\s+#\d{4,}"#)
-    private static let longNumberPattern = try! NSRegularExpression(pattern: #"\s+\d{8,}"#)
-    private static let stateCodePattern = try! NSRegularExpression(pattern: #"\s+[A-Z]{2}$"#)
-    private static let companySuffixPattern = try! NSRegularExpression(pattern: #"\s+(INC|LLC|CORP)\.?"#)
-    private static let asteriskPattern = try! NSRegularExpression(pattern: #"\s+\*.*$"#)
-    private static let datePattern = try! NSRegularExpression(pattern: #"\s+\d{2}/\d{2}"#)
-    private static let dotComPattern = try! NSRegularExpression(pattern: #"\.COM.*$"#)
+    private static let storeNumberPattern = safeRegex(pattern: #"\s+#\d{4,}"#)
+    private static let longNumberPattern = safeRegex(pattern: #"\s+\d{8,}"#)
+    private static let stateCodePattern = safeRegex(pattern: #"\s+[A-Z]{2}$"#)
+    private static let companySuffixPattern = safeRegex(pattern: #"\s+(INC|LLC|CORP)\.?"#)
+    private static let asteriskPattern = safeRegex(pattern: #"\s+\*.*$"#)
+    private static let datePattern = safeRegex(pattern: #"\s+\d{2}/\d{2}"#)
+    private static let dotComPattern = safeRegex(pattern: #"\.COM.*$"#)
     
     /// Extracts a clean merchant pattern from transaction description
     func extractMerchantPattern(from description: String) -> String {
@@ -176,7 +187,8 @@ class RuleSuggestionEngine: ObservableObject {
         ]
         
         for pattern in compiledPatterns {
-            let range = NSRange(cleaned.startIndex..<cleaned.endIndex, in: cleaned)
+            guard !cleaned.isEmpty else { continue }
+            let range = NSRange(location: 0, length: cleaned.utf16.count)
             cleaned = pattern.stringByReplacingMatches(in: cleaned, range: range, withTemplate: "")
         }
         
@@ -390,6 +402,7 @@ extension Transaction {
 extension Array {
     /// Splits array into chunks of specified size for batch processing
     func chunked(into size: Int) -> [[Element]] {
+        guard !isEmpty && size > 0 else { return [] }
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0..<Swift.min($0 + size, count)])
         }

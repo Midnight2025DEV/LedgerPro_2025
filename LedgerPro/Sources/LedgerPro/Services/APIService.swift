@@ -183,11 +183,11 @@ class APIService: ObservableObject {
             var body = Data()
             
             // Add file data
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+            body.append(try "--\(boundary)\r\n".safeUTF8Data())
+            body.append(try "Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".safeUTF8Data())
+            body.append(try "Content-Type: application/octet-stream\r\n\r\n".safeUTF8Data())
             body.append(fileData)
-            body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+            body.append(try "\r\n--\(boundary)--\r\n".safeUTF8Data())
             
             var request = URLRequest(url: url)
             request.httpMethod = "POST"

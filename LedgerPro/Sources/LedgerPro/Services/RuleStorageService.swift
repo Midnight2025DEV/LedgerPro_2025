@@ -6,12 +6,19 @@ class RuleStorageService: ObservableObject {
     
     @Published private(set) var customRules: [CategoryRule] = []
     
-    private let documentsDirectory = FileManager.default.urls(for: .documentDirectory, 
-                                                             in: .userDomainMask).first!
+    private let documentsDirectory: URL
+    
+    private static func getDocumentsDirectory() -> URL {
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? 
+               FileManager.default.temporaryDirectory
+    }
     private let rulesFileURL: URL
     
-    init() {
-        rulesFileURL = documentsDirectory.appendingPathComponent("custom_category_rules.json")
+    // Test support - allows injecting a custom filename for test isolation
+    init(testFileName: String? = nil) {
+        documentsDirectory = Self.getDocumentsDirectory()
+        let fileName = testFileName ?? "custom_category_rules.json"
+        rulesFileURL = documentsDirectory.appendingPathComponent(fileName)
         loadRules()
     }
     
@@ -62,6 +69,13 @@ class RuleStorageService: ObservableObject {
             AppLogger.shared.debug("Loaded \(customRules.count) custom rules")
         } catch {
             AppLogger.shared.error("Failed to load rules: \(error)")
+        }
+    }
+    
+    // Test support - clean up test files
+    func cleanupTestFile() {
+        if rulesFileURL.lastPathComponent != "custom_category_rules.json" {
+            try? FileManager.default.removeItem(at: rulesFileURL)
         }
     }
 }

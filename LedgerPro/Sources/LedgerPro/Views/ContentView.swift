@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
     @EnvironmentObject private var apiService: APIService
+    @EnvironmentObject private var mcpBridge: MCPBridge
     @State private var selectedTab: DashboardTab = .overview
     @State private var showingUploadSheet = false
     @State private var showingTransactionDetail = false
@@ -11,6 +12,7 @@ struct ContentView: View {
     @State private var healthCheckMessage = ""
     @State private var showingCategoryTest = false
     @State private var showingRulesWindow = false
+    @State private var showingLearningWindow = false
     @State private var selectedTransactionFilter: TransactionFilter = .all
     @State private var shouldNavigateToTransactions = false
     
@@ -53,6 +55,12 @@ struct ContentView: View {
                 }
                 .help("Manage Rules")
                 
+                Button(action: { showingLearningWindow = true }) {
+                    Image(systemName: "brain")
+                        .foregroundColor(.blue)
+                }
+                .help("Learning Analytics")
+                
                 Button(action: { showingCategoryTest = true }) {
                     Image(systemName: "folder.badge.gearshape")
                         .foregroundColor(.blue)
@@ -64,6 +72,9 @@ struct ContentView: View {
                         .foregroundColor(apiService.isHealthy ? .green : .red)
                 }
                 .help("Check Backend Health")
+                
+                // MCP Status Indicator
+                MCPStatusIndicator(mcpBridge: mcpBridge)
                 
                 Button(action: { 
                     AppLogger.shared.debug("Upload button clicked in ContentView")
@@ -81,6 +92,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingRulesWindow) {
             RulesManagementView()
+        }
+        .sheet(isPresented: $showingLearningWindow) {
+            LearningAnalyticsView()
         }
         .sheet(isPresented: $showingCategoryTest) {
             NavigationStack {
@@ -110,6 +124,23 @@ struct ContentView: View {
         }
         .task {
             checkHealth()
+            
+            // Monitor MCP connection status
+            print("🔍 Starting MCP connection monitoring...")
+            
+            // Log initial status
+            print("📊 Initial MCP Status:")
+            print("   - Connected: \(mcpBridge.isConnected)")
+            print("   - Available Servers: \(mcpBridge.servers.count)")
+            for server in mcpBridge.servers.values {
+                print("   - \(server.info.name): \(server.isConnected ? "✅ Active" : "❌ Inactive")")
+            }
+            
+            // Log path resolution for debugging
+            print("🔍 MCP Path Resolution Debug:")
+            print("   - Current directory: \(FileManager.default.currentDirectoryPath)")
+            let mcpPath = "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/mcp-servers"
+            print("   - MCP servers path exists: \(FileManager.default.fileExists(atPath: mcpPath))")
         }
     }
     
