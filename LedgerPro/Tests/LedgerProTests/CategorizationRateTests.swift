@@ -8,15 +8,15 @@ final class CategorizationRateTests: XCTestCase {
     
     override func setUp() async throws {
         try await super.setUp()
-        categoryService = CategoryService.shared
+        categoryService = await CategoryService.shared
         await categoryService.loadCategories()
         try await Task.sleep(for: .milliseconds(100))
         
-        categorizationService = ImportCategorizationService()
+        categorizationService = await ImportCategorizationService()
     }
     
     
-    func testEnhancedCategorizationRate() {
+    func testEnhancedCategorizationRate() async {
         // Given - Real world transaction examples that should be categorized with new rules
         let transactions = [
             // AI & Tech Services
@@ -66,7 +66,7 @@ final class CategorizationRateTests: XCTestCase {
         ]
         
         // When
-        let result = categorizationService.categorizeTransactions(transactions)
+        let result = await categorizationService.categorizeTransactions(transactions)
         
         // Then
         let successRate = result.successRate
@@ -107,7 +107,7 @@ final class CategorizationRateTests: XCTestCase {
     }
     
     
-    func testSpecificNewRules() {
+    func testSpecificNewRules() async {
         // Test individual new rules to ensure they're working
         let testCases: [(description: String, expectedCategory: String)] = [
             ("CLAUDE AI SUBSCRIPTION", "Subscriptions"),
@@ -141,7 +141,7 @@ final class CategorizationRateTests: XCTestCase {
                 category: "Other"
             )
             
-            let result = categorizationService.categorizeTransactions([transaction])
+            let result = await categorizationService.categorizeTransactions([transaction])
             
             if result.categorizedCount > 0 {
                 let categorizedTransaction = result.categorizedTransactions[0]

@@ -2,6 +2,7 @@ import XCTest
 @testable import LedgerPro
 
 
+@MainActor
 final class CategoryServiceTests: XCTestCase {
     var sut: CategoryService!
     var testCategories: [LedgerPro.Category]!
@@ -76,7 +77,7 @@ final class CategoryServiceTests: XCTestCase {
                 category: "Uncategorized"
             )
             
-            let (suggestedCategory, _) = sut.suggestCategory(for: transaction)
+            let (suggestedCategory, _) = await sut.suggestCategory(for: transaction)
             if let suggestion = suggestedCategory {
                 // Check if the suggested category matches or is related
                 let isExpectedMatch = suggestion.name == expectedCategory ||
@@ -102,7 +103,7 @@ final class CategoryServiceTests: XCTestCase {
         )
         
         // When
-        let (suggestion, _) = sut.suggestCategory(for: transaction)
+        let (suggestion, _) = await sut.suggestCategory(for: transaction)
         
         // Then - Should categorize based on rules or merchant patterns
         XCTAssertNotNil(suggestion)
@@ -121,7 +122,7 @@ final class CategoryServiceTests: XCTestCase {
         )
         
         // When
-        let (suggestion, confidence) = sut.suggestCategory(for: transaction)
+        let (suggestion, confidence) = await sut.suggestCategory(for: transaction)
         
         // Then - Should either return nil or low confidence suggestion
         if let suggestion = suggestion {
@@ -188,7 +189,7 @@ final class CategoryServiceTests: XCTestCase {
     
     func testGetAllCategories_includesAllLevels() {
         // When
-        let allCategories = sut.getAllCategoriesFlattened()
+        let allCategories = await sut.getAllCategoriesFlattened()
         
         // Then
         XCTAssertGreaterThanOrEqual(allCategories.count, sut.categories.count)
@@ -257,7 +258,7 @@ final class CategoryServiceTests: XCTestCase {
         let startTime = Date()
         
         for transaction in transactions {
-            _ = sut.suggestCategory(for: transaction)
+            _ = await sut.suggestCategory(for: transaction)
         }
         
         let duration = Date().timeIntervalSince(startTime)
@@ -279,7 +280,7 @@ final class CategoryServiceTests: XCTestCase {
         )
         
         // When
-        let (suggestion, confidence) = sut.suggestCategory(for: transaction)
+        let (suggestion, confidence) = await sut.suggestCategory(for: transaction)
         
         // Then - Should not crash
         if let suggestion = suggestion {
@@ -308,7 +309,7 @@ final class CategoryServiceTests: XCTestCase {
             )
             
             // When
-            let (suggestion, confidence) = sut.suggestCategory(for: transaction)
+            let (suggestion, confidence) = await sut.suggestCategory(for: transaction)
             
             // Then - Should handle gracefully
             if let suggestion = suggestion {
@@ -334,7 +335,7 @@ final class CategoryServiceTests: XCTestCase {
         var categorizedCount = 0
         
         for transaction in transactions {
-            let (suggestion, confidence) = sut.suggestCategory(for: transaction)
+            let (suggestion, confidence) = await sut.suggestCategory(for: transaction)
             
             if let suggestion = suggestion {
                 categorizedCount += 1
