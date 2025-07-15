@@ -186,7 +186,9 @@ final class FinancialDataManagerTests: XCTestCase {
     // MARK: - Bank Account Detection Tests
     
     func testDetectBankAccountFromFilename_capitalOne() async {
-        // Given
+        // Given - Clear existing accounts to test filename detection
+        sut.bankAccounts.removeAll()
+        
         let capitalOneTransactions = [
             Transaction(
                 date: "2024-01-01",
@@ -208,7 +210,9 @@ final class FinancialDataManagerTests: XCTestCase {
     }
     
     func testDetectBankAccountFromFilename_chase() async {
-        // Given
+        // Given - Clear existing accounts to test filename detection
+        sut.bankAccounts.removeAll()
+        
         let chaseTransactions = [
             Transaction(
                 date: "2024-01-01",
