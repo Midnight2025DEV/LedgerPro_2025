@@ -2,6 +2,7 @@ import XCTest
 @testable import LedgerPro
 
 // MARK: - RuleViewModel Tests
+@MainActor
 final class RuleViewModelTests: XCTestCase {
     var viewModel: RuleViewModel!
     
@@ -54,6 +55,7 @@ final class RuleViewModelTests: XCTestCase {
 }
 
 // MARK: - Rule Builder Tests
+@MainActor
 final class RuleBuilderTests: XCTestCase {
     
     func test_ruleValidation_requiresName() {

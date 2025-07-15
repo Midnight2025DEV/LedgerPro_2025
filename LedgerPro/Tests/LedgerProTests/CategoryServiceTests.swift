@@ -187,7 +187,7 @@ final class CategoryServiceTests: XCTestCase {
         }
     }
     
-    func testGetAllCategories_includesAllLevels() {
+    func testGetAllCategories_includesAllLevels() async {
         // When
         let allCategories = await sut.getAllCategoriesFlattened()
         
