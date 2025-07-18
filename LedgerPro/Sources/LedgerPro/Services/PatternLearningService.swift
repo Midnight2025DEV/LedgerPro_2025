@@ -6,7 +6,7 @@ import OSLog
 final class PatternLearningService: ObservableObject {
     static let shared = PatternLearningService()
     
-    private let logger = Logger(subsystem: "com.ledgerpro", category: "PatternLearning")
+    private let logger = AppLogger.shared
     
     @Published private(set) var corrections: [UserCorrection] = []
     @Published private(set) var patterns: [String: CorrectionPattern] = [:]

@@ -147,38 +147,38 @@ class APIService: ObservableObject {
         
         do {
             // First, verify file accessibility step by step
-            AppLogger.shared.debug("Testing file accessibility...")
-            print("🔍 File URL path: \(fileURL.path)")
-            print("🔍 File URL absolute string: \(fileURL.absoluteString)")
-            print("🔍 File exists at path: \(FileManager.default.fileExists(atPath: fileURL.path))")
-            print("🔍 File is readable: \(FileManager.default.isReadableFile(atPath: fileURL.path))")
+            AppLogger.shared.debug("Testing file accessibility...", category: "Network")
+            AppLogger.shared.debug("🔍 File URL path: \(fileURL.path)", category: "Network")
+            AppLogger.shared.debug("🔍 File URL absolute string: \(fileURL.absoluteString)", category: "Network")
+            AppLogger.shared.debug("🔍 File exists at path: \(FileManager.default.fileExists(atPath: fileURL.path))", category: "Network")
+            AppLogger.shared.debug("🔍 File is readable: \(FileManager.default.isReadableFile(atPath: fileURL.path))", category: "Network")
             
             // Try to get file attributes first
             do {
                 let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-                print("🔍 File attributes: \(attributes)")
+                AppLogger.shared.debug("🔍 File attributes: \(attributes)", category: "Network")
                 if let size = attributes[.size] as? NSNumber {
-                    print("🔍 File size from attributes: \(size.intValue) bytes")
+                    AppLogger.shared.debug("🔍 File size from attributes: \(size.intValue) bytes", category: "Network")
                 }
             } catch {
-                print("❌ Failed to get file attributes: \(error)")
+                AppLogger.shared.error("❌ Failed to get file attributes: \(error)", category: "Network")
             }
             
             // Now try to read the file data
             let fileData: Data
             do {
                 fileData = try Data(contentsOf: fileURL)
-                print("✅ Successfully read file data: \(fileData.count) bytes")
+                AppLogger.shared.debug("✅ Successfully read file data: \(fileData.count) bytes", category: "Network")
             } catch {
-                print("❌ Failed to read file data: \(error)")
+                AppLogger.shared.error("❌ Failed to read file data: \(error)", category: "Network")
                 throw APIError.uploadError("Cannot read file: \(error.localizedDescription)")
             }
             
             let filename = fileURL.lastPathComponent
             let boundary = "Boundary-\(UUID().uuidString)"
             
-            print("📄 File name: \(filename)")
-            print("📏 File size: \(fileData.count) bytes")
+            AppLogger.shared.debug("📄 File name: \(filename)", category: "Network")
+            AppLogger.shared.debug("📏 File size: \(fileData.count) bytes", category: "Network")
             
             var body = Data()
             
@@ -200,8 +200,8 @@ class APIService: ObservableObject {
             request.httpBody = body
             request.timeoutInterval = 120.0
             
-            print("📤 Uploading file: \(filename) (\(fileData.count) bytes)")
-            print("🔍 Request headers: \(request.allHTTPHeaderFields ?? [:])")
+            AppLogger.shared.info("📤 Uploading file: \(filename) (\(fileData.count) bytes)", category: "Network")
+            AppLogger.shared.debug("🔍 Request headers: \(request.allHTTPHeaderFields ?? [:])", category: "Network")
             
             // Simulate upload progress
             Task {
@@ -216,19 +216,19 @@ class APIService: ObservableObject {
             let (data, response) = try await URLSession.shared.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Invalid response type")
+                AppLogger.shared.error("❌ Invalid response type", category: "Network")
                 throw APIError.networkError("Invalid response")
             }
             
-            print("📊 Response status: \(httpResponse.statusCode)")
-            print("📊 Response headers: \(httpResponse.allHeaderFields)")
+            AppLogger.shared.debug("📊 Response status: \(httpResponse.statusCode)", category: "Network")
+            AppLogger.shared.debug("📊 Response headers: \(httpResponse.allHeaderFields)", category: "Network")
             
             let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode response"
-            print("📄 Response body: \(responseString)")
+            AppLogger.shared.debug("📄 Response body: \(responseString)", category: "Network")
             
             guard httpResponse.statusCode == 200 else {
                 let errorMessage = responseString
-                print("❌ Upload failed: \(httpResponse.statusCode) - \(errorMessage)")
+                AppLogger.shared.error("❌ Upload failed: \(httpResponse.statusCode) - \(errorMessage)", category: "Network")
                 throw APIError.httpError(httpResponse.statusCode, errorMessage)
             }
             
@@ -240,11 +240,11 @@ class APIService: ObservableObject {
                     uploadProgress = 1.0
                 }
                 
-                print("✅ Upload successful: \(result.jobId)")
+                AppLogger.shared.info("✅ Upload successful: \(result.jobId)", category: "Network")
                 return result
             } catch {
-                print("❌ Failed to decode response: \(error)")
-                AppLogger.shared.debug("Raw response: \(responseString)")
+                AppLogger.shared.error("❌ Failed to decode response: \(error)", category: "Network")
+                AppLogger.shared.debug("Raw response: \(responseString)", category: "Network")
                 throw APIError.networkError("Failed to decode server response: \(error.localizedDescription)")
             }
             

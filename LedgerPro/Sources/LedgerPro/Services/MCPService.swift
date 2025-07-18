@@ -116,8 +116,8 @@ class MCPService: ObservableObject {
         let serverStatus = mcpBridge.getServerStatus()
         let activeCount = serverStatus.values.filter { $0.isConnected }.count
         
-        print("MCP Health Check: \(activeCount)/\(serverStatus.count) servers active")
-        print("Bridge Status: \(mcpBridge.connectionStatus.description)")
+        AppLogger.shared.info("MCP Health Check: \(activeCount)/\(serverStatus.count) servers active", category: "MCP")
+        AppLogger.shared.info("Bridge Status: \(mcpBridge.connectionStatus.description)", category: "MCP")
     }
     
     private func pingServer(_ server: MCPServer) async throws -> Bool {

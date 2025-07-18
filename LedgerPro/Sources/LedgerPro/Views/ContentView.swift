@@ -5,6 +5,7 @@ struct ContentView: View {
     @EnvironmentObject private var apiService: APIService
     @EnvironmentObject private var mcpBridge: MCPBridge
     @State private var selectedTab: DashboardTab = .overview
+    @State private var previousTab: DashboardTab = .overview
     @State private var showingUploadSheet = false
     @State private var showingTransactionDetail = false
     @State private var selectedTransaction: Transaction?
@@ -15,8 +16,9 @@ struct ContentView: View {
     @State private var showingLearningWindow = false
     @State private var selectedTransactionFilter: TransactionFilter = .all
     @State private var shouldNavigateToTransactions = false
+    @State private var triggerUncategorizedFilter = false
     
-    enum TransactionFilter {
+    enum TransactionFilter: Equatable {
         case all
         case uncategorized
         case category(String)
@@ -117,30 +119,35 @@ struct ContentView: View {
                 object: nil,
                 queue: .main
             ) { notification in
+                // Switch to transactions tab and enable uncategorized filter
                 selectedTab = .transactions
                 selectedTransactionFilter = .uncategorized
-                shouldNavigateToTransactions = true
+                
+                // Trigger the filter with a slight delay to ensure view is loaded
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    triggerUncategorizedFilter.toggle()
+                }
             }
         }
         .task {
             checkHealth()
             
             // Monitor MCP connection status
-            print("🔍 Starting MCP connection monitoring...")
+            AppLogger.shared.info("Starting MCP connection monitoring...", category: "UI")
             
             // Log initial status
-            print("📊 Initial MCP Status:")
-            print("   - Connected: \(mcpBridge.isConnected)")
-            print("   - Available Servers: \(mcpBridge.servers.count)")
+            AppLogger.shared.info("Initial MCP Status:", category: "UI")
+            AppLogger.shared.info("Connected: \(mcpBridge.isConnected)", category: "UI")
+            AppLogger.shared.info("Available Servers: \(mcpBridge.servers.count)", category: "UI")
             for server in mcpBridge.servers.values {
-                print("   - \(server.info.name): \(server.isConnected ? "✅ Active" : "❌ Inactive")")
+                AppLogger.shared.info("\(server.info.name): \(server.isConnected ? "Active" : "Inactive")", category: "UI")
             }
             
             // Log path resolution for debugging
-            print("🔍 MCP Path Resolution Debug:")
-            print("   - Current directory: \(FileManager.default.currentDirectoryPath)")
+            AppLogger.shared.debug("MCP Path Resolution Debug:", category: "UI")
+            AppLogger.shared.debug("Current directory: \(FileManager.default.currentDirectoryPath)", category: "UI")
             let mcpPath = "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/mcp-servers"
-            print("   - MCP servers path exists: \(FileManager.default.fileExists(atPath: mcpPath))")
+            AppLogger.shared.debug("MCP servers path exists: \(FileManager.default.fileExists(atPath: mcpPath))", category: "UI")
         }
     }
     
@@ -150,10 +157,14 @@ struct ContentView: View {
         case .overview:
             OverviewView()
         case .transactions:
-            TransactionListView(onTransactionSelect: { transaction in
-                selectedTransaction = transaction
-                showingTransactionDetail = true
-            })
+            TransactionListView(
+                onTransactionSelect: { transaction in
+                    selectedTransaction = transaction
+                    showingTransactionDetail = true
+                },
+                initialShowUncategorizedOnly: selectedTransactionFilter == .uncategorized,
+                triggerUncategorizedFilter: triggerUncategorizedFilter
+            )
         case .accounts:
             AccountsView()
         case .insights:
@@ -189,6 +200,13 @@ struct SidebarView: View {
         List(ContentView.DashboardTab.allCases, id: \.self, selection: $selectedTab) { tab in
             Label(tab.rawValue, systemImage: tab.systemImage)
                 .tag(tab)
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            // Track tab navigation
+            Analytics.shared.trackTabNavigation(
+                from: oldValue.rawValue,
+                to: newValue.rawValue
+            )
         }
         .listStyle(SidebarListStyle())
         .navigationTitle("Dashboard")

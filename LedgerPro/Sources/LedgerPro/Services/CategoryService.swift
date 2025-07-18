@@ -339,7 +339,16 @@ extension CategoryService {
     }
     
     func suggestCategory(for transaction: Transaction) -> (category: Category?, confidence: Double) {
-        // Use the sophisticated rule engine with both system and custom rules
+        // 1. Try MerchantCategorizer first (81 merchants with sophisticated matching)
+        let merchantResult = MerchantCategorizer.shared.categorize(transaction: transaction)
+        
+        // Use merchant result if confidence is good (only high-confidence database matches)
+        if merchantResult.confidence >= 0.85 && merchantResult.source == .merchantDatabase {
+            AppLogger.shared.debug("Merchant categorization: \(merchantResult.reasoning)")
+            return (merchantResult.category, merchantResult.confidence)
+        }
+        
+        // 2. Fall back to the sophisticated rule engine with both system and custom rules
         let allRules = RuleStorageService.shared.allRules
         let matchingRules = allRules
             .filter { $0.matches(transaction: transaction) }

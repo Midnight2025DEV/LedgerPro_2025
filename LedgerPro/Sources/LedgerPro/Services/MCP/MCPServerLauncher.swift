@@ -20,7 +20,7 @@ class MCPServerLauncher: ObservableObject {
     
     // MARK: - Private Properties
     
-    private let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "MCPServerLauncher")
+    private let logger = AppLogger.shared
     private let mcpBridge: MCPBridge
     private var serverProcesses: [String: Process] = [:]
     private let mcpToolsPath = NSHomeDirectory() + "/mcp-tools"

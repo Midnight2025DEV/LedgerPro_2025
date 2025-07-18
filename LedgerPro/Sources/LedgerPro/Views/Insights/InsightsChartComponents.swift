@@ -95,10 +95,10 @@ struct CategorySpendingCharts: View {
                 ?? categoryService.categories.first { $0.name.lowercased().contains(categoryName.lowercased()) }
                 ?? categoryService.categories.first { categoryName.lowercased().contains($0.name.lowercased()) }
             AppLogger.shared.debug("Category: '\(categoryName)'")
-            print("   Found object: \(categoryObject?.name ?? "NOT FOUND")")
-            print("   Available categories containing this word:")
+            AppLogger.shared.debug("   Found object: \(categoryObject?.name ?? "NOT FOUND")", category: "Charts")
+            AppLogger.shared.debug("   Available categories containing this word:", category: "Charts")
             for cat in categoryService.categories where cat.name.lowercased().contains(categoryName.lowercased()) {
-                print("   - '\(cat.name)' (color: \(cat.color))")
+                AppLogger.shared.debug("   - '\(cat.name)' (color: \(cat.color))", category: "Charts")
             }
             
             if categoryObject == nil {
@@ -120,16 +120,16 @@ struct CategorySpendingCharts: View {
         let sortedData = enhancedData.sorted { $0.amount > $1.amount }
         
         // Debug logging for chart data
-        print("🎨 INSIGHTS CHART DATA:")
+        AppLogger.shared.debug("🎨 INSIGHTS CHART DATA:", category: "Charts")
         let allCategories = grouped.map { categoryName, transactions in
             let total = transactions.reduce(0) { $0 + abs($1.amount) }
             return (categoryName, total)
         }.sorted { $0.1 > $1.1 }
-        print("All categories before filtering:")
+        AppLogger.shared.debug("All categories before filtering:", category: "Charts")
         for (cat, amount) in allCategories {
-            print("  - \(cat): $\(String(format: "%.2f", amount)) (\(String(format: "%.1f%%", amount/allCategories.map{$0.1}.reduce(0,+)*100)))")
+            AppLogger.shared.debug("  - \(cat): $\(String(format: "%.2f", amount)) (\(String(format: "%.1f%%", amount/allCategories.map{$0.1}.reduce(0,+)*100)))", category: "Charts")
         }
-        print("All categories shown: \(allCategories.map{$0.0})")
+        AppLogger.shared.debug("All categories shown: \(allCategories.map{$0.0})", category: "Charts")
         
         return sortedData
     }
@@ -145,18 +145,18 @@ struct CategorySpendingCharts: View {
             EnhancedBarChart(data: categoryData)
         }
         .onAppear {
-            print("📊 CategoryService has \(categoryService.categories.count) categories loaded")
+            AppLogger.shared.info("📊 CategoryService has \(categoryService.categories.count) categories loaded", category: "Charts")
             for cat in categoryService.categories.prefix(5) {
-                print("  - \(cat.name): \(cat.color)")
+                AppLogger.shared.debug("  - \(cat.name): \(cat.color)", category: "Charts")
             }
             
             // Force reload categories to get updated colors
             Task {
                 do {
                     try await categoryService.reloadCategories()
-                    print("✅ Categories reloaded with updated colors")
+                    AppLogger.shared.info("✅ Categories reloaded with updated colors", category: "Charts")
                 } catch {
-                    print("❌ Failed to reload categories: \(error)")
+                    AppLogger.shared.error("❌ Failed to reload categories: \(error)", category: "Charts")
                 }
             }
         }
@@ -185,7 +185,7 @@ struct CategoryPieChart: View {
             
             if !data.isEmpty {
                 Chart(data, id: \.category) { item in
-                    let _ = print("🎨 Rendering segment: \(item.category), Color: \(item.color)")
+                    let _ = AppLogger.shared.debug("🎨 Rendering segment: \(item.category), Color: \(item.color)", category: "Charts")
                     SectorMark(
                         angle: .value("Amount", item.amount),
                         innerRadius: .ratio(0.4),
@@ -211,10 +211,10 @@ struct CategoryPieChart: View {
                                 DragGesture(minimumDistance: 0)
                                     .onEnded { value in
                                         let location = value.location
-                                        print("🎯 TAP ON CHART at location: \(location)")
+                                        AppLogger.shared.debug("🎯 TAP ON CHART at location: \(location)", category: "Charts")
                                         let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
                                         let distance = sqrt(pow(location.x - center.x, 2) + pow(location.y - center.y, 2))
-                                        print("📍 Center: \(center), Distance: \(distance)")
+                                        AppLogger.shared.debug("📍 Center: \(center), Distance: \(distance)", category: "Charts")
                                         
                                         // Check if within donut ring
                                         let outerRadius = min(geometry.size.width, geometry.size.height) * 0.45
@@ -226,9 +226,9 @@ struct CategoryPieChart: View {
                                             let normalizedDegrees = degrees < 0 ? degrees + 360 : degrees
                                             let chartAngle = (normalizedDegrees + 90).truncatingRemainder(dividingBy: 360)
                                             
-                                            print("📐 Chart angle: \(chartAngle)°")
+                                            AppLogger.shared.debug("📐 Chart angle: \(chartAngle)°", category: "Charts")
                                             let tappedCategory = categoryForAngle(chartAngle)
-                                            print("🎯 Tapped category: \(tappedCategory ?? "nil")")
+                                            AppLogger.shared.debug("🎯 Tapped category: \(tappedCategory ?? "nil")", category: "Charts")
                                             
                                             withAnimation(.easeInOut(duration: 0.2)) {
                                                 if hoveredCategory == tappedCategory {
@@ -238,7 +238,7 @@ struct CategoryPieChart: View {
                                                 }
                                             }
                                         } else {
-                                            print("🎯 Click outside donut ring")
+                                            AppLogger.shared.debug("🎯 Click outside donut ring", category: "Charts")
                                         }
                                     }
                             )
@@ -287,19 +287,19 @@ struct CategoryPieChart: View {
         let total = totalAmount
         var cumulativeAngle: Double = 0
         
-        print("🔍 Looking for angle: \(angle)° in categories:")
+        AppLogger.shared.debug("🔍 Looking for angle: \(angle)° in categories:", category: "Charts")
         for item in data {
             let itemAngle = (item.amount / total) * 360
             let endAngle = cumulativeAngle + itemAngle
-            print("  📊 \(item.category): \(cumulativeAngle)° to \(endAngle)° (size: \(itemAngle)°)")
+            AppLogger.shared.debug("  📊 \(item.category): \(cumulativeAngle)° to \(endAngle)° (size: \(itemAngle)°)", category: "Charts")
             
             if angle >= cumulativeAngle && angle < endAngle {
-                print("  ✅ Found match: \(item.category)")
+                AppLogger.shared.debug("  ✅ Found match: \(item.category)", category: "Charts")
                 return item.category
             }
             cumulativeAngle += itemAngle
         }
-        print("  ❌ No category found for angle \(angle)°")
+        AppLogger.shared.debug("  ❌ No category found for angle \(angle)°", category: "Charts")
         
         return nil
     }

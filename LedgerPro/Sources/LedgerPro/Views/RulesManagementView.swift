@@ -544,6 +544,13 @@ struct RuleBuilderView: View {
                     Button("Save") {
                         if let rule = builder.buildRule() {
                             ruleViewModel.saveRule(rule)
+                            
+                            // Track rule creation analytics
+                            Analytics.shared.trackRuleCreated(
+                                ruleType: "custom_rule",
+                                source: "manual_creation"
+                            )
+                            
                             dismiss()
                         }
                     }
@@ -716,6 +723,12 @@ struct QuickStartTemplatesView: View {
         
         for template in templatesToAdd {
             viewModel.saveRule(template)
+            
+            // Track template rule creation
+            Analytics.shared.trackRuleCreated(
+                ruleType: "template_rule",
+                source: "quick_start_templates"
+            )
         }
         
         isAdding = false
