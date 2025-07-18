@@ -1,0 +1,132 @@
+{
+  "": {
+    "dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/LedgerProTests.d",
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/LedgerProTests.o",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/master.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/APIServiceTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/APIServiceTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/APIServiceTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/APIServiceTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/BasicTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/BasicTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/BasicTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/BasicTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CIValidationTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CIValidationTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CIValidationTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CIValidationTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategorizationRateTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategorizationRateTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategorizationRateTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategorizationRateTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleMatchingTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryRuleMatchingTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryRuleMatchingTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryRuleMatchingTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryRuleTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryRuleTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryRuleTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceCustomRuleTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryServiceCustomRuleTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryServiceCustomRuleTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryServiceCustomRuleTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryServiceTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryServiceTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CategoryServiceTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/EndToEndCategorizationTest.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/EndToEndCategorizationTest.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/EndToEndCategorizationTest~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/EndToEndCategorizationTest.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/FinancialDataManagerTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/FinancialDataManagerTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/FinancialDataManagerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/FinancialDataManagerTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/ForexCalculationTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/ForexCalculationTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/ForexCalculationTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/ForexCalculationTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/ImportCategorizationServiceTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/ImportCategorizationServiceTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/ImportCategorizationServiceTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/ImportCategorizationServiceTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CriticalWorkflowTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CriticalWorkflowTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/CriticalWorkflowTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/LedgerProTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/LedgerProTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/LedgerProTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/LedgerProTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/MerchantDatabaseRangeTest.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/MerchantDatabaseRangeTest.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/MerchantDatabaseRangeTest~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/MerchantDatabaseRangeTest.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/PatternLearningServiceTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningServiceTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningServiceTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningServiceTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/PatternLearningServiceTests_Enhanced.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningServiceTests_Enhanced.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningServiceTests_Enhanced~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningServiceTests_Enhanced.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/PatternLearningTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/PatternLearningTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RangeErrorDebugTest.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RangeErrorDebugTest~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RangeErrorDebugTest.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorPinpointTest.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RangeErrorPinpointTest.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RangeErrorPinpointTest~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RangeErrorPinpointTest.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleStorageServiceTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleStorageServiceTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleStorageServiceTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleStorageServiceTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleSuggestionEngineTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleSuggestionEngineTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleSuggestionEngineTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleSuggestionEngineTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleTemplatesTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleTemplatesTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RuleTemplatesTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RulesManagementTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RulesManagementTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RulesManagementTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/RulesManagementTests.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionParsingTests.swift": {
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/TransactionParsingTests.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/TransactionParsingTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProTests.build/TransactionParsingTests.swiftdeps"
+  }
+}

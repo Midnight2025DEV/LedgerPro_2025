@@ -1,0 +1,86 @@
+version: "Apple Swift version 6.0.2 (swiftlang-6.0.2.1.2 clang-1600.0.26.4)"
+options: "5b4c963337599ad013659668a298607acfa6cb07a45ccedf25ee6bbe85e2218b"
+build_start_time: [1752815197, 613655000]
+build_end_time: [1752815233, 319436000]
+inputs:
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/LedgerProApp.swift": [1752591834, 965729945]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Category.swift": [1752591834, 965889821]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/CategoryGroup.swift": [1752558182, 893086451]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/CategoryInsights.swift": [1752591834, 966087239]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/CategoryRule+SystemRules.swift": [1752591834, 966213198]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/CategoryRule.swift": [1752591834, 966390741]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/ImportResult.swift": [1752591834, 966540451]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/MerchantDatabase/MerchantDatabase.swift"
+  : [1752591834, 966723452]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/MerchantDatabase/MerchantDatabaseData.swift"
+  : [1752591834, 966906078]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/RuleBuilder.swift": [1752591834, 967071454]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/RuleSuggestionEngine.swift": [1752811400, 311605475]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/RuleViewModel.swift": [1752591834, 967408998]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift": [1752637402, 828131809]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/TransactionSplit.swift": [1752558182, 895015751]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/UserCorrection.swift": [1752591834, 967830210]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/APIService.swift": [1752811157, 161322733]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/Analytics.swift": [1752815184, 985853445]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/CategoryService.swift": [1752596181, 606331158]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/CategoryStatsProvider.swift": [1752591834, 968518131]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/DashboardDataService.swift": [1752591834, 968654549]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/FinancialDataManager.swift": [1752811368, 140836660]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/ImportCategorizationService.swift"
+  : [1752591834, 969041385]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPBridge+InitializationFix.swift"
+  : [1752814468, 497291492]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPBridge.swift": [1752811796, 909757693]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPMessage.swift": [1752591834, 969547389]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPServer.swift": [1752591834, 969694640]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPServerLauncher+PathResolution.swift"
+  : [1752814600, 866159814]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPServerLauncher.swift": [1752811811, 460435911]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPStdioConnection.swift": [1752811833, 746955572]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCP/MCPTypes.swift": [1752591834, 970201394]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MCPService.swift": [1752811426, 606038152]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/MerchantDatabase/MerchantCategorizer.swift"
+  : [1752591834, 970540604]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/PatternLearningService.swift": [1752811845, 900277256]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Services/RuleStorageService.swift": [1752591834, 970769231]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Utils/Extensions.swift": [1752811407, 177167463]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Utils/Logger.swift": [1752811513, 342173799]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Utils/SafeAccessExtensions.swift": [1752811414, 324777004]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/AccountsView.swift": [1752040379, 924105427]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/AddCategoryView.swift": [1752591834, 971381944]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/CategoryPickerPopup.swift": [1752591834, 971538861]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/CategoryTestView.swift": [1752591834, 971753155]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/AutoCategoryToast.swift": [1752591834, 971954656]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/AutoSizingPopupExample.swift"
+  : [1752591834, 972080449]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/StatCard.swift": [1752636977, 620642067]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/TopMerchantsView.swift": [1752591834, 972189991]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/TransactionRowEnhancements.swift"
+  : [1752591834, 972315784]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/ContentView.swift": [1752814976, 284637411]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/FileUploadView.swift": [1752814951, 686617660]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Insights/InsightsCategoryAnalysis.swift"
+  : [1752591834, 972928121]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Insights/InsightsChartComponents.swift"
+  : [1752811280, 831007286]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Insights/InsightsOverviewComponents.swift"
+  : [1752591834, 973213832]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Insights/InsightsSpecializedViews.swift"
+  : [1752591834, 973354041]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/InsightsView.swift": [1752591834, 973520042]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/MCPServerManagerView.swift": [1752591834, 973671710]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/MCPStatusIndicator.swift": [1752591834, 973782336]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/OverviewView.swift": [1752811390, 170224514]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/RulesManagementView.swift": [1752815063, 305014447]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Settings/LearningAnalyticsView.swift"
+  : [1752591834, 974554466]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/SettingsView.swift": [1752815132, 288136468]
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/TransactionListView.swift": [1752814968, 920014140]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Transactions/TransactionDetailView.swift"
+  : [1752591834, 975232596]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Transactions/TransactionFilterView.swift"
+  : [1752591834, 975392514]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Transactions/TransactionRowView.swift"
+  : [1752591834, 975515306]
+  ? "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Transactions/TransactionUtilityViews.swift"
+  : [1752591834, 975950351]

@@ -80,7 +80,7 @@ class MCPBridge: ObservableObject {
     
     // MARK: - Private Properties
     
-    private let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "MCPBridge")
+    private let logger = AppLogger.shared
     private var healthCheckTask: Task<Void, Never>?
     private let healthCheckInterval: TimeInterval = 60.0
     private var pendingRequests: [String: CheckedContinuation<MCPResponse, Error>] = [:]
@@ -367,10 +367,24 @@ class MCPBridge: ObservableObject {
             throw MCPRPCError(code: -32601, message: "Server not available: PDF Processor")
         }
         
+        // Detect file type and choose appropriate tool
+        let fileExtension = fileURL.pathExtension.lowercased()
+        let toolName: String
+        
+        switch fileExtension {
+        case "pdf":
+            toolName = "process_bank_pdf"
+        case "csv":
+            toolName = "process_csv_file"
+        default:
+            throw MCPRPCError(code: -32602, message: "Unsupported file type: \(fileExtension)")
+        }
+        
+        logger.info("🔍 Processing \(fileExtension.uppercased()) file with tool: \(toolName)", category: "MCP")
+        
         // MCP servers expect tool calls, not direct method calls
-        // The PDF processor server has a "process_bank_pdf" tool
         let params: [String: AnyCodable] = [
-            "name": AnyCodable("process_bank_pdf"),
+            "name": AnyCodable(toolName),
             "arguments": AnyCodable([
                 "file_path": fileURL.path,
                 "processor": "auto"
@@ -379,7 +393,7 @@ class MCPBridge: ObservableObject {
         
         // Debug log the request
         debugLogRequest("tools/call", [
-            "name": "process_bank_pdf",
+            "name": toolName,
             "arguments": [
                 "file_path": fileURL.path,
                 "processor": "auto"
@@ -387,7 +401,7 @@ class MCPBridge: ObservableObject {
         ])
         
         let response = try await sendRequest(to: pdfServer.id, method: .callTool, params: params)
-        print("📡 MCP Tool Response: \(response)")        
+        logger.debug("📡 MCP Tool Response: \(response)", category: "MCP")        
         // Convert the tool response to our expected format
         if let result = response.result?.value as? [String: Any] {
             // Handle MCP tool response structure
@@ -397,9 +411,9 @@ class MCPBridge: ObservableObject {
                let firstContent = content.first,
                let jsonText = firstContent["text"] as? String {
                 
-                print("🔍 DEBUG - Raw JSON text length: \(jsonText.count)")
-                print("🔍 DEBUG - First 200 chars: \(String(jsonText.prefix(200)))")
-                print("🔍 DEBUG - JSON contains backslashes: \(jsonText.contains("\\"))")
+                logger.debug("🔍 DEBUG - Raw JSON text length: \(jsonText.count)", category: "MCP")
+                logger.debug("🔍 DEBUG - First 200 chars: \(String(jsonText.prefix(200)))", category: "MCP")
+                logger.debug("🔍 DEBUG - JSON contains backslashes: \(jsonText.contains("\\"))", category: "MCP")
                 
                 // Parse the JSON string from the content
                 guard let jsonData = jsonText.data(using: .utf8),
@@ -408,13 +422,13 @@ class MCPBridge: ObservableObject {
                 }
                 
                 // Check if processing was successful
-                print("🔍 DEBUG - Parsed result keys: \(parsedResult.keys)")
-                print("🔍 DEBUG - Success flag: \(parsedResult["success"] ?? "nil")")
-                print("🔍 DEBUG - Has transactions: \(parsedResult["transactions"] != nil)")
+                logger.debug("🔍 DEBUG - Parsed result keys: \(parsedResult.keys)", category: "MCP")
+                logger.debug("🔍 DEBUG - Success flag: \(parsedResult["success"] ?? "nil")", category: "MCP")
+                logger.debug("🔍 DEBUG - Has transactions: \(parsedResult["transactions"] != nil)", category: "MCP")
                 if let transactions = parsedResult["transactions"] as? [[String: Any]] {
-                    print("🔍 DEBUG - Transaction count: \(transactions.count)")
+                    logger.debug("🔍 DEBUG - Transaction count: \(transactions.count)", category: "MCP")
                     if let firstTransaction = transactions.first {
-                        print("🔍 DEBUG - First transaction: \(firstTransaction)")
+                        logger.debug("🔍 DEBUG - First transaction: \(firstTransaction)", category: "MCP")
                     }
                 }
                 
@@ -435,16 +449,16 @@ class MCPBridge: ObservableObject {
                             
                             // Debug forex data
                             if let hasForex = transaction.hasForex, hasForex == true {
-                                print("💱 FOREX TRANSACTION DETECTED:")
-                                print("   Description: \(transaction.description)")
-                                print("   USD Amount: $\(transaction.amount)")
-                                print("   Original: \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "N/A")")
-                                print("   Exchange Rate: \(transaction.exchangeRate ?? 0)")
+                                logger.debug("💱 FOREX TRANSACTION DETECTED:", category: "MCP")
+                                logger.debug("   Description: \(transaction.description)", category: "MCP")
+                                logger.debug("   USD Amount: $\(transaction.amount)", category: "MCP")
+                                logger.debug("   Original: \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "N/A")", category: "MCP")
+                                logger.debug("   Exchange Rate: \(transaction.exchangeRate ?? 0)", category: "MCP")
                             }
                         } catch {
-                            print("🔍 DEBUG - Failed to decode transaction \(index): \(error)")
+                            logger.warning("🔍 DEBUG - Failed to decode transaction \(index): \(error)", category: "MCP")
                             if index == 0 {
-                                print("🔍 DEBUG - First transaction dict: \(dict)")
+                                logger.debug("🔍 DEBUG - First transaction dict: \(dict)", category: "MCP")
                             }
                         }
                     }
@@ -683,13 +697,13 @@ class MCPBridge: ObservableObject {
 
     // DEBUG: Log the exact request being sent
     private func debugLogRequest(_ method: String, _ params: [String: Any]?) {
-        print("🔍 DEBUG MCP Request:")
-        print("   Method: \(method)")
+        logger.debug("🔍 DEBUG MCP Request:", category: "MCP")
+        logger.debug("   Method: \(method)", category: "MCP")
         if let params = params {
-            print("   Params: \(params)")
+            logger.debug("   Params: \(params)", category: "MCP")
             if let jsonData = try? JSONSerialization.data(withJSONObject: params, options: .prettyPrinted),
                let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("   JSON:\n\(jsonString)")
+                logger.debug("   JSON:\n\(jsonString)", category: "MCP")
             }
         }
     }

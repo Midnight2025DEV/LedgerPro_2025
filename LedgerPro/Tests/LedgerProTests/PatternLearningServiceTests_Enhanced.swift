@@ -15,6 +15,9 @@ final class PatternLearningServiceEnhancedTests: XCTestCase {
         // Clear any existing data
         sut.clearAllData()
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Setup mock categories
         mockCategories = [
             LedgerPro.Category(name: "Food & Dining", icon: "fork.knife", color: "#FF9800"),
@@ -36,6 +39,10 @@ final class PatternLearningServiceEnhancedTests: XCTestCase {
     
     override func tearDown() async throws {
         sut.clearAllData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         sut = nil
         mockCategories = nil
         mockTransactions = nil
@@ -98,6 +105,9 @@ final class PatternLearningServiceEnhancedTests: XCTestCase {
             originalCategory: oldCategory,
             newCategory: newCategory
         )
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then
         XCTAssertFalse(sut.corrections.isEmpty)
@@ -165,6 +175,9 @@ final class PatternLearningServiceEnhancedTests: XCTestCase {
                 newCategory: foodCategory
             )
         }
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then - Should have recorded all corrections and created patterns
         XCTAssertEqual(sut.corrections.count, 5)

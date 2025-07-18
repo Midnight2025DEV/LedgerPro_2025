@@ -21,21 +21,35 @@ import pandas as pd
 
 # Add parent directory to path to import existing processors
 sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent.parent))
 
 # Try to import existing processors
 try:
-    from financial_advisor.core.camelot_processor import CamelotFinancialProcessor
-    from financial_advisor.csv_processor import process_csv_file
-except ImportError:
-    # Create placeholder classes if imports fail
-    class CamelotFinancialProcessor:
-        def process_pdf(self, file_path):
-            return {"transactions": [], "metadata": {"error": "CamelotProcessor not available"}}
-    
-    def process_csv_file(file_path):
-        return {"transactions": [], "metadata": {"error": "CSV processor not available"}}
+    # Import the enhanced CSV processor
+    sys.path.append(str(Path(__file__).parent.parent.parent / "backend" / "processors" / "python"))
+    from csv_processor_enhanced import EnhancedCSVProcessor
+    enhanced_processor = EnhancedCSVProcessor()
+    csv_processor_available = True
+    print("✅ Enhanced CSV processor loaded successfully", file=sys.stderr)
+except ImportError as e:
+    print(f"Import error: {e}", file=sys.stderr)
+    enhanced_processor = None
+    csv_processor_available = False
+
+# Create placeholder PDF processor since financial_advisor module doesn't exist
+class CamelotFinancialProcessor:
+    def process_pdf(self, file_path):
+        return {"transactions": [], "metadata": {"error": "CamelotProcessor not available"}}
 
 server = Server("pdf-processor")
+
+# Add initialization tracking
+_initialized = True  # Start as initialized since we don't have complex setup
+
+# Add a startup message
+print("🚀 PDF Processor server starting...", file=sys.stderr)
+print(f"   CSV processor available: {csv_processor_available}", file=sys.stderr)
+print("✅ PDF Processor server ready for requests", file=sys.stderr)
 
 @server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
@@ -140,6 +154,9 @@ async def handle_call_tool(
 ) -> list[types.TextContent]:
     """Handle tool calls"""
     
+    # Server is ready to handle requests
+    print(f"🔧 Handling tool call: {name}", file=sys.stderr)
+    
     try:
         if name == "process_bank_pdf":
             result = await process_bank_pdf(
@@ -169,6 +186,8 @@ async def handle_call_tool(
         
         # Log the response size for debugging
         print(f"[DEBUG] Tool response size: {len(json_str)} bytes", file=sys.stderr)
+        print(f"[DEBUG] Response type: {type(result)}, keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}", file=sys.stderr)
+        print(f"[DEBUG] JSON string first 100 chars: {json_str[:100]}...", file=sys.stderr)
         
         return [types.TextContent(
             type="text",
@@ -328,14 +347,15 @@ async def process_bank_pdf(file_path: str, bank: Optional[str] = None, processor
         # Calculate summary
         transactions = result["transactions"]
         if transactions:
-            total_debits = sum(t["amount"] for t in transactions if t["amount"] < 0)
+            # Correctly calculate debits (expenses) and credits (income/payments)
+            total_debits = sum(abs(t["amount"]) for t in transactions if t["amount"] < 0)
             total_credits = sum(t["amount"] for t in transactions if t["amount"] > 0)
             
             result["summary"] = {
                 "transaction_count": len(transactions),
-                "total_debits": total_debits,
-                "total_credits": total_credits,
-                "net_amount": total_credits + total_debits,
+                "total_debits": total_debits,  # Total expenses (positive value)
+                "total_credits": total_credits,  # Total income/payments
+                "net_amount": total_credits - total_debits,  # Income minus expenses
                 "date_range": get_date_range(transactions)
             }
         
@@ -481,6 +501,15 @@ def parse_capital_one_transactions(table: List[List]) -> List[Dict]:
                 if amount == 0:
                     i += 1
                     continue
+                
+                # Apply correct sign for credit card transactions
+                # Payments (positive) vs Purchases (negative)
+                if "PAYMENT" in description.upper() or "PYMT" in description.upper() or "PMT" in description.upper():
+                    # Payments reduce your balance (positive)
+                    amount = abs(amount)
+                else:
+                    # All other transactions increase your balance (negative/expense)
+                    amount = -abs(amount)
                 
                 transaction = {
                     "date": post_date,  # Use post date as the primary date
@@ -641,23 +670,36 @@ async def extract_pdf_tables(file_path: str, page_numbers: Optional[List[int]] =
     }
 
 async def process_csv_async(file_path: str) -> Dict:
-    """Process CSV file using existing processor"""
+    """Process CSV file using enhanced processor"""
     
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
     
-    try:
-        result = process_csv_file(file_path)
+    if not csv_processor_available or enhanced_processor is None:
         return {
             "file": file_path,
-            "processor": "csv_processor",
+            "processor": "csv_processor_enhanced",
+            "success": False,
+            "error": "Enhanced CSV processor not available",
+            "transactions": [],
+            "metadata": {}
+        }
+    
+    try:
+        print(f"🎯 MCP processing CSV file: {file_path}", file=sys.stderr)
+        result = enhanced_processor.process_csv_file(file_path)
+        
+        return {
+            "file": file_path,
+            "processor": "csv_processor_enhanced",
             "success": True,
             **result
         }
     except Exception as e:
+        print(f"❌ MCP CSV processing error: {str(e)}", file=sys.stderr)
         return {
             "file": file_path,
-            "processor": "csv_processor",
+            "processor": "csv_processor_enhanced",
             "success": False,
             "error": str(e),
             "transactions": [],

@@ -72,12 +72,12 @@ extension Optional {
     /// Cast with logging
     func safeCast<T>(to type: T.Type, file: String = #file, line: Int = #line) -> T? {
         guard let self = self else {
-            print("⚠️ Attempted to cast nil value to \(type) at \(URL(fileURLWithPath: file).lastPathComponent):\(line)")
+            AppLogger.shared.warning("Attempted to cast nil value to \(type) at \(URL(fileURLWithPath: file).lastPathComponent):\(line)", category: "Utils")
             return nil
         }
         
         guard let casted = self as? T else {
-            print("⚠️ Failed to cast \(Swift.type(of: self)) to \(type) at \(URL(fileURLWithPath: file).lastPathComponent):\(line)")
+            AppLogger.shared.warning("Failed to cast \(Swift.type(of: self)) to \(type) at \(URL(fileURLWithPath: file).lastPathComponent):\(line)", category: "Utils")
             return nil
         }
         

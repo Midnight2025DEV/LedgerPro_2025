@@ -190,7 +190,7 @@ extension UserDefaults {
             let data = try JSONEncoder().encode(object)
             set(data, forKey: key)
         } catch {
-            print("Failed to encode object for key \(key): \(error)")
+            AppLogger.shared.error("Failed to encode object for key \(key): \(error)", category: "Utils")
         }
     }
     
@@ -200,7 +200,7 @@ extension UserDefaults {
         do {
             return try JSONDecoder().decode(type, from: data)
         } catch {
-            print("Failed to decode object for key \(key): \(error)")
+            AppLogger.shared.error("Failed to decode object for key \(key): \(error)", category: "Utils")
             return nil
         }
     }

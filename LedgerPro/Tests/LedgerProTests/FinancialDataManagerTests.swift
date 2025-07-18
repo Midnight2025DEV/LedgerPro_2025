@@ -80,6 +80,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // When
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Then
         XCTAssertEqual(sut.transactions.count, initialCount + testTransactions.count)
         XCTAssertEqual(sut.transactions.last?.description, "UBER RIDE DOWNTOWN")
@@ -88,10 +91,17 @@ final class FinancialDataManagerTests: XCTestCase {
     func testAddTransactions_preventsDuplicateJobs() async {
         // Given
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         let countAfterFirst = sut.transactions.count
         
         // When - Add same job ID again
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement_duplicate.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then - Count should not increase
         XCTAssertEqual(sut.transactions.count, countAfterFirst)
@@ -100,6 +110,10 @@ final class FinancialDataManagerTests: XCTestCase {
     func testUpdateTransactionCategory_persistsChange() async {
         // Given
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         let transaction = sut.transactions.first!
         let newCategory = "Groceries"
         
@@ -122,6 +136,10 @@ final class FinancialDataManagerTests: XCTestCase {
         )
         
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         sut.transactions.append(duplicateTransaction)
         let countWithDuplicate = sut.transactions.count
         
@@ -137,6 +155,9 @@ final class FinancialDataManagerTests: XCTestCase {
     func testCalculateSummary_computesCorrectTotals() async {
         // Given
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // When
         let summary = sut.summary
@@ -160,6 +181,10 @@ final class FinancialDataManagerTests: XCTestCase {
         )
         
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         sut.transactions.append(otherTransaction)
         
         // When
@@ -173,6 +198,9 @@ final class FinancialDataManagerTests: XCTestCase {
     func testGetSummaryForAccount_calculatesCorrectly() async {
         // Given
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // When
         let accountSummary = sut.getSummary(for: testBankAccount.id)
@@ -201,6 +229,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // When
         sut.addTransactions(capitalOneTransactions, jobId: "capital_one_job", filename: "Capital_One_Credit_1234.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Then
         XCTAssertFalse(sut.bankAccounts.isEmpty)
         let account = sut.bankAccounts.first!
@@ -225,6 +256,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // When
         sut.addTransactions(chaseTransactions, jobId: "chase_job", filename: "Chase_Checking_5678.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Then
         let account = sut.bankAccounts.first!
         XCTAssertEqual(account.institution, "Chase Bank")
@@ -237,11 +271,18 @@ final class FinancialDataManagerTests: XCTestCase {
     func testClearAllData_removesAllData() async {
         // Given
         sut.addTransactions(testTransactions, jobId: "test_job_1", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertFalse(sut.transactions.isEmpty)
         XCTAssertFalse(sut.bankAccounts.isEmpty)
         
         // When
         sut.clearAllData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then
         XCTAssertTrue(sut.transactions.isEmpty)
@@ -279,6 +320,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // When
         sut.addTransactions([forexTransaction], jobId: "forex_job", filename: "capital_one_travel.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Then
         let storedTransaction = sut.transactions.first!
         XCTAssertEqual(storedTransaction.originalAmount, -100.00)
@@ -296,6 +340,9 @@ final class FinancialDataManagerTests: XCTestCase {
         
         // When
         sut.addTransactions(emptyTransactions, jobId: "empty_job", filename: "empty.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then - Should not crash
         XCTAssertEqual(sut.transactions.count, initialCount)
@@ -325,6 +372,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // Given
         sut.addTransactions(testTransactions, jobId: "test_job", filename: "test.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // When
         let result = sut.getAccount(for: "invalid_account_id")
         
@@ -340,6 +390,9 @@ final class FinancialDataManagerTests: XCTestCase {
         
         // When - Import transactions
         sut.addTransactions(testTransactions, jobId: "workflow_test", filename: "test_statement.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then - Verify import
         XCTAssertEqual(sut.transactions.count, testTransactions.count)
@@ -379,6 +432,10 @@ final class FinancialDataManagerTests: XCTestCase {
         
         let startTime = Date()
         sut.addTransactions(largeDataset, jobId: "performance_test", filename: "large_dataset.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         let duration = Date().timeIntervalSince(startTime)
         
         XCTAssertLessThan(duration, 2.0, "Adding 1000 transactions should take less than 2 seconds")
@@ -400,6 +457,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // Add original transactions
         sut.addTransactions(baseTransactions, jobId: "original_job", filename: "original.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Create duplicates with slight variations
         let duplicateTransactions = baseTransactions.map { transaction in
             Transaction(
@@ -413,6 +473,10 @@ final class FinancialDataManagerTests: XCTestCase {
         
         let startTime = Date()
         sut.addTransactions(duplicateTransactions, jobId: "duplicate_job", filename: "duplicate.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         sut.removeDuplicates()
         let duration = Date().timeIntervalSince(startTime)
         
@@ -428,6 +492,9 @@ final class FinancialDataManagerTests: XCTestCase {
         
         // When
         sut.loadDemoData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then
         XCTAssertFalse(sut.transactions.isEmpty)

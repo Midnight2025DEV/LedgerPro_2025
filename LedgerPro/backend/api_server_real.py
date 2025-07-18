@@ -463,7 +463,7 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
                 if amount > 0:
                     total_income += amount
                 else:
-                    total_expenses += amount
+                    total_expenses += abs(amount)
 
         # If no transactions found, provide helpful message
         if not transactions:

@@ -1,13 +1,13 @@
 import Foundation
+import SwiftUI
 import Combine
 
-@MainActor
 class FinancialDataManager: ObservableObject {
-    @Published var transactions: [Transaction] = []
-    @Published var bankAccounts: [BankAccount] = []
-    @Published var uploadedStatements: [UploadedStatement] = []
-    @Published var isLoading = false
-    @Published var summary: FinancialSummary = FinancialSummary(
+    @MainActor @Published var transactions: [Transaction] = []
+    @MainActor @Published var bankAccounts: [BankAccount] = []
+    @MainActor @Published var uploadedStatements: [UploadedStatement] = []
+    @MainActor @Published var isLoading = false
+    @MainActor @Published var summary: FinancialSummary = FinancialSummary(
         totalIncome: 0,
         totalExpenses: 0,
         netSavings: 0,
@@ -30,68 +30,107 @@ class FinancialDataManager: ObservableObject {
     
     // MARK: - Data Loading/Saving
     func loadStoredData() {
-        isLoading = true
-        
-        // Load transactions
-        if let transactionData = userDefaults.data(forKey: transactionsKey) {
-            do {
-                let decoder = JSONDecoder()
-                transactions = try decoder.decode([Transaction].self, from: transactionData)
-            } catch {
-                AppLogger.shared.error("Failed to load transactions: \(error)")
+        Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            await MainActor.run {
+                self.isLoading = true
+            }
+            
+            // Load data in background
+            let userDefaults = UserDefaults.standard
+            let loadedTransactions: [Transaction]
+            let loadedAccounts: [BankAccount] 
+            let loadedStatements: [UploadedStatement]
+            
+            // Load transactions
+            if let transactionData = userDefaults.data(forKey: self.transactionsKey) {
+                do {
+                    let decoder = JSONDecoder()
+                    loadedTransactions = try decoder.decode([Transaction].self, from: transactionData)
+                } catch {
+                    AppLogger.shared.error("Failed to load transactions: \(error)")
+                    loadedTransactions = []
+                }
+            } else {
+                loadedTransactions = []
+            }
+            
+            // Load bank accounts
+            if let accountData = userDefaults.data(forKey: self.accountsKey) {
+                do {
+                    let decoder = JSONDecoder()
+                    loadedAccounts = try decoder.decode([BankAccount].self, from: accountData)
+                } catch {
+                    AppLogger.shared.error("Failed to load bank accounts: \(error)")
+                    loadedAccounts = []
+                }
+            } else {
+                loadedAccounts = []
+            }
+            
+            // Load uploaded statements
+            if let statementData = userDefaults.data(forKey: self.statementsKey) {
+                do {
+                    let decoder = JSONDecoder()
+                    loadedStatements = try decoder.decode([UploadedStatement].self, from: statementData)
+                } catch {
+                    AppLogger.shared.error("Failed to load uploaded statements: \(error)")
+                    loadedStatements = []
+                }
+            } else {
+                loadedStatements = []
+            }
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.transactions = loadedTransactions
+                self.bankAccounts = loadedAccounts
+                self.uploadedStatements = loadedStatements
+                
+                // If we have transactions but no accounts, create accounts from transaction data
+                if !self.transactions.isEmpty && self.bankAccounts.isEmpty {
+                    self.createAccountsFromTransactions()
+                }
+                
+                self.updateSummaryOnMainThread()
+                self.isLoading = false
             }
         }
-        
-        // Load bank accounts
-        if let accountData = userDefaults.data(forKey: accountsKey) {
-            do {
-                let decoder = JSONDecoder()
-                bankAccounts = try decoder.decode([BankAccount].self, from: accountData)
-            } catch {
-                AppLogger.shared.error("Failed to load bank accounts: \(error)")
-            }
-        }
-        
-        // Load uploaded statements
-        if let statementData = userDefaults.data(forKey: statementsKey) {
-            do {
-                let decoder = JSONDecoder()
-                uploadedStatements = try decoder.decode([UploadedStatement].self, from: statementData)
-            } catch {
-                AppLogger.shared.error("Failed to load uploaded statements: \(error)")
-            }
-        }
-        
-        // If we have transactions but no accounts, create accounts from transaction data
-        if !transactions.isEmpty && bankAccounts.isEmpty {
-            createAccountsFromTransactions()
-        }
-        
-        updateSummary()
-        isLoading = false
     }
     
     private func saveData() {
-        let encoder = JSONEncoder()
-        
-        // Save transactions
-        if let transactionData = try? encoder.encode(transactions) {
-            userDefaults.set(transactionData, forKey: transactionsKey)
-        }
-        
-        // Save bank accounts
-        if let accountData = try? encoder.encode(bankAccounts) {
-            userDefaults.set(accountData, forKey: accountsKey)
-        }
-        
-        // Save uploaded statements
-        if let statementData = try? encoder.encode(uploadedStatements) {
-            userDefaults.set(statementData, forKey: statementsKey)
+        Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            // Capture current state on main thread
+            let (currentTransactions, currentAccounts, currentStatements) = await MainActor.run {
+                (self.transactions, self.bankAccounts, self.uploadedStatements)
+            }
+            
+            // Perform encoding and UserDefaults operations in background
+            let encoder = JSONEncoder()
+            let userDefaults = UserDefaults.standard
+            
+            // Save transactions
+            if let transactionData = try? encoder.encode(currentTransactions) {
+                userDefaults.set(transactionData, forKey: self.transactionsKey)
+            }
+            
+            // Save bank accounts
+            if let accountData = try? encoder.encode(currentAccounts) {
+                userDefaults.set(accountData, forKey: self.accountsKey)
+            }
+            
+            // Save uploaded statements
+            if let statementData = try? encoder.encode(currentStatements) {
+                userDefaults.set(statementData, forKey: self.statementsKey)
+            }
         }
     }
     
     // MARK: - Account Management
-    private func createAccountsFromTransactions() {
+    @MainActor private func createAccountsFromTransactions() {
         let uniqueAccountIds = Set(transactions.compactMap { $0.accountId })
         
         for accountId in uniqueAccountIds {
@@ -154,109 +193,130 @@ class FinancialDataManager: ObservableObject {
     
     // MARK: - Transaction Management
     func addTransactions(_ newTransactions: [Transaction], jobId: String, filename: String) {
-        isLoading = true
-        
-        // Check for duplicate jobId
-        let existingJobIds = Set(transactions.compactMap { $0.jobId })
-        if existingJobIds.contains(jobId) {
-            AppLogger.shared.info("Job \(jobId) already exists, skipping duplicate transactions")
-            isLoading = false
-            return
-        }
-        
-        // Debug: Check if any transactions have forex data
-        let forexTransactions = newTransactions.filter { $0.hasForex == true }
-        if !forexTransactions.isEmpty {
-            AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
-            for transaction in forexTransactions {
-                AppLogger.shared.debug("Foreign transaction: \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
+        Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            await MainActor.run {
+                self.isLoading = true
             }
-        }
-        
-        // Check if transactions already have account IDs and find/create corresponding accounts
-        let uniqueAccountIds = Set(newTransactions.compactMap { $0.accountId })
-        
-        var finalAccount: BankAccount
-        
-        if let firstAccountId = uniqueAccountIds.first, uniqueAccountIds.count == 1 {
-            // All transactions have the same accountId, try to find existing account
-            if let existingAccount = bankAccounts.first(where: { $0.id == firstAccountId }) {
-                finalAccount = existingAccount
+            
+            // Check for duplicate jobId on main thread (quick check)
+            let existingJobIds = await MainActor.run {
+                Set(self.transactions.compactMap { $0.jobId })
+            }
+            
+            if existingJobIds.contains(jobId) {
+                AppLogger.shared.info("Job \(jobId) already exists, skipping duplicate transactions")
+                await MainActor.run {
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            // Process data in background
+            // Debug: Check if any transactions have forex data
+            let forexTransactions = newTransactions.filter { $0.hasForex == true }
+            if !forexTransactions.isEmpty {
+                AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
+                for transaction in forexTransactions {
+                    AppLogger.shared.debug("Foreign transaction: \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
+                }
+            }
+            
+            // Get current accounts on main thread
+            let currentAccounts = await MainActor.run { self.bankAccounts }
+            
+            // Check if transactions already have account IDs and find/create corresponding accounts
+            let uniqueAccountIds = Set(newTransactions.compactMap { $0.accountId })
+            
+            let (finalAccount, updatedAccounts): (BankAccount, [BankAccount])
+            
+            if let firstAccountId = uniqueAccountIds.first, uniqueAccountIds.count == 1 {
+                // All transactions have the same accountId, try to find existing account
+                if let existingAccount = currentAccounts.first(where: { $0.id == firstAccountId }) {
+                    finalAccount = existingAccount
+                    updatedAccounts = currentAccounts
+                } else {
+                    // Create account based on existing accountId
+                    finalAccount = self.createAccountFromId(firstAccountId, filename: filename)
+                    updatedAccounts = currentAccounts + [finalAccount]
+                }
             } else {
-                // Create account based on existing accountId
-                finalAccount = createAccountFromId(firstAccountId, filename: filename)
-                bankAccounts.append(finalAccount)
+                // No consistent accountId, detect from filename
+                let detectedAccount = self.detectBankAccountFromFilename(filename, transactions: newTransactions)
+                
+                // Check if account already exists
+                let existingAccount = currentAccounts.first { account in
+                    account.institution == detectedAccount.institution &&
+                    account.accountType == detectedAccount.accountType &&
+                    account.lastFourDigits == detectedAccount.lastFourDigits
+                }
+                
+                if let existing = existingAccount {
+                    finalAccount = existing
+                    updatedAccounts = currentAccounts
+                } else {
+                    finalAccount = detectedAccount
+                    updatedAccounts = currentAccounts + [finalAccount]
+                }
             }
-        } else {
-            // No consistent accountId, detect from filename
-            let detectedAccount = detectBankAccountFromFilename(filename, transactions: newTransactions)
             
-            // Check if account already exists
-            let existingAccount = bankAccounts.first { account in
-                account.institution == detectedAccount.institution &&
-                account.accountType == detectedAccount.accountType &&
-                account.lastFourDigits == detectedAccount.lastFourDigits
+            // Add transactions with account linkage
+            let transactionsWithAccounts = newTransactions.map { transaction in
+                // DEBUG: Log forex data for each transaction
+                AppLogger.shared.debug("Adding transaction: \(transaction.description)")
+                AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
+                AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
+                AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
+                AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
+                
+                // Use existing accountId if present, otherwise use detected account
+                let accountIdToUse = transaction.accountId ?? finalAccount.id
+                
+                return Transaction(
+                    id: transaction.id,
+                    date: transaction.date,
+                    description: transaction.description,
+                    amount: transaction.amount,
+                    category: transaction.category,
+                    confidence: transaction.confidence,
+                    jobId: jobId,
+                    accountId: accountIdToUse,
+                    rawData: transaction.rawData,
+                    originalAmount: transaction.originalAmount,
+                    originalCurrency: transaction.originalCurrency,
+                    exchangeRate: transaction.exchangeRate,
+                    hasForex: transaction.hasForex
+                )
             }
             
-            if let existing = existingAccount {
-                finalAccount = existing
-            } else {
-                finalAccount = detectedAccount
-                bankAccounts.append(finalAccount)
-            }
-        }
-        
-        // Add transactions with account linkage
-        let transactionsWithAccounts = newTransactions.map { transaction in
-            // DEBUG: Log forex data for each transaction
-            AppLogger.shared.debug("Adding transaction: \(transaction.description)")
-            AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
-            AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
-            AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-            AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
-            
-            // Use existing accountId if present, otherwise use detected account
-            let accountIdToUse = transaction.accountId ?? finalAccount.id
-            
-            return Transaction(
-                id: transaction.id,
-                date: transaction.date,
-                description: transaction.description,
-                amount: transaction.amount,
-                category: transaction.category,
-                confidence: transaction.confidence,
+            // Create uploaded statement record (heavy calculation in background)
+            let statementSummary = self.calculateSummary(for: transactionsWithAccounts)
+            let statement = UploadedStatement(
                 jobId: jobId,
-                accountId: accountIdToUse,
-                rawData: transaction.rawData,
-                originalAmount: transaction.originalAmount,
-                originalCurrency: transaction.originalCurrency,
-                exchangeRate: transaction.exchangeRate,
-                hasForex: transaction.hasForex
+                filename: filename,
+                uploadDate: ISO8601DateFormatter().string(from: Date()),
+                transactionCount: transactionsWithAccounts.count,
+                accountId: finalAccount.id,
+                summary: UploadedStatement.StatementSummary(
+                    totalIncome: statementSummary.totalIncome,
+                    totalExpenses: statementSummary.totalExpenses,
+                    netAmount: statementSummary.netSavings
+                )
             )
+            
+            // Update UI on main thread
+            await MainActor.run {
+                self.transactions.append(contentsOf: transactionsWithAccounts)
+                self.bankAccounts = updatedAccounts
+                self.uploadedStatements.insert(statement, at: 0)
+                self.updateSummaryOnMainThread()
+                self.isLoading = false
+            }
+            
+            // Save data in background (don't await)
+            self.saveData()
         }
-        
-        transactions.append(contentsOf: transactionsWithAccounts)
-        
-        // Create uploaded statement record
-        let statementSummary = calculateSummary(for: transactionsWithAccounts)
-        let statement = UploadedStatement(
-            jobId: jobId,
-            filename: filename,
-            uploadDate: ISO8601DateFormatter().string(from: Date()),
-            transactionCount: transactionsWithAccounts.count,
-            accountId: finalAccount.id,
-            summary: UploadedStatement.StatementSummary(
-                totalIncome: statementSummary.totalIncome,
-                totalExpenses: statementSummary.totalExpenses,
-                netAmount: statementSummary.netSavings
-            )
-        )
-        
-        uploadedStatements.insert(statement, at: 0)
-        
-        updateSummary()
-        saveData()
-        isLoading = false
     }
     
     private func createAccountFromId(_ accountId: String, filename: String) -> BankAccount {
@@ -372,7 +432,7 @@ class FinancialDataManager: ObservableObject {
         )
     }
     
-    func removeDuplicates() {
+    @MainActor func removeDuplicates() {
         let uniqueTransactions = transactions.removingDuplicates { transaction in
             "\(transaction.date)_\(transaction.description)_\(transaction.amount)"
         }
@@ -384,7 +444,7 @@ class FinancialDataManager: ObservableObject {
         saveData()
     }
     
-    func clearAllData() {
+    @MainActor func clearAllData() {
         transactions.removeAll()
         bankAccounts.removeAll()
         uploadedStatements.removeAll()
@@ -397,27 +457,33 @@ class FinancialDataManager: ObservableObject {
     }
     
     // MARK: - Account Queries
-    func getTransactions(for accountId: String) -> [Transaction] {
+    @MainActor func getTransactions(for accountId: String) -> [Transaction] {
         return transactions.filter { $0.accountId == accountId }
     }
     
-    func getSummary(for accountId: String) -> FinancialSummary {
+    @MainActor func getSummary(for accountId: String) -> FinancialSummary {
         let accountTransactions = getTransactions(for: accountId)
         return calculateSummary(for: accountTransactions)
     }
     
-    func getAccount(for accountId: String?) -> BankAccount? {
+    @MainActor func getAccount(for accountId: String?) -> BankAccount? {
         guard let accountId = accountId else { return nil }
         return bankAccounts.first { $0.id == accountId }
     }
     
-    func getAccountType(for transaction: Transaction) -> BankAccount.AccountType? {
+    @MainActor func getAccountType(for transaction: Transaction) -> BankAccount.AccountType? {
         return getAccount(for: transaction.accountId)?.accountType
     }
     
     // MARK: - Summary Calculation
-    private func updateSummary() {
+    @MainActor private func updateSummaryOnMainThread() {
         summary = calculateSummary(for: transactions)
+    }
+    
+    private func updateSummary() {
+        Task { @MainActor in
+            summary = calculateSummary(for: transactions)
+        }
     }
     
     private func calculateSummary(for transactions: [Transaction]) -> FinancialSummary {
@@ -457,7 +523,7 @@ class FinancialDataManager: ObservableObject {
     }
     
     // MARK: - Demo Data
-    func loadDemoData() {
+    @MainActor func loadDemoData() {
         let demoTransactions = [
             Transaction(
                 id: "demo_1",
@@ -522,7 +588,7 @@ class FinancialDataManager: ObservableObject {
     // MARK: - Transaction Updates
     
     /// Update the category of a specific transaction
-    func updateTransactionCategory(transactionId: String, newCategory: String) {
+    @MainActor func updateTransactionCategory(transactionId: String, newCategory: String) {
         guard let index = transactions.firstIndex(where: { $0.id == transactionId }) else {
             AppLogger.shared.error("Transaction not found: \(transactionId)")
             return
@@ -576,7 +642,7 @@ class FinancialDataManager: ObservableObject {
     }
     
     /// Update the category of a transaction using Category object (for new category system)
-    func updateTransactionCategory(transactionId: String, newCategory: Category) {
+    @MainActor func updateTransactionCategory(transactionId: String, newCategory: Category) {
         updateTransactionCategory(transactionId: transactionId, newCategory: newCategory.name)
     }
     
@@ -650,7 +716,7 @@ class FinancialDataManager: ObservableObject {
     }
     
     /// Find a rule that matches this transaction
-    private func findMatchingRule(for transaction: Transaction) -> CategoryRule? {
+    @MainActor private func findMatchingRule(for transaction: Transaction) -> CategoryRule? {
         let allRules = RuleStorageService.shared.allRules
         
         return allRules.first { rule in
@@ -659,7 +725,7 @@ class FinancialDataManager: ObservableObject {
     }
     
     /// Check if we already have a rule for this merchant
-    private func hasRuleForMerchant(_ merchantName: String) -> Bool {
+    @MainActor private func hasRuleForMerchant(_ merchantName: String) -> Bool {
         let allRules = RuleStorageService.shared.allRules
         
         return allRules.contains { rule in
@@ -674,7 +740,7 @@ class FinancialDataManager: ObservableObject {
     }
     
     /// Determine if we should create a rule for this merchant
-    private func shouldCreateRule(for merchantName: String, transaction: Transaction) -> Bool {
+    @MainActor private func shouldCreateRule(for merchantName: String, transaction: Transaction) -> Bool {
         // Don't create rules for very generic or short merchant names
         if merchantName.count < 3 || merchantName.contains("UNKNOWN") {
             return false
@@ -694,7 +760,7 @@ class FinancialDataManager: ObservableObject {
     }
     
     /// Create a merchant-specific rule from user categorization
-    private func createMerchantRule(merchantName: String, category: String, transaction: Transaction) async {
+    @MainActor private func createMerchantRule(merchantName: String, category: String, transaction: Transaction) async {
         // Find the category object
         guard let categoryObj = CategoryService.shared.categories.first(where: { $0.name == category }) else {
             AppLogger.shared.error("Category not found: \(category)")
@@ -717,6 +783,684 @@ class FinancialDataManager: ObservableObject {
         // Save the rule
         RuleStorageService.shared.saveRule(newRule)
         AppLogger.shared.info("Created new merchant rule: \(merchantName) → \(category)")
+    }
+    
+    // MARK: - Account and Transaction Helpers
+    
+    /// Get account information for a specific account ID
+    @MainActor func getAccount(for accountId: String) -> BankAccount? {
+        return bankAccounts.first { $0.id == accountId }
+    }
+}
+
+// MARK: - Context-Aware Financial Intelligence
+
+extension FinancialDataManager {
+    
+    /// Provides context-aware financial summaries based on account type and transaction patterns
+    @MainActor func getContextAwareSummary(for accountId: String? = nil) -> ContextAwareFinancialSummary {
+        let relevantTransactions = accountId != nil ? 
+            transactions.filter { $0.accountId == accountId } : 
+            transactions
+        
+        // Determine account type from transactions or use mixed for all accounts
+        let accountType = determineAccountType(from: relevantTransactions, accountId: accountId)
+        
+        switch accountType {
+        case .creditCard:
+            return generateCreditCardSummary(transactions: relevantTransactions)
+        case .checking, .savings:
+            return generateCheckingSavingsSummary(transactions: relevantTransactions)
+        case .investment:
+            return generateInvestmentSummary(transactions: relevantTransactions)
+        case .loan:
+            return generateLoanSummary(transactions: relevantTransactions)
+        case .mixed:
+            return generateMixedAccountSummary(transactions: relevantTransactions)
+        }
+    }
+    
+    @MainActor private func determineAccountType(from transactions: [Transaction], accountId: String?) -> AccountType {
+        // If specific account ID provided, look up the actual account type
+        if let accountId = accountId {
+            AppLogger.shared.debug("Determining account type for ID: \(accountId)", category: "Data")
+            if let account = getAccount(for: accountId) {
+                AppLogger.shared.debug("Found account: \(account.displayName) - Type: \(account.accountType)", category: "Account")
+                // Map BankAccount.AccountType to our AccountType
+                switch account.accountType {
+                case .checking:
+                    return .checking
+                case .savings:
+                    return .savings
+                case .credit:
+                    return .creditCard
+                case .investment:
+                    return .investment
+                case .loan:
+                    return .loan
+                }
+            }
+            
+            // Fallback to heuristics if account not found
+            let creditIndicators = transactions.filter { 
+                $0.accountId == accountId && ($0.description.contains("PAYMENT") || $0.description.contains("AUTOPAY"))
+            }.count
+            
+            let investmentIndicators = transactions.filter {
+                $0.accountId == accountId && ($0.description.contains("DIVIDEND") || $0.description.contains("TRANSFER"))
+            }.count
+            
+            if creditIndicators > 0 { return .creditCard }
+            if investmentIndicators > 0 { return .investment }
+            
+            // Default to checking for specific accounts
+            return .checking
+        }
+        
+        // Mixed account summary
+        return .mixed
+    }
+    
+    private func generateCreditCardSummary(transactions: [Transaction]) -> ContextAwareFinancialSummary {
+        let expenses = transactions.filter { $0.amount < 0 }
+        let payments = transactions.filter { $0.amount > 0 }
+        
+        let totalSpent = expenses.reduce(0) { $0 + abs($1.amount) }
+        let totalPayments = payments.reduce(0) { $0 + $1.amount }
+        let currentBalance = totalSpent - totalPayments
+        
+        let averageTransaction = expenses.isEmpty ? 0 : totalSpent / Double(expenses.count)
+        let utilizationTrend = calculateUtilizationTrend(expenses: expenses)
+        
+        return ContextAwareFinancialSummary(
+            accountType: .creditCard,
+            primaryMetrics: [
+                ContextMetric(
+                    title: "Current Balance",
+                    value: currentBalance,
+                    format: .currency,
+                    trend: calculateBalanceTrend(transactions: transactions),
+                    description: "Outstanding credit card balance"
+                ),
+                ContextMetric(
+                    title: "Total Spent",
+                    value: totalSpent,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Total spending this period"
+                ),
+                ContextMetric(
+                    title: "Average Transaction",
+                    value: averageTransaction,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Average purchase amount"
+                )
+            ],
+            secondaryMetrics: [
+                ContextMetric(
+                    title: "Total Payments",
+                    value: totalPayments,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Payments made this period"
+                ),
+                ContextMetric(
+                    title: "Utilization Trend",
+                    value: utilizationTrend,
+                    format: .percentage,
+                    trend: utilizationTrend > 0.3 ? .negative : .positive,
+                    description: "Spending pattern indicator"
+                )
+            ],
+            insights: generateCreditCardInsights(
+                totalSpent: totalSpent,
+                totalPayments: totalPayments,
+                averageTransaction: averageTransaction,
+                transactionCount: expenses.count
+            ),
+            recommendations: generateCreditCardRecommendations(
+                balance: currentBalance,
+                utilizationTrend: utilizationTrend,
+                paymentHistory: payments
+            )
+        )
+    }
+    
+    private func generateCheckingSavingsSummary(transactions: [Transaction]) -> ContextAwareFinancialSummary {
+        let income = transactions.filter { $0.amount > 0 }
+        let expenses = transactions.filter { $0.amount < 0 }
+        
+        let totalIncome = income.reduce(0) { $0 + $1.amount }
+        let totalExpenses = expenses.reduce(0) { $0 + abs($1.amount) }
+        let netCashFlow = totalIncome - totalExpenses
+        let savingsRate = totalIncome > 0 ? (netCashFlow / totalIncome) : 0
+        
+        return ContextAwareFinancialSummary(
+            accountType: .checking,
+            primaryMetrics: [
+                ContextMetric(
+                    title: "Net Cash Flow",
+                    value: netCashFlow,
+                    format: .currency,
+                    trend: netCashFlow > 0 ? .positive : .negative,
+                    description: "Income minus expenses"
+                ),
+                ContextMetric(
+                    title: "Total Income",
+                    value: totalIncome,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Total deposits and income"
+                ),
+                ContextMetric(
+                    title: "Total Expenses",
+                    value: totalExpenses,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Total spending and withdrawals"
+                )
+            ],
+            secondaryMetrics: [
+                ContextMetric(
+                    title: "Savings Rate",
+                    value: savingsRate,
+                    format: .percentage,
+                    trend: savingsRate > 0.2 ? .positive : (savingsRate > 0 ? .neutral : .negative),
+                    description: "Percentage of income saved"
+                ),
+                ContextMetric(
+                    title: "Transaction Volume",
+                    value: Double(transactions.count),
+                    format: .number,
+                    trend: .neutral,
+                    description: "Total transactions this period"
+                )
+            ],
+            insights: generateCheckingInsights(
+                netCashFlow: netCashFlow,
+                savingsRate: savingsRate,
+                transactionCount: transactions.count
+            ),
+            recommendations: generateCheckingRecommendations(
+                savingsRate: savingsRate,
+                netCashFlow: netCashFlow,
+                expenses: expenses
+            )
+        )
+    }
+    
+    private func generateInvestmentSummary(transactions: [Transaction]) -> ContextAwareFinancialSummary {
+        let contributions = transactions.filter { $0.amount > 0 && !$0.description.contains("DIVIDEND") }
+        let dividends = transactions.filter { $0.description.contains("DIVIDEND") }
+        let withdrawals = transactions.filter { $0.amount < 0 }
+        
+        let totalContributions = contributions.reduce(0) { $0 + $1.amount }
+        let totalDividends = dividends.reduce(0) { $0 + $1.amount }
+        let totalWithdrawals = withdrawals.reduce(0) { $0 + abs($1.amount) }
+        
+        return ContextAwareFinancialSummary(
+            accountType: .investment,
+            primaryMetrics: [
+                ContextMetric(
+                    title: "Total Contributions",
+                    value: totalContributions,
+                    format: .currency,
+                    trend: .positive,
+                    description: "Money invested this period"
+                ),
+                ContextMetric(
+                    title: "Dividend Income",
+                    value: totalDividends,
+                    format: .currency,
+                    trend: .positive,
+                    description: "Passive income generated"
+                ),
+                ContextMetric(
+                    title: "Net Investment",
+                    value: totalContributions - totalWithdrawals,
+                    format: .currency,
+                    trend: totalContributions > totalWithdrawals ? .positive : .negative,
+                    description: "Net money invested"
+                )
+            ],
+            secondaryMetrics: [
+                ContextMetric(
+                    title: "Withdrawals",
+                    value: totalWithdrawals,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Money withdrawn from investments"
+                ),
+                ContextMetric(
+                    title: "Dividend Yield",
+                    value: totalContributions > 0 ? (totalDividends / totalContributions) : 0,
+                    format: .percentage,
+                    trend: .neutral,
+                    description: "Return on invested capital"
+                )
+            ],
+            insights: generateInvestmentInsights(
+                contributions: totalContributions,
+                dividends: totalDividends,
+                withdrawals: totalWithdrawals
+            ),
+            recommendations: generateInvestmentRecommendations(
+                contributionPattern: contributions,
+                dividendIncome: totalDividends
+            )
+        )
+    }
+    
+    private func generateLoanSummary(transactions: [Transaction]) -> ContextAwareFinancialSummary {
+        let payments = transactions.filter { $0.amount < 0 }
+        let totalPayments = payments.reduce(0) { $0 + abs($1.amount) }
+        let averagePayment = payments.isEmpty ? 0 : totalPayments / Double(payments.count)
+        
+        return ContextAwareFinancialSummary(
+            accountType: .loan,
+            primaryMetrics: [
+                ContextMetric(
+                    title: "Total Payments",
+                    value: totalPayments,
+                    format: .currency,
+                    trend: .positive,
+                    description: "Total loan payments made"
+                ),
+                ContextMetric(
+                    title: "Average Payment",
+                    value: averagePayment,
+                    format: .currency,
+                    trend: .neutral,
+                    description: "Average payment amount"
+                ),
+                ContextMetric(
+                    title: "Payment Frequency",
+                    value: Double(payments.count),
+                    format: .number,
+                    trend: .neutral,
+                    description: "Number of payments made"
+                )
+            ],
+            secondaryMetrics: [],
+            insights: generateLoanInsights(payments: payments, totalPayments: totalPayments),
+            recommendations: generateLoanRecommendations(paymentPattern: payments)
+        )
+    }
+    
+    @MainActor private func generateMixedAccountSummary(transactions: [Transaction]) -> ContextAwareFinancialSummary {
+        let actualIncomeTransactions = transactions.filter { $0.isActualIncome }
+        let expenseTransactions = transactions.filter { $0.amount < 0 }
+        
+        let totalIncome = actualIncomeTransactions.reduce(0) { $0 + $1.amount }
+        let totalExpenses = expenseTransactions.reduce(0) { $0 + abs($1.amount) }
+        let cashFlow = totalIncome - totalExpenses
+        
+        // Calculate TRUE Net Worth based on account balances
+        var trueNetWorth: Double = 0
+        var totalAssets: Double = 0
+        var totalLiabilities: Double = 0
+        
+        // Group transactions by account to calculate balances
+        for account in self.bankAccounts {
+            let accountTransactions = transactions.filter { $0.accountId == account.id }
+            let inflows = accountTransactions.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount }
+            let negativeTransactions = accountTransactions.filter { $0.amount < 0 }
+            let outflows = abs(negativeTransactions.reduce(0) { $0 + $1.amount })
+            
+            switch account.accountType {
+            case .checking, .savings, .investment:
+                // Asset accounts: positive balance adds to net worth
+                let balance = inflows - outflows
+                if balance > 0 {
+                    totalAssets += balance
+                }
+                trueNetWorth += balance
+                
+            case .credit, .loan:
+                // Liability accounts: positive balance (debt) reduces net worth
+                let balance = outflows - inflows  // What you owe
+                if balance > 0 {
+                    totalLiabilities += balance
+                }
+                trueNetWorth -= balance
+            }
+        }
+        
+        AppLogger.shared.info("Mixed Account Financial Summary:", category: "Data")
+        AppLogger.shared.info("Total transactions: \(transactions.count)", category: "Data")
+        AppLogger.shared.info("Actual income transactions: \(actualIncomeTransactions.count) = $\(String(format: "%.2f", totalIncome))", category: "Data")
+        AppLogger.shared.info("Expense transactions: \(expenseTransactions.count) = $\(String(format: "%.2f", totalExpenses))", category: "Data")
+        AppLogger.shared.info("Cash Flow (Income - Expenses): $\(String(format: "%.2f", cashFlow))", category: "Data")
+        AppLogger.shared.info("Total Assets: $\(String(format: "%.2f", totalAssets))", category: "Data")
+        AppLogger.shared.info("Total Liabilities: $\(String(format: "%.2f", totalLiabilities))", category: "Data")
+        AppLogger.shared.info("Net Worth (Assets - Liabilities): $\(String(format: "%.2f", trueNetWorth))", category: "Data")
+        
+        // Debug: Show some sample income transactions
+        if actualIncomeTransactions.count > 0 {
+            AppLogger.shared.debug("Sample income transactions:", category: "Data")
+            for transaction in actualIncomeTransactions.prefix(3) {
+                AppLogger.shared.debug("\(transaction.description) = $\(String(format: "%.2f", transaction.amount)) (Category: \(transaction.category))", category: "Data")
+            }
+        }
+        
+        // Debug: Show positive amounts that were filtered out
+        let filteredOutPositive = transactions.filter { $0.amount > 0 && !$0.isActualIncome }
+        if filteredOutPositive.count > 0 {
+            AppLogger.shared.debug("Filtered out \(filteredOutPositive.count) positive transactions:", category: "Data")
+            for transaction in filteredOutPositive.prefix(3) {
+                AppLogger.shared.debug("\(transaction.description) = $\(String(format: "%.2f", transaction.amount)) (Category: \(transaction.category))", category: "Data")
+            }
+        }
+        
+        return ContextAwareFinancialSummary(
+            accountType: .mixed,
+            primaryMetrics: [
+                ContextMetric(
+                    title: "Net Worth",
+                    value: trueNetWorth,
+                    format: .currency,
+                    trend: trueNetWorth >= 0 ? .positive : .negative,
+                    description: trueNetWorth >= 0 ? "Assets exceed liabilities" : "Liabilities exceed assets"
+                ),
+                ContextMetric(
+                    title: "Total Income",
+                    value: totalIncome,
+                    format: .currency,
+                    trend: totalIncome > 0 ? .positive : .neutral,
+                    description: "All income across accounts"
+                ),
+                ContextMetric(
+                    title: "Total Expenses",
+                    value: totalExpenses,
+                    format: .currency,
+                    trend: .negative,
+                    description: "All expenses across accounts"
+                ),
+                ContextMetric(
+                    title: "Cash Flow",
+                    value: cashFlow,
+                    format: .currency,
+                    trend: cashFlow >= 0 ? .positive : .negative,
+                    description: cashFlow >= 0 ? "Income exceeds expenses" : "Expenses exceed income"
+                )
+            ],
+            secondaryMetrics: [
+                ContextMetric(
+                    title: "Account Diversity",
+                    value: Double(Set(transactions.compactMap { $0.accountId }).count),
+                    format: .number,
+                    trend: .neutral,
+                    description: "Number of different accounts"
+                )
+            ],
+            insights: generateMixedAccountInsights(
+                netWorth: trueNetWorth,
+                accountCount: Set(transactions.compactMap { $0.accountId }).count
+            ),
+            recommendations: generateMixedAccountRecommendations(transactions: transactions)
+        )
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func calculateBalanceTrend(transactions: [Transaction]) -> ContextTrendDirection {
+        let recentTransactions = transactions.sorted { $0.formattedDate > $1.formattedDate }.prefix(10)
+        let olderTransactions = transactions.sorted { $0.formattedDate < $1.formattedDate }.prefix(10)
+        
+        let recentAverage = recentTransactions.reduce(0) { $0 + $1.amount } / max(1, Double(recentTransactions.count))
+        let olderAverage = olderTransactions.reduce(0) { $0 + $1.amount } / max(1, Double(olderTransactions.count))
+        
+        if recentAverage > olderAverage * 1.1 { return .positive }
+        if recentAverage < olderAverage * 0.9 { return .negative }
+        return .neutral
+    }
+    
+    private func calculateUtilizationTrend(expenses: [Transaction]) -> Double {
+        guard !expenses.isEmpty else { return 0 }
+        
+        let highSpendingTransactions = expenses.filter { abs($0.amount) > 100 }.count
+        
+        return Double(highSpendingTransactions) / Double(expenses.count)
+    }
+    
+    // MARK: - Insight Generators
+    
+    private func generateCreditCardInsights(totalSpent: Double, totalPayments: Double, averageTransaction: Double, transactionCount: Int) -> [String] {
+        var insights: [String] = []
+        
+        if totalSpent > totalPayments {
+            insights.append("💳 Your spending exceeds payments - consider paying down the balance")
+        }
+        
+        if averageTransaction > 200 {
+            insights.append("🛍️ High average transaction amount - review large purchases")
+        }
+        
+        if transactionCount > 50 {
+            insights.append("📊 High transaction volume - frequent small purchases detected")
+        }
+        
+        return insights
+    }
+    
+    private func generateCheckingInsights(netCashFlow: Double, savingsRate: Double, transactionCount: Int) -> [String] {
+        var insights: [String] = []
+        
+        if savingsRate > 0.2 {
+            insights.append("💰 Excellent savings rate - you're building wealth effectively")
+        } else if savingsRate > 0 {
+            insights.append("📈 Positive cash flow - consider increasing your savings rate")
+        } else {
+            insights.append("⚠️ Spending exceeds income - review your budget")
+        }
+        
+        return insights
+    }
+    
+    private func generateInvestmentInsights(contributions: Double, dividends: Double, withdrawals: Double) -> [String] {
+        var insights: [String] = []
+        
+        if dividends > 0 {
+            insights.append("📈 Generating passive income through dividends")
+        }
+        
+        if contributions > withdrawals {
+            insights.append("🎯 Net positive investment - building long-term wealth")
+        }
+        
+        return insights
+    }
+    
+    private func generateLoanInsights(payments: [Transaction], totalPayments: Double) -> [String] {
+        var insights: [String] = []
+        
+        if payments.count > 1 {
+            insights.append("✅ Consistent payment history")
+        }
+        
+        if totalPayments > 1000 {
+            insights.append("💪 Significant progress on loan repayment")
+        }
+        
+        return insights
+    }
+    
+    private func generateMixedAccountInsights(netWorth: Double, accountCount: Int) -> [String] {
+        var insights: [String] = []
+        
+        if accountCount > 3 {
+            insights.append("🏦 Well-diversified account portfolio")
+        }
+        
+        if netWorth > 0 {
+            insights.append("📊 Positive overall financial position")
+        }
+        
+        return insights
+    }
+    
+    // MARK: - Recommendation Generators
+    
+    private func generateCreditCardRecommendations(balance: Double, utilizationTrend: Double, paymentHistory: [Transaction]) -> [String] {
+        var recommendations: [String] = []
+        
+        if balance > 1000 {
+            recommendations.append("Consider making additional payments to reduce interest charges")
+        }
+        
+        if utilizationTrend > 0.5 {
+            recommendations.append("Monitor spending patterns - utilization is trending high")
+        }
+        
+        return recommendations
+    }
+    
+    private func generateCheckingRecommendations(savingsRate: Double, netCashFlow: Double, expenses: [Transaction]) -> [String] {
+        var recommendations: [String] = []
+        
+        if savingsRate < 0.1 {
+            recommendations.append("Try to save at least 10% of your income")
+        }
+        
+        if netCashFlow < 0 {
+            recommendations.append("Review expenses to improve cash flow")
+        }
+        
+        return recommendations
+    }
+    
+    private func generateInvestmentRecommendations(contributionPattern: [Transaction], dividendIncome: Double) -> [String] {
+        var recommendations: [String] = []
+        
+        if contributionPattern.isEmpty {
+            recommendations.append("Consider regular investment contributions")
+        }
+        
+        if dividendIncome == 0 {
+            recommendations.append("Explore dividend-paying investments for passive income")
+        }
+        
+        return recommendations
+    }
+    
+    private func generateLoanRecommendations(paymentPattern: [Transaction]) -> [String] {
+        var recommendations: [String] = []
+        
+        if paymentPattern.count < 2 {
+            recommendations.append("Establish consistent payment schedule")
+        }
+        
+        return recommendations
+    }
+    
+    private func generateMixedAccountRecommendations(transactions: [Transaction]) -> [String] {
+        return ["Review individual account performance for optimization opportunities"]
+    }
+}
+
+// MARK: - Context-Aware Models
+
+struct ContextAwareFinancialSummary {
+    let accountType: AccountType
+    let primaryMetrics: [ContextMetric]
+    let secondaryMetrics: [ContextMetric]
+    let insights: [String]
+    let recommendations: [String]
+}
+
+struct ContextMetric {
+    let title: String
+    let value: Double
+    let format: MetricFormat
+    let trend: ContextTrendDirection
+    let description: String
+    
+    var formattedValue: String {
+        switch format {
+        case .currency:
+            return value.formatAsCurrency()
+        case .percentage:
+            return String(format: "%.1f%%", value * 100)
+        case .number:
+            return String(format: "%.0f", value)
+        }
+    }
+    
+    var icon: String {
+        switch format {
+        case .currency:
+            return value >= 0 ? "dollarsign.circle.fill" : "minus.circle.fill"
+        case .percentage:
+            return "percent"
+        case .number:
+            return "number.circle.fill"
+        }
+    }
+    
+    var color: Color {
+        switch trend {
+        case .positive:
+            return .green
+        case .negative:
+            return .red
+        case .neutral:
+            return .blue
+        }
+    }
+}
+
+enum AccountType {
+    case creditCard
+    case checking
+    case savings
+    case investment
+    case loan
+    case mixed
+    
+    var displayName: String {
+        switch self {
+        case .creditCard: return "Credit Card"
+        case .checking: return "Checking"
+        case .savings: return "Savings"
+        case .investment: return "Investment"
+        case .loan: return "Loan"
+        case .mixed: return "All Accounts"
+        }
+    }
+}
+
+enum MetricFormat {
+    case currency
+    case percentage
+    case number
+}
+
+enum ContextTrendDirection {
+    case positive
+    case negative
+    case neutral
+    
+    var icon: String {
+        switch self {
+        case .positive:
+            return "arrow.up.circle.fill"
+        case .negative:
+            return "arrow.down.circle.fill"
+        case .neutral:
+            return "minus.circle.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .positive:
+            return .green
+        case .negative:
+            return .red
+        case .neutral:
+            return .gray
+        }
     }
 }
 

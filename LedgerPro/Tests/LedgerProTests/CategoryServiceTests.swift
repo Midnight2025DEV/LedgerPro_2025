@@ -65,8 +65,8 @@ final class CategoryServiceTests: XCTestCase {
             ("STARBUCKS COFFEE", "Food & Dining"),
             ("AMAZON.COM", "Shopping"),
             ("NETFLIX.COM", "Entertainment"),
-            ("WHOLE FOODS", "Other"), // Actually categorized as Other in the system
-            ("CVS PHARMACY", "Shopping") // Might be categorized as Shopping instead of Healthcare
+            ("WHOLE FOODS", "Groceries"), // Actually categorized as Groceries in the system
+            ("CVS PHARMACY", "Healthcare") // Actually categorized as Healthcare in the system
         ]
         
         for (description, expectedCategory) in testCases {

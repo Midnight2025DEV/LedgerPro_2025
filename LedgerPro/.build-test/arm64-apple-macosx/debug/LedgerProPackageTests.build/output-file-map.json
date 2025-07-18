@@ -1,0 +1,11 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/debug/LedgerProPackageTests.build/master.swiftdeps"
+  },
+  "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/debug/LedgerProPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/debug/LedgerProPackageTests.build/runner.d",
+    "object": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/debug/LedgerProPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/debug/LedgerProPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/debug/LedgerProPackageTests.build/runner.swiftdeps"
+  }
+}

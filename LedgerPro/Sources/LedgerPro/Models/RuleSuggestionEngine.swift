@@ -59,13 +59,13 @@ class RuleSuggestionEngine: ObservableObject {
         let startTime = CFAbsoluteTimeGetCurrent()
         defer {
             let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-            print("📊 [Performance] Generated suggestions for \(transactions.count) transactions in \(String(format: "%.3f", timeElapsed))s")
+            AppLogger.shared.info("Generated suggestions for \(transactions.count) transactions in \(String(format: "%.3f", timeElapsed))s", category: "Rules")
         }
         
         // Process in batches for large datasets to improve memory usage
         let batchSize = 500
         if transactions.count > batchSize {
-            print("🔄 [Performance] Processing \(transactions.count) transactions in batches of \(batchSize)")
+            AppLogger.shared.info("Processing \(transactions.count) transactions in batches of \(batchSize)", category: "Rules")
             return generateSuggestionsInBatches(transactions: transactions, batchSize: batchSize)
         }
         
@@ -124,7 +124,7 @@ class RuleSuggestionEngine: ObservableObject {
         defer {
             let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
             if timeElapsed > 0.1 { // Log if grouping takes more than 100ms
-                print("🔍 [Performance] Merchant grouping took \(String(format: "%.3f", timeElapsed))s for \(transactions.count) transactions")
+                AppLogger.shared.debug("Merchant grouping took \(String(format: "%.3f", timeElapsed))s for \(transactions.count) transactions", category: "Rules")
             }
         }
         
@@ -168,7 +168,7 @@ class RuleSuggestionEngine: ObservableObject {
         defer {
             let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
             if timeElapsed > 0.01 { // Log if extraction takes more than 10ms
-                print("🔍 [Performance] Merchant extraction took \(String(format: "%.3f", timeElapsed))s for: \(description.prefix(50))")
+                AppLogger.shared.debug("Merchant extraction took \(String(format: "%.3f", timeElapsed))s for: \(description.prefix(50))", category: "Rules")
             }
         }
         

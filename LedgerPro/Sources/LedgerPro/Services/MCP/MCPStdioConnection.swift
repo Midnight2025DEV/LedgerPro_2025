@@ -14,7 +14,7 @@ class MCPStdioConnection: ObservableObject {
     private var outputPipe: Pipe?
     private var errorPipe: Pipe?
     
-    private let logger = Logger(subsystem: "com.ledgerpro.mcp", category: "MCPStdioConnection")
+    private let logger = AppLogger.shared
     private var responseHandlers: [String: CheckedContinuation<MCPResponse, Error>] = [:]
     private let responseQueue = DispatchQueue(label: "mcp.response", qos: .userInitiated)
     
@@ -79,7 +79,7 @@ class MCPStdioConnection: ObservableObject {
             if let error = String(data: data, encoding: .utf8) {
                 Task { [weak self] in
                     guard let self = self else { return }
-                    await self.logger.error("⚠️ Server error: \(error)")
+                    self.logger.error("⚠️ Server error: \(error)")
                 }
             }
         }
@@ -135,37 +135,62 @@ class MCPStdioConnection: ObservableObject {
     }
     
     func sendRequest(_ request: MCPRequest) async throws -> MCPResponse {
+        return try await sendRequestWithTimeout(request, timeout: 120.0)
+    }
+    
+    private func sendRequestWithTimeout(_ request: MCPRequest, timeout: TimeInterval) async throws -> MCPResponse {
         guard isConnected else {
             throw MCPConnectionError.notConnected
         }
         
-        return try await withCheckedThrowingContinuation { continuation in
-            responseQueue.sync {
-                responseHandlers[request.id] = continuation
+        return try await withThrowingTaskGroup(of: MCPResponse.self) { group in
+            // Add the main request task
+            group.addTask { [weak self] in
+                guard let self = self else { throw MCPConnectionError.notConnected }
+                
+                return try await withCheckedThrowingContinuation { continuation in
+                    Task { @MainActor in
+                        self.responseHandlers[request.id] = continuation
+                        
+                        do {
+                            let encoder = JSONEncoder()
+                            var requestData = try encoder.encode(request)
+                            requestData.append(try "\n".safeUTF8Data())
+                            
+                            self.inputPipe?.fileHandleForWriting.write(requestData)
+                            
+                            self.logger.debug("📤 Sent request: \(request.method.rawValue) (id: \(request.id))")
+                            
+                        } catch {
+                            self.logger.error("❌ Failed to encode/send MCP request: \(error.localizedDescription)")
+                            self.responseHandlers.removeValue(forKey: request.id)
+                            
+                            // Provide more specific error for JSON encoding issues
+                            if error is EncodingError {
+                                continuation.resume(throwing: MCPConnectionError.invalidResponse)
+                            } else {
+                                continuation.resume(throwing: error)
+                            }
+                        }
+                    }
+                }
             }
             
-            do {
-                let encoder = JSONEncoder()
-                var requestData = try encoder.encode(request)
-                requestData.append(try "\n".safeUTF8Data())
-                
-                inputPipe?.fileHandleForWriting.write(requestData)
-                
-                logger.debug("📤 Sent request: \(request.method.rawValue) (id: \(request.id))")
-                
-            } catch {
-                logger.error("❌ Failed to encode/send MCP request: \(error.localizedDescription)")
-                _ = responseQueue.sync {
-                    responseHandlers.removeValue(forKey: request.id)
-                }
-                
-                // Provide more specific error for JSON encoding issues
-                if error is EncodingError {
-                    continuation.resume(throwing: MCPConnectionError.invalidResponse)
-                } else {
-                    continuation.resume(throwing: error)
-                }
+            // Add timeout task
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                throw MCPConnectionError.timeout
             }
+            
+            // Return the first completed task (either response or timeout)
+            guard let result = try await group.next() else {
+                throw MCPConnectionError.timeout
+            }
+            
+            // Cancel remaining tasks
+            group.cancelAll()
+            
+            return result
         }
     }
     
@@ -238,7 +263,7 @@ class MCPStdioConnection: ObservableObject {
         logger.debug("   Server response: \(String(describing: response))")
     }
     
-    private func handleOutputData(_ data: Data) {
+    private func handleOutputData(_ data: Data) async {
         // APPEND new data to buffer
         outputBuffer.append(data)
         
@@ -270,6 +295,20 @@ class MCPStdioConnection: ObservableObject {
             } catch {
                 // This might be a partial message, keep accumulating
                 logger.warning("⚠️ Received partial or invalid JSON, buffering: \(messageData.count) bytes")
+                // Debug: Check if buffer ends with newline when we have a large buffer
+                if outputBuffer.count > 100000 {
+                    let last10Bytes = outputBuffer.suffix(10)
+                    let last10String = String(data: last10Bytes, encoding: .utf8) ?? "non-utf8"
+                    let bufferSize = outputBuffer.count
+                    logger.warning("🔍 Large buffer (\(bufferSize) bytes) last 10 chars: \(last10String.debugDescription)")
+                    // Check if we have a complete JSON object but missing newline
+                    if (try? JSONSerialization.jsonObject(with: outputBuffer, options: [])) != nil {
+                        logger.warning("⚡ Buffer contains valid JSON but no newline! Adding newline...")
+                        outputBuffer.append(Self.newlineData)
+                        continue  // Try processing again with the added newline
+                    }
+                }                // Give more time for large responses to complete
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
                 // Put the data back at the beginning of the buffer
                 outputBuffer.insert(contentsOf: messageData, at: 0)
                 outputBuffer.insert(contentsOf: Self.newlineData, at: messageData.count)

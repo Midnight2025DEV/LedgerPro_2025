@@ -186,6 +186,11 @@ struct SettingsView: View {
                     }
                 } else {
                     Button("Export Financial Data") {
+                        // Track export action
+                        Analytics.shared.trackExportPerformed(
+                            format: exportFormat.rawValue,
+                            transactionCount: dataManager.transactions.count
+                        )
                         exportData()
                     }
                     .buttonStyle(.borderedProminent)
@@ -195,6 +200,11 @@ struct SettingsView: View {
                     createBackup()
                 }
                 .buttonStyle(.bordered)
+            }
+            
+            // Analytics Dashboard
+            Section("Analytics") {
+                AnalyticsDashboardView()
             }
             
             // Application Info
@@ -553,6 +563,143 @@ struct ExportData: Codable {
     let accounts: [BankAccount]
     let summary: FinancialSummary
     let exportDate: String
+}
+
+// MARK: - Analytics Dashboard View
+struct AnalyticsDashboardView: View {
+    @StateObject private var analytics = Analytics.shared
+    @State private var analyticsData = AnalyticsData(events: [], timings: [])
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Usage Analytics")
+                    .fontWeight(.medium)
+                
+                Spacer()
+                
+                Button("Toggle Analytics") {
+                    analytics.setEnabled(!analytics.isEnabled)
+                }
+                .buttonStyle(.bordered)
+                .foregroundColor(analytics.isEnabled ? .red : .green)
+            }
+            
+            if analytics.isEnabled {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    AnalyticsMetricCard(
+                        title: "Imports This Month",
+                        value: "\(analyticsData.importsThisMonth)",
+                        icon: "doc.badge.plus",
+                        color: .blue
+                    )
+                    
+                    AnalyticsMetricCard(
+                        title: "Avg. Categorization",
+                        value: "\(Int(analyticsData.averageCategorizationRate * 100))%",
+                        icon: "folder.badge.gearshape",
+                        color: .green
+                    )
+                    
+                    AnalyticsMetricCard(
+                        title: "Avg. Import Time",
+                        value: String(format: "%.1fs", analyticsData.averageImportTime),
+                        icon: "clock",
+                        color: .orange
+                    )
+                    
+                    AnalyticsMetricCard(
+                        title: "Top Categories",
+                        value: "\(analyticsData.mostUsedCategories.count)",
+                        icon: "chart.bar",
+                        color: .purple
+                    )
+                }
+                
+                if !analyticsData.mostUsedCategories.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Most Used Categories")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                        
+                        ForEach(Array(analyticsData.mostUsedCategories.prefix(3).enumerated()), id: \.offset) { index, item in
+                            HStack {
+                                Text("\(index + 1).")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 20, alignment: .leading)
+                                
+                                Text(item.category)
+                                    .font(.caption)
+                                
+                                Spacer()
+                                
+                                Text("\(item.count)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.top, 8)
+                }
+            } else {
+                Text("Analytics disabled for privacy")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .italic()
+            }
+        }
+        .onAppear {
+            refreshAnalyticsData()
+        }
+        .onChange(of: analytics.isEnabled) { _, _ in
+            refreshAnalyticsData()
+        }
+    }
+    
+    private func refreshAnalyticsData() {
+        if analytics.isEnabled {
+            analyticsData = analytics.getAnalyticsData()
+        } else {
+            analyticsData = AnalyticsData(events: [], timings: [])
+        }
+    }
+}
+
+struct AnalyticsMetricCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.caption)
+                
+                Spacer()
+                
+                Text(title)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.trailing)
+            }
+            
+            Text(value)
+                .font(.headline)
+                .fontWeight(.semibold)
+        }
+        .padding(8)
+        .background(Color.gray.opacity(0.05))
+        .cornerRadius(6)
+    }
 }
 
 #Preview {

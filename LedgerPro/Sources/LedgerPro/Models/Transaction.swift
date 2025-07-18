@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct Transaction: Codable, Identifiable, Hashable {
     let id: String
@@ -137,6 +138,13 @@ struct Transaction: Codable, Identifiable, Hashable {
         return amount > 0
     }
     
+    var isPayment: Bool {
+        return amount > 0 && (description.lowercased().contains("payment") || 
+                             description.lowercased().contains("autopay") ||
+                             description.lowercased().contains("online pmt") ||
+                             description.lowercased().contains("transfer"))
+    }
+    
     var displayAmount: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -220,6 +228,16 @@ struct BankAccount: Codable, Identifiable, Hashable {
             case .credit: return "creditcard"
             case .investment: return "chart.line.uptrend.xyaxis"
             case .loan: return "house"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .checking: return .blue
+            case .savings: return .green
+            case .credit: return .orange
+            case .investment: return .purple
+            case .loan: return .red
             }
         }
     }

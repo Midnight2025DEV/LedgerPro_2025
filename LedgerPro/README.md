@@ -51,9 +51,24 @@ swift run
 ### 🔧 Backend Processing
 - **PDF Analysis** - Advanced table extraction using Camelot
 - **Multi-Bank Support** - Capital One, Navy Federal, Chase, Wells Fargo, etc.
-- **AI Categorization** - Smart transaction categorization
+- **AI Categorization** - Smart transaction categorization with 90+ built-in rules
+- **Foreign Currency Detection** - Automatic detection and conversion (Capital One)
+- **Enhanced CSV Processing** - Improved parsing with forex support
 - **Duplicate Detection** - Prevents duplicate transactions
 - **Security** - File validation and secure processing
+
+### 🎯 New Categorization Features
+- **90+ Built-in Rules** - Comprehensive categorization for common merchants
+- **Smart Learning** - System learns from your corrections
+- **Custom Rules** - Create your own categorization rules
+- **High Accuracy** - 85%+ auto-categorization rate
+- **Categories Include**:
+  - AI Services (Claude, OpenAI, Anthropic)
+  - Food & Coffee (Starbucks, Panera, Rifle Coffee)
+  - Transportation (Uber, Lyft, Gas stations, Parking)
+  - Entertainment (Netflix, YouTube, Crunchyroll)
+  - Shopping (Amazon, Walmart, Target)
+  - And many more...
 
 ### 🤖 MCP Integration (NEW!)
 - **Local AI Processing** - Process PDFs entirely on-device
