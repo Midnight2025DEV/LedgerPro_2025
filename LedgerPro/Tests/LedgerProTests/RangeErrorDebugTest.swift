@@ -11,6 +11,9 @@ final class RangeErrorDebugTest: XCTestCase {
         financialManager = FinancialDataManager()
         importService = ImportCategorizationService()
         financialManager.clearAllData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
     
     override func tearDown() async throws {
@@ -32,16 +35,23 @@ final class RangeErrorDebugTest: XCTestCase {
         // This should not crash
         financialManager.addTransactions([transaction], jobId: "debug", filename: "debug.csv")
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 1)
     }
     
-    func testEmptyTransactionsArray() {
+    func testEmptyTransactionsArray() async {
         // Test adding empty array
         financialManager.addTransactions([], jobId: "empty", filename: "empty.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 0)
     }
     
-    func testTransactionWithEmptyDescription() {
+    func testTransactionWithEmptyDescription() async {
         // Test transaction with empty description (might cause prefix issues)
         let transaction = Transaction(
             id: "empty_desc",
@@ -52,10 +62,14 @@ final class RangeErrorDebugTest: XCTestCase {
         )
         
         financialManager.addTransactions([transaction], jobId: "empty_desc", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 1)
     }
     
-    func testClearAllData() {
+    func testClearAllData() async {
         // Add some data first
         let transaction = Transaction(
             id: "test",
@@ -66,21 +80,33 @@ final class RangeErrorDebugTest: XCTestCase {
         )
         
         financialManager.addTransactions([transaction], jobId: "test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 1)
         
         // Now clear it
         financialManager.clearAllData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 0)
     }
     
-    func testLoadDemoData() {
+    func testLoadDemoData() async {
         // Test loading demo data
         financialManager.loadDemoData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertGreaterThan(financialManager.transactions.count, 0)
     }
     
     // Test gradually increasing size to find the threshold
-    func testTwoTransactions() {
+    func testTwoTransactions() async {
         let transactions = [
             Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized"),
             Transaction(id: "test2", date: "2024-01-02", description: "STARBUCKS", amount: -5.75, category: "Uncategorized")
@@ -90,10 +116,14 @@ final class RangeErrorDebugTest: XCTestCase {
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "two-test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 2)
     }
     
-    func testThreeTransactions() {
+    func testThreeTransactions() async {
         let transactions = [
             Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized"),
             Transaction(id: "test2", date: "2024-01-02", description: "STARBUCKS", amount: -5.75, category: "Uncategorized"),
@@ -104,10 +134,14 @@ final class RangeErrorDebugTest: XCTestCase {
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "three-test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 3)
     }
     
-    func testFourTransactionsAllNegative() {
+    func testFourTransactionsAllNegative() async {
         // Test 4 transactions all negative amounts
         let transactions = [
             Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized"),
@@ -120,10 +154,14 @@ final class RangeErrorDebugTest: XCTestCase {
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "four-negative-test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 4)
     }
     
-    func testThreeTransactionsWithPositive() {
+    func testThreeTransactionsWithPositive() async {
         // Test 3 transactions with one positive
         let transactions = [
             Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized"),
@@ -135,11 +173,15 @@ final class RangeErrorDebugTest: XCTestCase {
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "three-positive-test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         XCTAssertEqual(financialManager.transactions.count, 3)
     }
     
     // Test specifically what might be different about categorized transactions
-    func testCategorizedTransactionStructure() {
+    func testCategorizedTransactionStructure() async {
         let transaction = Transaction(id: "test", date: "2024-01-01", description: "STARBUCKS", amount: -5.50, category: "Uncategorized")
         
         let categorized = importService.categorizeTransactions([transaction])
@@ -164,6 +206,9 @@ final class RangeErrorDebugTest: XCTestCase {
         // Now try adding them
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         financialManager.addTransactions(allTransactions, jobId: "structure-test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         XCTAssertEqual(financialManager.transactions.count, 1)
     }

@@ -281,6 +281,9 @@ final class FinancialDataManagerTests: XCTestCase {
         // When
         sut.clearAllData()
         
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Then
         XCTAssertTrue(sut.transactions.isEmpty)
         XCTAssertTrue(sut.bankAccounts.isEmpty)
@@ -489,6 +492,9 @@ final class FinancialDataManagerTests: XCTestCase {
         
         // When
         sut.loadDemoData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Then
         XCTAssertFalse(sut.transactions.isEmpty)

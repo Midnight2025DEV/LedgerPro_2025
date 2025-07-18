@@ -11,6 +11,9 @@ final class RangeErrorPinpointTest: XCTestCase {
         financialManager = FinancialDataManager()
         importService = ImportCategorizationService()
         financialManager.clearAllData()
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
     
     override func tearDown() async throws {
@@ -19,7 +22,7 @@ final class RangeErrorPinpointTest: XCTestCase {
         try await super.tearDown()
     }
     
-    func testPinpointExactCrash() {
+    func testPinpointExactCrash() async {
         // The minimal case that causes the crash
         let transactions = [
             Transaction(id: "test1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized"),
@@ -46,24 +49,32 @@ final class RangeErrorPinpointTest: XCTestCase {
         print("🔍 Step 3: Testing FinancialDataManager.addTransactions...")
         // This is where the crash should occur
         financialManager.addTransactions(allTransactions, jobId: "pinpoint-test", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         print("✅ addTransactions completed successfully")
         
         XCTAssertEqual(financialManager.transactions.count, 3)
     }
     
     // Test adding the positive transaction directly without categorization
-    func testDirectPositiveTransaction() {
+    func testDirectPositiveTransaction() async {
         let positiveTransaction = Transaction(id: "pos", date: "2024-01-01", description: "PAYCHECK", amount: 3000.00, category: "Uncategorized")
         
         print("🔍 Testing direct positive transaction...")
         financialManager.addTransactions([positiveTransaction], jobId: "direct-positive", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         print("✅ Direct positive transaction added successfully")
         
         XCTAssertEqual(financialManager.transactions.count, 1)
     }
     
     // Test with a categorized positive transaction
-    func testCategorizedPositiveTransaction() {
+    func testCategorizedPositiveTransaction() async {
         let positiveTransaction = Transaction(id: "pos", date: "2024-01-01", description: "PAYCHECK", amount: 3000.00, category: "Uncategorized")
         
         print("🔍 Step 1: Categorizing positive transaction...")
@@ -83,6 +94,10 @@ final class RangeErrorPinpointTest: XCTestCase {
         
         print("🔍 Step 3: Adding categorized positive transaction...")
         financialManager.addTransactions(allTransactions, jobId: "categorized-positive", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         print("✅ Categorized positive transaction added successfully")
         
         XCTAssertEqual(financialManager.transactions.count, 1)
