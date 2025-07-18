@@ -1,0 +1,4 @@
+module LedgerProPackageTests {
+    header "/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/.build-test/arm64-apple-macosx/release/LedgerProPackageTests.build/LedgerProPackageTests-Swift.h"
+    requires objc
+}

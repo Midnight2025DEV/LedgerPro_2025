@@ -57,6 +57,9 @@ final class CriticalWorkflowTests: XCTestCase {
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         financialManager.addTransactions(allTransactions, jobId: "complete-import", filename: "test_import.csv")
         
+        // Wait for async updates to complete
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Step 3: Verify import success
         XCTAssertEqual(financialManager.transactions.count, 3)
         XCTAssertEqual(financialManager.uploadedStatements.count, 1)
@@ -79,6 +82,9 @@ final class CriticalWorkflowTests: XCTestCase {
         ]
         
         financialManager.addTransactions(transactions, jobId: "test-learning", filename: "test.csv")
+        
+        // Wait for async updates to complete
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         let foodCategory = categoryService.categories.first { $0.name == "Food & Dining" }
         XCTAssertNotNil(foodCategory, "Food & Dining category should exist")
@@ -169,6 +175,7 @@ final class CriticalWorkflowTests: XCTestCase {
             jobId: "capital-one-import",
             filename: "capital_one.csv"
         )
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Step 3: Verify forex data preserved after import
         let savedTransactions = financialManager.transactions
@@ -210,6 +217,7 @@ final class CriticalWorkflowTests: XCTestCase {
         
         // Import all transactions (this should work now)
         financialManager.addTransactions(allTransactions, jobId: "large-import", filename: "large_dataset.csv")
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         // Step 3: Calculate summary
         let summary = financialManager.summary
@@ -243,6 +251,7 @@ final class CriticalWorkflowTests: XCTestCase {
         
         // Should handle empty description gracefully
         financialManager.addTransactions([edgeCaseTransaction], jobId: "edge-case", filename: "edge.csv")
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         XCTAssertEqual(financialManager.transactions.count, 1)
         
         // Step 2: Test with very long description (another edge case)
@@ -257,6 +266,7 @@ final class CriticalWorkflowTests: XCTestCase {
         
         // Should handle long description gracefully
         financialManager.addTransactions([longDescTransaction], jobId: "long-desc", filename: "long.csv")
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         XCTAssertEqual(financialManager.transactions.count, 2)
         
         // Step 3: Test duplicate job ID handling
@@ -270,10 +280,12 @@ final class CriticalWorkflowTests: XCTestCase {
         
         // First import should succeed
         financialManager.addTransactions([duplicateTransaction], jobId: "duplicate-test", filename: "dup1.csv")
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         XCTAssertEqual(financialManager.transactions.count, 3)
         
         // Second import with same job ID should be ignored
         financialManager.addTransactions([duplicateTransaction], jobId: "duplicate-test", filename: "dup2.csv")
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         XCTAssertEqual(financialManager.transactions.count, 3) // No change
     }
     
@@ -296,6 +308,7 @@ final class CriticalWorkflowTests: XCTestCase {
         // Step 2: Financial data management
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         financialManager.addTransactions(allTransactions, jobId: "integration-test", filename: "integration.csv")
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         XCTAssertEqual(financialManager.transactions.count, 1)
         
         // Step 3: Pattern learning integration
@@ -342,6 +355,7 @@ final class CriticalWorkflowTests: XCTestCase {
             XCTAssertEqual(allTransactions.count, 50, "Each batch should have 50 transactions")
             
             financialManager.addTransactions(allTransactions, jobId: "batch-\(batchIndex)", filename: "batch_\(batchIndex).csv")
+            try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         }
         
         let processingTime = Date().timeIntervalSince(startTime)
