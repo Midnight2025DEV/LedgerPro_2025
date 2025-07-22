@@ -13,9 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Select Xcode version
+    - name: Select Xcode version  
       run: |
-        sudo xcode-select --switch /Applications/Xcode_15.2.app/Contents/Developer
+        sudo xcode-select --switch /Applications/Xcode_15.4.app/Contents/Developer || sudo xcode-select --switch /Applications/Xcode_15.2.app/Contents/Developer
         xcodebuild -version
         swift --version
     
@@ -92,12 +92,18 @@ jobs:
     - name: Build Swift package
       run: |
         cd LedgerPro
-        swift build
+        echo "Current directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Checking Package.swift exists:"
+        ls -la Package.swift
+        swift build --verbose
     
     - name: Run Swift tests
       run: |
         cd LedgerPro
-        swift test
+        echo "Running tests from directory: $(pwd)"
+        swift test --verbose
     
     - name: Upload backend logs on failure
       if: failure()
