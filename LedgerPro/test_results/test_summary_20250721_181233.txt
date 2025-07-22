@@ -1,0 +1,11 @@
+Test Run Summary - Mon Jul 21 18:12:37 PDT 2025
+================================
+
+Test Results:
+✅ Passed:  7
+❌ Failed:  10
+
+Failed Tests:
+  • '-[LedgerProTests.APIIntegrationTests testCompleteUploadFlow]' started.
+
+Full results saved to: test_results/api_integration_tests_20250721_181233.txt

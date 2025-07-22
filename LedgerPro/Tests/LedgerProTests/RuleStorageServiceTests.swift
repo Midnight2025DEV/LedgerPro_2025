@@ -30,8 +30,8 @@ final class RuleStorageServiceTests: XCTestCase {
             ruleName: "Target Stores"
         )
         customRule.merchantContains = "TARGET"
-        customRule.amountMin = Decimal(-100)
-        customRule.amountMax = Decimal(-10)
+        customRule.amountMin = -100
+        customRule.amountMax = -10
         customRule.priority = 85
         
         // When

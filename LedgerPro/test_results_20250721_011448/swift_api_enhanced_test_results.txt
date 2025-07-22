@@ -1,0 +1,331 @@
+Building for debugging...
+[0/6] Write swift-version--58304C5D6DBC2206.txt
+error: emit-module command failed with exit code 1 (use -v to see invocation)
+[2/8] Emitting module LedgerPro
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:9:26: error: 'Logger' initializer is inaccessible due to 'private' protection level
+  7 |     static let shared = APIMonitor()
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+    |                          `- error: 'Logger' initializer is inaccessible due to 'private' protection level
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+ 11 |     private let historyLimit = 100
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Utils/Logger.swift:56:13: note: 'init()' declared here
+ 54 |     private let dateFormatter: DateFormatter
+ 55 |     
+ 56 |     private init() {
+    |             `- note: 'init()' declared here
+ 57 |         #if DEBUG
+ 58 |         self.minimumLogLevel = .debug
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:9:32: error: argument passed to call that takes no arguments
+  7 |     static let shared = APIMonitor()
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+    |                                `- error: argument passed to call that takes no arguments
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+ 11 |     private let historyLimit = 100
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:446:8: error: invalid redeclaration of 'StatCard'
+444 | }
+445 | 
+446 | struct StatCard: View {
+    |        `- error: invalid redeclaration of 'StatCard'
+447 |     let title: String
+448 |     let value: String
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:551:8: error: invalid redeclaration of 'DetailRow'
+549 | }
+550 | 
+551 | struct DetailRow: View {
+    |        `- error: invalid redeclaration of 'DetailRow'
+552 |     let label: String
+553 |     let value: String
+[3/8] Compiling LedgerPro APIMonitor.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:9:26: error: 'Logger' initializer is inaccessible due to 'private' protection level
+  7 |     static let shared = APIMonitor()
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+    |                          `- error: 'Logger' initializer is inaccessible due to 'private' protection level
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+ 11 |     private let historyLimit = 100
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Utils/Logger.swift:56:13: note: 'init()' declared here
+ 54 |     private let dateFormatter: DateFormatter
+ 55 |     
+ 56 |     private init() {
+    |             `- note: 'init()' declared here
+ 57 |         #if DEBUG
+ 58 |         self.minimumLogLevel = .debug
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:9:32: error: argument passed to call that takes no arguments
+  7 |     static let shared = APIMonitor()
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+    |                                `- error: argument passed to call that takes no arguments
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+ 11 |     private let historyLimit = 100
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:446:8: error: invalid redeclaration of 'StatCard'
+444 | }
+445 | 
+446 | struct StatCard: View {
+    |        `- error: invalid redeclaration of 'StatCard'
+447 |     let title: String
+448 |     let value: String
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:551:8: error: invalid redeclaration of 'DetailRow'
+549 | }
+550 | 
+551 | struct DetailRow: View {
+    |        `- error: invalid redeclaration of 'DetailRow'
+552 |     let label: String
+553 |     let value: String
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:92:18: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+ 90 |         
+ 91 |         queue.async(flags: .barrier) {
+ 92 |             self.requestHistory.append(record)
+    |                  `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+ 93 |             self.trimHistory()
+ 94 |         }
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:93:18: warning: call to main actor-isolated instance method 'trimHistory()' in a synchronous nonisolated context; this is an error in the Swift 6 language mode
+ 91 |         queue.async(flags: .barrier) {
+ 92 |             self.requestHistory.append(record)
+ 93 |             self.trimHistory()
+    |                  `- warning: call to main actor-isolated instance method 'trimHistory()' in a synchronous nonisolated context; this is an error in the Swift 6 language mode
+ 94 |         }
+ 95 |         
+    :
+306 |     }
+307 |     
+308 |     private func trimHistory() {
+    |                  `- note: calls to instance method 'trimHistory()' from outside of its actor context are implicitly asynchronous
+309 |         if requestHistory.count > historyLimit {
+310 |             requestHistory.removeFirst(requestHistory.count - historyLimit)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:120:33: warning: main actor-isolated property 'requestHistory' can not be referenced from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: property declared here
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+118 |         
+119 |         queue.async(flags: .barrier) {
+120 |             if let index = self.requestHistory.firstIndex(where: { $0.id == requestId }) {
+    |                                 `- warning: main actor-isolated property 'requestHistory' can not be referenced from a Sendable closure; this is an error in the Swift 6 language mode
+121 |                 self.requestHistory[index].responseStatus = httpResponse?.statusCode
+122 |                 self.requestHistory[index].responseTime = responseTime
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:121:22: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+119 |         queue.async(flags: .barrier) {
+120 |             if let index = self.requestHistory.firstIndex(where: { $0.id == requestId }) {
+121 |                 self.requestHistory[index].responseStatus = httpResponse?.statusCode
+    |                      `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+122 |                 self.requestHistory[index].responseTime = responseTime
+123 |                 self.requestHistory[index].responseSize = data?.count
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:122:22: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+120 |             if let index = self.requestHistory.firstIndex(where: { $0.id == requestId }) {
+121 |                 self.requestHistory[index].responseStatus = httpResponse?.statusCode
+122 |                 self.requestHistory[index].responseTime = responseTime
+    |                      `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+123 |                 self.requestHistory[index].responseSize = data?.count
+124 |                 self.requestHistory[index].error = error?.localizedDescription
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:123:22: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+121 |                 self.requestHistory[index].responseStatus = httpResponse?.statusCode
+122 |                 self.requestHistory[index].responseTime = responseTime
+123 |                 self.requestHistory[index].responseSize = data?.count
+    |                      `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+124 |                 self.requestHistory[index].error = error?.localizedDescription
+125 |                 self.requestHistory[index].responseHeaders = httpResponse?.allHeaderFields as? [String: String]
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:124:22: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+122 |                 self.requestHistory[index].responseTime = responseTime
+123 |                 self.requestHistory[index].responseSize = data?.count
+124 |                 self.requestHistory[index].error = error?.localizedDescription
+    |                      `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+125 |                 self.requestHistory[index].responseHeaders = httpResponse?.allHeaderFields as? [String: String]
+126 |             }
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:125:22: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+123 |                 self.requestHistory[index].responseSize = data?.count
+124 |                 self.requestHistory[index].error = error?.localizedDescription
+125 |                 self.requestHistory[index].responseHeaders = httpResponse?.allHeaderFields as? [String: String]
+    |                      `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+126 |             }
+127 |         }
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:292:18: warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+  8 |     
+  9 |     private let logger = Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+ 10 |     private var requestHistory: [APIRequestRecord] = []
+    |                 `- note: mutation of this property is only permitted within the actor
+ 11 |     private let historyLimit = 100
+ 12 |     private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    :
+290 |     func clearHistory() {
+291 |         queue.async(flags: .barrier) {
+292 |             self.requestHistory.removeAll()
+    |                  `- warning: main actor-isolated property 'requestHistory' can not be mutated from a Sendable closure; this is an error in the Swift 6 language mode
+293 |         }
+294 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:319:23: warning: expression is 'async' but is not marked with 'await'; this is an error in the Swift 6 language mode
+317 | extension URLSession {
+318 |     func monitoredDataTask(with request: URLRequest) async throws -> (Data, URLResponse) {
+319 |         let monitor = APIMonitor.shared
+    |                       |- warning: expression is 'async' but is not marked with 'await'; this is an error in the Swift 6 language mode
+    |                       `- note: property access is 'async'
+320 |         let requestId = monitor.logRequest(request)
+321 |         let startTime = Date()
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:320:25: error: expression is 'async' but is not marked with 'await'
+318 |     func monitoredDataTask(with request: URLRequest) async throws -> (Data, URLResponse) {
+319 |         let monitor = APIMonitor.shared
+320 |         let requestId = monitor.logRequest(request)
+    |                         |- error: expression is 'async' but is not marked with 'await'
+    |                         `- note: calls to instance method 'logRequest' from outside of its actor context are implicitly asynchronous
+321 |         let startTime = Date()
+322 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:325:13: error: expression is 'async' but is not marked with 'await'
+323 |         do {
+324 |             let (data, response) = try await self.data(for: request)
+325 |             monitor.logResponse(response, data: data, error: nil, 
+    |             |- error: expression is 'async' but is not marked with 'await'
+    |             `- note: calls to instance method 'logResponse(_:data:error:requestId:startTime:)' from outside of its actor context are implicitly asynchronous
+326 |                               requestId: requestId, startTime: startTime)
+327 |             return (data, response)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:329:13: error: expression is 'async' but is not marked with 'await'
+327 |             return (data, response)
+328 |         } catch {
+329 |             monitor.logResponse(nil, data: nil, error: error, 
+    |             |- error: expression is 'async' but is not marked with 'await'
+    |             `- note: calls to instance method 'logResponse(_:data:error:requestId:startTime:)' from outside of its actor context are implicitly asynchronous
+330 |                               requestId: requestId, startTime: startTime)
+331 |             throw error
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:336:23: warning: expression is 'async' but is not marked with 'await'; this is an error in the Swift 6 language mode
+334 |     
+335 |     func monitoredData(for request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (Data, URLResponse) {
+336 |         let monitor = APIMonitor.shared
+    |                       |- warning: expression is 'async' but is not marked with 'await'; this is an error in the Swift 6 language mode
+    |                       `- note: property access is 'async'
+337 |         let requestId = monitor.logRequest(request)
+338 |         let startTime = Date()
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:337:25: error: expression is 'async' but is not marked with 'await'
+335 |     func monitoredData(for request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (Data, URLResponse) {
+336 |         let monitor = APIMonitor.shared
+337 |         let requestId = monitor.logRequest(request)
+    |                         |- error: expression is 'async' but is not marked with 'await'
+    |                         `- note: calls to instance method 'logRequest' from outside of its actor context are implicitly asynchronous
+338 |         let startTime = Date()
+339 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:342:13: error: expression is 'async' but is not marked with 'await'
+340 |         do {
+341 |             let (data, response) = try await self.data(for: request, delegate: delegate)
+342 |             monitor.logResponse(response, data: data, error: nil, 
+    |             |- error: expression is 'async' but is not marked with 'await'
+    |             `- note: calls to instance method 'logResponse(_:data:error:requestId:startTime:)' from outside of its actor context are implicitly asynchronous
+343 |                               requestId: requestId, startTime: startTime)
+344 |             return (data, response)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:346:13: error: expression is 'async' but is not marked with 'await'
+344 |             return (data, response)
+345 |         } catch {
+346 |             monitor.logResponse(nil, data: nil, error: error, 
+    |             |- error: expression is 'async' but is not marked with 'await'
+    |             `- note: calls to instance method 'logResponse(_:data:error:requestId:startTime:)' from outside of its actor context are implicitly asynchronous
+347 |                               requestId: requestId, startTime: startTime)
+348 |             throw error
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:371:33: error: missing arguments for parameters 'change', 'color', 'icon' in call
+369 |                     
+370 |                     HStack {
+371 |                         StatCard(title: "Total", value: "\(stats.totalRequests)")
+    |                                 `- error: missing arguments for parameters 'change', 'color', 'icon' in call
+372 |                         StatCard(title: "Success", value: String(format: "%.1f%%", stats.successRate * 100))
+373 |                         StatCard(title: "Avg Time", value: stats.formattedAverageTime)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/StatCard.swift:11:5: note: 'init(title:value:change:subtitle:color:icon:)' declared here
+ 9 |     let icon: String
+10 |     
+11 |     init(title: String, value: String, change: String, subtitle: String? = nil, color: Color, icon: String) {
+   |     `- note: 'init(title:value:change:subtitle:color:icon:)' declared here
+12 |         self.title = title
+13 |         self.value = value
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:476:42: error: extra argument 'label' in call
+474 |                     // Basic Info
+475 |                     Section("Request Info") {
+476 |                         DetailRow(label: "Method", value: request.method)
+    |                                          `- error: extra argument 'label' in call
+477 |                         DetailRow(label: "URL", value: request.url)
+478 |                         DetailRow(label: "Timestamp", value: request.timestamp.formatted())
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Debug/APIMonitor.swift:476:34: error: missing arguments for parameters 'icon', 'title' in call
+474 |                     // Basic Info
+475 |                     Section("Request Info") {
+476 |                         DetailRow(label: "Method", value: request.method)
+    |                                  `- error: missing arguments for parameters 'icon', 'title' in call
+477 |                         DetailRow(label: "URL", value: request.url)
+478 |                         DetailRow(label: "Timestamp", value: request.timestamp.formatted())
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Views/Components/TransactionRowEnhancements.swift:218:8: note: 'init(icon:title:value:)' declared here
+216 | // MARK: - Detail Row
+217 | 
+218 | struct DetailRow: View {
+    |        `- note: 'init(icon:title:value:)' declared here
+219 |     let icon: String
+220 |     let title: String
+error: fatalError

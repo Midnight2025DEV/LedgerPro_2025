@@ -78,15 +78,14 @@ final class PatternLearningService: ObservableObject {
             return
         }
         
-        let rule = CategoryRule(
+        var rule = CategoryRule(
             categoryId: category.id,
-            ruleName: "Learned: \(pattern.pattern)",
-            priority: 80 // Medium-high priority for learned rules
-        ).applying {
-            $0.merchantContains = pattern.pattern
-            $0.confidence = pattern.confidence
-            $0.isActive = true
-        }
+            ruleName: "Learned: \(pattern.pattern)"
+        )
+        rule.priority = 80 // Medium-high priority for learned rules
+        rule.merchantContains = pattern.pattern
+        rule.confidence = pattern.confidence
+        rule.isActive = true
         
         // Add to rule storage
         RuleStorageService.shared.saveRule(rule)
@@ -201,15 +200,15 @@ final class PatternLearningService: ObservableObject {
                     return nil
                 }
                 
-                return CategoryRule(
+                var rule = CategoryRule(
                     categoryId: category.id,
-                    ruleName: "Suggested: \(pattern.pattern)",
-                    priority: 75
-                ).applying {
-                    $0.merchantContains = pattern.pattern
-                    $0.confidence = pattern.confidence
-                    $0.isActive = false // Suggested rules are inactive until accepted
-                }
+                    ruleName: "Suggested: \(pattern.pattern)"
+                )
+                rule.priority = 75
+                rule.merchantContains = pattern.pattern
+                rule.confidence = pattern.confidence
+                rule.isActive = false // Suggested rules are inactive until accepted
+                return rule
             }
             .sorted { $0.confidence > $1.confidence }
     }

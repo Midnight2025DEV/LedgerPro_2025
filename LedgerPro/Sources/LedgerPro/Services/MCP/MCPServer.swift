@@ -38,12 +38,26 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
     private let baseRetryDelay: TimeInterval = 1.0
     private var connectionStartTime: Date?
     
-    enum ConnectionState {
+    enum ConnectionState: Equatable {
         case disconnected
         case connecting
         case connected
         case reconnecting
         case error(MCPRPCError)
+        
+        static func == (lhs: ConnectionState, rhs: ConnectionState) -> Bool {
+            switch (lhs, rhs) {
+            case (.disconnected, .disconnected),
+                 (.connecting, .connecting),
+                 (.connected, .connected),
+                 (.reconnecting, .reconnecting):
+                return true
+            case (.error(let lhsError), .error(let rhsError)):
+                return lhsError.code == rhsError.code && lhsError.message == rhsError.message
+            default:
+                return false
+            }
+        }
     }
     
     struct ServerMetrics {

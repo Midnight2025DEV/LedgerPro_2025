@@ -498,7 +498,7 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
             "summary": {
                 "total_income": total_income,
                 "total_expenses": total_expenses,
-                "net_amount": total_income + total_expenses,
+                "net_amount": total_income - total_expenses,
                 "transaction_count": len(transactions),
             },
         }
@@ -587,7 +587,12 @@ async def get_transactions(job_id: str):
             detail=f"Processing still in progress: {job['status']}",
         )
 
-    results = job.get("results", {})
+    results = job.get("results")
+    if results is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Processing results not available",
+        )
 
     return {
         "job_id": job_id,

@@ -3,20 +3,41 @@ import Foundation
 @MainActor
 class ImportCategorizationService {
     private let categoryService = CategoryService.shared
-    private let confidenceThreshold = 0.7 // Only auto-apply if confidence > 70%
+    private let confidenceThreshold = 0.5 // Lowered for better categorization
     
-    func categorizeTransactions(_ transactions: [Transaction]) -> ImportResult {
+    func categorizeTransactions(_ transactions: [Transaction]) async -> ImportResult {
+        AppLogger.shared.info("🔄 ImportCategorizationService: Starting categorization of \(transactions.count) transactions")
+        
+        // Ensure categories are loaded
+        if categoryService.categories.isEmpty {
+            AppLogger.shared.warning("⚠️ No categories loaded! Force loading categories...")
+            await categoryService.forceReinitializeCategories()
+            
+            // Wait a moment for categories to fully load
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        }
+        
+        AppLogger.shared.info("📊 Categories available: \(categoryService.categories.count)")
+        
         var categorized: [(Transaction, Category, Double)] = []
         var uncategorized: [Transaction] = []
         var highConfidenceCount = 0
         
-        for transaction in transactions {
+        for (index, transaction) in transactions.enumerated() {
+            // Log first few transactions for debugging
+            if index < 3 {
+                AppLogger.shared.info("🔍 Processing transaction \(index + 1): '\(transaction.description)'")
+            }
+            
             let (category, confidence) = categoryService.suggestCategory(for: transaction)
+            
+            if index < 3 {
+                AppLogger.shared.info("📤 Suggestion: \(category?.name ?? "nil") (confidence: \(String(format: "%.2f", confidence)))")
+            }
             
             if let category = category, confidence >= confidenceThreshold {
                 // Create updated transaction with suggested category
-                var updatedTransaction = transaction
-                updatedTransaction = Transaction(
+                let updatedTransaction = Transaction(
                     id: transaction.id,
                     date: transaction.date,
                     description: transaction.description,
@@ -29,9 +50,8 @@ class ImportCategorizationService {
                     originalAmount: transaction.originalAmount,
                     originalCurrency: transaction.originalCurrency,
                     exchangeRate: transaction.exchangeRate,
-                    hasForex: transaction.hasForex,
                     wasAutoCategorized: true,
-                    categorizationMethod: "merchant_rule"
+                    categorizationMethod: "rule_based"
                 )
                 
                 categorized.append((updatedTransaction, category, confidence))
@@ -44,7 +64,7 @@ class ImportCategorizationService {
             }
         }
         
-        return ImportResult(
+        let result = ImportResult(
             totalTransactions: transactions.count,
             categorizedCount: categorized.count,
             highConfidenceCount: highConfidenceCount,
@@ -52,5 +72,9 @@ class ImportCategorizationService {
             categorizedTransactions: categorized,
             uncategorizedTransactions: uncategorized
         )
+        
+        AppLogger.shared.info("✅ Categorization complete: \(result.categorizedCount)/\(result.totalTransactions) categorized (\(Int(result.successRate * 100))%)")
+        
+        return result
     }
 }

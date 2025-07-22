@@ -38,8 +38,8 @@ final class CategoryRuleTests: XCTestCase {
             categoryId: Category.systemCategoryIds.shopping,
             ruleName: "Large Purchase Rule"
         ).with {
-            $0.amountMin = Decimal(-1000)
-            $0.amountMax = Decimal(-100)
+            $0.amountMin = -1000
+            $0.amountMax = -100
             $0.amountSign = .negative
         }
         
@@ -114,8 +114,8 @@ final class CategoryRuleTests: XCTestCase {
             ruleName: "Specific Uber Rule"
         ).with {
             $0.merchantExact = "uber"
-            $0.amountMin = Decimal(-50)
-            $0.amountMax = Decimal(-10)
+            $0.amountMin = -50
+            $0.amountMax = -10
             $0.confidence = 0.8
         }
         
@@ -153,8 +153,8 @@ final class CategoryRuleTests: XCTestCase {
             categoryId: Category.systemCategoryIds.shopping,
             ruleName: "Invalid Amount Rule"
         ).with {
-            $0.amountMin = Decimal(100)
-            $0.amountMax = Decimal(50) // Max < Min
+            $0.amountMin = 100
+            $0.amountMax = 50 // Max < Min
         }
         
         // When & Then
@@ -170,8 +170,8 @@ final class CategoryRuleTests: XCTestCase {
             ruleName: "Complex Rule"
         ).with {
             $0.merchantContains = "uber"
-            $0.amountMin = Decimal(-50)
-            $0.amountMax = Decimal(-10)
+            $0.amountMin = -50
+            $0.amountMax = -10
             $0.amountSign = .negative
         }
         

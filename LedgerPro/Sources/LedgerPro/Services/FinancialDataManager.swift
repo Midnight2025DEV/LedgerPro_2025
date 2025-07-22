@@ -7,6 +7,7 @@ class FinancialDataManager: ObservableObject {
     @MainActor @Published var bankAccounts: [BankAccount] = []
     @MainActor @Published var uploadedStatements: [UploadedStatement] = []
     @MainActor @Published var isLoading = false
+    @MainActor @Published var lastImportTime: Date? = nil
     @MainActor @Published var summary: FinancialSummary = FinancialSummary(
         totalIncome: 0,
         totalExpenses: 0,
@@ -30,6 +31,9 @@ class FinancialDataManager: ObservableObject {
     
     // MARK: - Data Loading/Saving
     func loadStoredData() {
+        // DEBUG: Log data loading start
+        AppLogger.shared.info("💾 FinancialDataManager: Starting to load stored data...")
+        
         Task.detached { [weak self] in
             guard let self = self else { return }
             
@@ -88,8 +92,14 @@ class FinancialDataManager: ObservableObject {
                 self.bankAccounts = loadedAccounts
                 self.uploadedStatements = loadedStatements
                 
+                // DEBUG: Log what was loaded
+                AppLogger.shared.info("💾 Loaded \(loadedTransactions.count) transactions from storage")
+                AppLogger.shared.info("💾 Loaded \(loadedAccounts.count) accounts from storage")
+                AppLogger.shared.info("💾 Loaded \(loadedStatements.count) statements from storage")
+                
                 // If we have transactions but no accounts, create accounts from transaction data
                 if !self.transactions.isEmpty && self.bankAccounts.isEmpty {
+                    AppLogger.shared.info("🔧 Creating accounts from transaction data...")
                     self.createAccountsFromTransactions()
                 }
                 
@@ -107,6 +117,11 @@ class FinancialDataManager: ObservableObject {
             let (currentTransactions, currentAccounts, currentStatements) = await MainActor.run {
                 (self.transactions, self.bankAccounts, self.uploadedStatements)
             }
+            
+            // DEBUG: Log what we're saving
+            AppLogger.shared.info("💾 Saving \(currentTransactions.count) transactions to storage")
+            AppLogger.shared.info("💾 Saving \(currentAccounts.count) accounts to storage")
+            AppLogger.shared.info("💾 Saving \(currentStatements.count) statements to storage")
             
             // Perform encoding and UserDefaults operations in background
             let encoder = JSONEncoder()
@@ -193,6 +208,9 @@ class FinancialDataManager: ObservableObject {
     
     // MARK: - Transaction Management
     func addTransactions(_ newTransactions: [Transaction], jobId: String, filename: String) {
+        // DEBUG: Log entry point
+        AppLogger.shared.info("📥 addTransactions called with \(newTransactions.count) transactions, jobId: \(jobId), filename: \(filename)")
+        
         Task.detached { [weak self] in
             guard let self = self else { return }
             
@@ -206,16 +224,20 @@ class FinancialDataManager: ObservableObject {
             }
             
             if existingJobIds.contains(jobId) {
-                AppLogger.shared.info("Job \(jobId) already exists, skipping duplicate transactions")
+                AppLogger.shared.warning("🔄 Job \(jobId) already exists, skipping duplicate transactions")
                 await MainActor.run {
                     self.isLoading = false
                 }
                 return
             }
             
+            // DEBUG: Log existing data before adding
+            let currentTransactionCount = await MainActor.run { self.transactions.count }
+            AppLogger.shared.info("📊 Current transaction count before adding: \(currentTransactionCount)")
+            
             // Process data in background
             // Debug: Check if any transactions have forex data
-            let forexTransactions = newTransactions.filter { $0.hasForex == true }
+            let forexTransactions = newTransactions.filter { $0.hasForex }
             if !forexTransactions.isEmpty {
                 AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
                 for transaction in forexTransactions {
@@ -268,7 +290,7 @@ class FinancialDataManager: ObservableObject {
                 AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
                 AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
                 AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-                AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
+                AppLogger.shared.debug("   - hasForex: \(transaction.hasForex)")
                 
                 // Use existing accountId if present, otherwise use detected account
                 let accountIdToUse = transaction.accountId ?? finalAccount.id
@@ -285,8 +307,7 @@ class FinancialDataManager: ObservableObject {
                     rawData: transaction.rawData,
                     originalAmount: transaction.originalAmount,
                     originalCurrency: transaction.originalCurrency,
-                    exchangeRate: transaction.exchangeRate,
-                    hasForex: transaction.hasForex
+                    exchangeRate: transaction.exchangeRate
                 )
             }
             
@@ -311,7 +332,13 @@ class FinancialDataManager: ObservableObject {
                 self.bankAccounts = updatedAccounts
                 self.uploadedStatements.insert(statement, at: 0)
                 self.updateSummaryOnMainThread()
+                self.lastImportTime = Date() // Trigger filter reset
                 self.isLoading = false
+                
+                // DEBUG: Log final state after adding
+                AppLogger.shared.info("✅ Transactions added successfully! New total: \(self.transactions.count)")
+                AppLogger.shared.info("📊 Added \(transactionsWithAccounts.count) transactions to account: \(finalAccount.institution) - \(finalAccount.name)")
+                AppLogger.shared.info("🏦 Total accounts: \(self.bankAccounts.count)")
             }
             
             // Save data in background (don't await)
@@ -610,8 +637,7 @@ class FinancialDataManager: ObservableObject {
             rawData: originalTransaction.rawData,
             originalAmount: originalTransaction.originalAmount,
             originalCurrency: originalTransaction.originalCurrency,
-            exchangeRate: originalTransaction.exchangeRate,
-            hasForex: originalTransaction.hasForex
+            exchangeRate: originalTransaction.exchangeRate
         )
         
         // Update the transaction in the array

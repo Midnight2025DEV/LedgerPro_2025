@@ -164,6 +164,41 @@ struct FileUploadView: View {
                         }
                         .buttonStyle(.bordered)
                         .help("Test MCP server connection and capabilities")
+                        
+                        Button("Diagnostic Categories") {
+                            categoryService.runComprehensiveDiagnostics()
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Run comprehensive category system diagnostics")
+                        
+                        Button("Toggle Log Level") {
+                            DiagnosticLogManager.shared.toggleLogLevel()
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Switch between Summary, Detailed, and Verbose logging")
+                        
+                        Button("Test Categorization") {
+                            Task {
+                                let testTransactions = [
+                                    Transaction(date: "2024-01-01", description: "WALMART SUPERCENTER #1234", amount: -45.67, category: "Other"),
+                                    Transaction(date: "2024-01-02", description: "UBER TRIP HELP.UBER.COM", amount: -12.34, category: "Other"),
+                                    Transaction(date: "2024-01-03", description: "STARBUCKS STORE 12345", amount: -5.89, category: "Other"),
+                                    Transaction(date: "2024-01-04", description: "PAYROLL DEPOSIT", amount: 2500.00, category: "Other"),
+                                    Transaction(date: "2024-01-05", description: "AMAZON.COM MERCHANDISE", amount: -89.99, category: "Other")
+                                ]
+                                
+                                let service = ImportCategorizationService()
+                                let result = await service.categorizeTransactions(testTransactions)
+                                
+                                AppLogger.shared.info("🧪 TEST RESULTS: \(result.categorizedCount)/\(result.totalTransactions) categorized (\(Int(result.successRate * 100))%)")
+                                
+                                for (transaction, category, confidence) in result.categorizedTransactions {
+                                    AppLogger.shared.info("✅ \(transaction.description) → \(category.name) (\(Int(confidence * 100))%)")
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Test auto-categorization with sample transactions")
                     }
                 }
             }
@@ -735,6 +770,16 @@ struct FileUploadView: View {
                     let results = try await apiService.getTransactions(uploadResponse.jobId)
                     transactions = results.transactions
                     finalFilename = results.metadata.filename
+                    
+                    // DEBUG: Log API processing results
+                    AppLogger.shared.info("📄 Backend API processing complete for jobId: \(uploadResponse.jobId)")
+                    AppLogger.shared.info("📊 API returned \(transactions.count) transactions")
+                    AppLogger.shared.info("📁 Filename: \(finalFilename)")
+                    
+                    for (index, transaction) in transactions.prefix(3).enumerated() {
+                        AppLogger.shared.info("   API Transaction \(index + 1): \(transaction.description) - \(transaction.amount) - ID: \(transaction.id)")
+                    }
+                    
                     logger.info("Retrieved \(transactions.count) transactions", category: "Upload")
                     
                     // Update transaction count
@@ -769,17 +814,33 @@ struct FileUploadView: View {
                 currentStep = 5
             }
             
-            AppLogger.shared.info("Auto-categorizing \(transactions.count) transactions...")
+            AppLogger.shared.info("🔄 FileUploadView: Starting auto-categorization of \(transactions.count) transactions...")
+            
+            // Log sample input transactions
+            AppLogger.shared.info("🔍 SAMPLE INPUT TRANSACTIONS TO CATEGORIZATION:")
+            for (index, transaction) in transactions.prefix(3).enumerated() {
+                AppLogger.shared.info("   \(index + 1). '\(transaction.description)' (current category: '\(transaction.category)')")
+            }
+            
             let categorizationService = ImportCategorizationService()
-            let categorizedResult = await MainActor.run {
-                let result = categorizationService.categorizeTransactions(transactions)
+            let categorizedResult = await categorizationService.categorizeTransactions(transactions)
+            
+            AppLogger.shared.info("📦 FileUploadView: Received categorization result")
+            AppLogger.shared.info("   Result type: ImportResult")
+            AppLogger.shared.info("   Total transactions: \(categorizedResult.totalTransactions)")
+            AppLogger.shared.info("   Categorized count: \(categorizedResult.categorizedCount)")
+            AppLogger.shared.info("   Uncategorized count: \(categorizedResult.uncategorizedCount)")
+            AppLogger.shared.info("   Success rate: \(String(format: "%.1f", categorizedResult.successRate * 100))%")
+            
+            // Update progress after categorization (on main actor)
+            await MainActor.run {
+                categorizedCount = categorizedResult.categorizedCount
+                let percentage = categorizedResult.categorizedCount > 0 ? Int((Double(categorizedResult.categorizedCount) / Double(categorizedResult.totalTransactions)) * 100) : 0
+                detailedStatus = "Categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions (\(percentage)%)"
                 
-                // Update progress during categorization
-                categorizedCount = result.categorizedCount
-                let percentage = result.categorizedCount > 0 ? Int((Double(result.categorizedCount) / Double(result.totalTransactions)) * 100) : 0
-                detailedStatus = "Categorized \(result.categorizedCount)/\(result.totalTransactions) transactions (\(percentage)%)"
-                
-                return result
+                AppLogger.shared.info("📊 FileUploadView: Updated UI with categorization results")
+                AppLogger.shared.info("   UI categorizedCount: \(categorizedCount)")
+                AppLogger.shared.info("   UI detailedStatus: '\(detailedStatus)'")
             }
             logger.info("Auto-categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions", category: "Upload")
             
@@ -796,17 +857,56 @@ struct FileUploadView: View {
                 importResult = categorizedResult
                 
                 // Add categorized transactions to data manager
-                let finalTransactions = categorizedResult.categorizedTransactions.map { $0.0 } + 
-                                      categorizedResult.uncategorizedTransactions
+                AppLogger.shared.info("🏗️ FileUploadView: Assembling final transaction list")
+                AppLogger.shared.info("   Categorized tuples: \(categorizedResult.categorizedTransactions.count)")
+                AppLogger.shared.info("   Uncategorized transactions: \(categorizedResult.uncategorizedTransactions.count)")
+                
+                // Extract transactions from categorized tuples
+                let categorizedTransactionsOnly = categorizedResult.categorizedTransactions.map { $0.0 }
+                AppLogger.shared.info("   Extracted \(categorizedTransactionsOnly.count) transactions from categorized tuples")
+                
+                // Log sample categorized transactions after extraction
+                if !categorizedTransactionsOnly.isEmpty {
+                    AppLogger.shared.info("🔍 SAMPLE EXTRACTED CATEGORIZED TRANSACTIONS:")
+                    for (index, transaction) in categorizedTransactionsOnly.prefix(3).enumerated() {
+                        AppLogger.shared.info("   \(index + 1). '\(transaction.description)' -> '\(transaction.category)' (confidence: \(transaction.confidence ?? 0.0))")
+                        AppLogger.shared.info("      wasAutoCategorized: \(transaction.wasAutoCategorized ?? false)")
+                    }
+                }
+                
+                let finalTransactions = categorizedTransactionsOnly + categorizedResult.uncategorizedTransactions
+                
+                // DEBUG: Log transaction details before adding to dataManager
+                AppLogger.shared.info("📊 FileUploadView: Final transaction list assembled")
+                AppLogger.shared.info("   Total final transactions: \(finalTransactions.count)")
+                AppLogger.shared.info("   From categorized: \(categorizedTransactionsOnly.count)")
+                AppLogger.shared.info("   From uncategorized: \(categorizedResult.uncategorizedTransactions.count)")
+                
+                // Log detailed breakdown of final transactions
+                AppLogger.shared.info("🔍 FINAL TRANSACTION BREAKDOWN:")
+                for (index, transaction) in finalTransactions.prefix(5).enumerated() {
+                    AppLogger.shared.info("   \(index + 1). '\(transaction.description)' -> '\(transaction.category)' (ID: \(transaction.id))")
+                    AppLogger.shared.info("      Amount: \(transaction.amount), Confidence: \(transaction.confidence ?? 0.0)")
+                    AppLogger.shared.info("      WasAutoCategorized: \(transaction.wasAutoCategorized ?? false)")
+                }
                 
                 // Use jobId if available (backend processing) or generate one for MCP
                 let jobIdForData = currentJobId ?? UUID().uuidString
+                AppLogger.shared.info("📋 Using jobId: \(jobIdForData) for data storage")
+                
+                AppLogger.shared.info("💾 FileUploadView: Calling dataManager.addTransactions")
+                AppLogger.shared.info("   Transactions to add: \(finalTransactions.count)")
+                AppLogger.shared.info("   JobId: \(jobIdForData)")
+                AppLogger.shared.info("   Filename: \(finalFilename)")
                 
                 dataManager.addTransactions(
                     finalTransactions,
                     jobId: jobIdForData,
                     filename: finalFilename
                 )
+                
+                AppLogger.shared.info("✅ FileUploadView: dataManager.addTransactions completed")
+                AppLogger.shared.info("   DataManager now has: \(dataManager.transactions.count) total transactions")
                 
                 let processingMethod = useMCPProcessing ? "MCP Local Processing" : "Backend API"
                 logger.info("Processing completed successfully with \(processingMethod)!", category: "Upload")
@@ -851,6 +951,13 @@ struct FileUploadView: View {
             await MainActor.run {
                 // Show import summary instead of immediately dismissing
                 showingImportSummary = true
+                
+                // Post notification to reset transaction filters
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TransactionsImported"),
+                    object: nil,
+                    userInfo: ["count": importResult?.totalTransactions ?? 0]
+                )
             }
             
         } catch {
@@ -1138,6 +1245,16 @@ struct FileUploadView: View {
         
         // Process document through MCP
         let result = try await mcpBridge.processDocument(url)
+        
+        // DEBUG: Log MCP processing results
+        AppLogger.shared.info("📄 MCP processing complete for \(url.lastPathComponent)")
+        AppLogger.shared.info("📊 MCP returned \(result.transactions.count) transactions")
+        AppLogger.shared.info("📋 Processing method: \(result.metadata.method)")
+        AppLogger.shared.info("🎯 Confidence: \(result.confidence)")
+        
+        for (index, transaction) in result.transactions.prefix(3).enumerated() {
+            AppLogger.shared.info("   MCP Transaction \(index + 1): \(transaction.description) - \(transaction.amount)")
+        }
         
         return result.transactions
     }

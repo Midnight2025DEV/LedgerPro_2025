@@ -317,7 +317,7 @@ struct RuleDetailView: View {
                     HStack {
                         StatView(title: "Matches", value: "\(rule.matchCount)")
                         StatView(title: "Success Rate", value: "\(Int(rule.confidence * 100))%")
-                        StatView(title: "Last Used", value: rule.lastMatched?.formatted(.dateTime.month().day()) ?? "Never")
+                        StatView(title: "Last Used", value: rule.lastMatchDate?.formatted(.dateTime) ?? "Never")
                     }
                 }
                 
@@ -477,8 +477,8 @@ struct RuleBuilderView: View {
                     }
                     
                     Picker("Amount Type", selection: $builder.amountSign) {
-                        ForEach(AmountSign.allCases, id: \.self) { sign in
-                            Text(sign.displayName).tag(sign)
+                        ForEach(CategoryRule.AmountSign.allCases, id: \.self) { sign in
+                            Text(sign.rawValue).tag(sign)
                         }
                     }
                     .pickerStyle(MenuPickerStyle())
@@ -632,7 +632,7 @@ struct QuickStartTemplatesView: View {
     private var availableTemplates: [CategoryRule] {
         // Filter out templates that already exist as custom rules
         let existingRuleNames = Set(viewModel.rules.map { $0.ruleName.lowercased() })
-        return CategoryRule.commonRuleTemplates.filter { template in
+        return CategoryRule.systemRules.filter { template in
             !existingRuleNames.contains(template.ruleName.lowercased())
         }
     }

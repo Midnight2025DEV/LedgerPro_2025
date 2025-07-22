@@ -84,7 +84,7 @@ struct ConfidenceIndicator: View {
                     .frame(width: 4, height: 4)
             }
         }
-        .help("Confidence: \\(confidenceLevel.text) (\\(Int(confidence * 100))%)")
+        .help("Confidence: \(confidenceLevel.text) (\(Int(confidence * 100))%)")
     }
 }
 
@@ -118,7 +118,7 @@ struct AutoCategorizationStatsBanner: View {
                         .animation(.spring(response: 0.6, dampingFraction: 0.6), value: animateIn)
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\\(percentage)% Auto-categorized")
+                        Text("\(percentage)% Auto-categorized")
                             .font(.headline)
                         
                         if improvementFromLastMonth > 0 {
@@ -126,7 +126,7 @@ struct AutoCategorizationStatsBanner: View {
                                 Image(systemName: "arrow.up.circle.fill")
                                     .font(.caption2)
                                     .foregroundColor(.green)
-                                Text("+\\(improvementFromLastMonth)% from last month")
+                                Text("+\(improvementFromLastMonth)% from last month")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -139,7 +139,7 @@ struct AutoCategorizationStatsBanner: View {
                 // Stats
                 HStack(spacing: 16) {
                     VStack(alignment: .trailing) {
-                        Text("\\(autoCategorizedCount)")
+                        Text("\(autoCategorizedCount)")
                             .font(.title2)
                             .fontWeight(.semibold)
                             .foregroundColor(.blue)
@@ -149,7 +149,7 @@ struct AutoCategorizationStatsBanner: View {
                     }
                     
                     VStack(alignment: .trailing) {
-                        Text("\\(totalCount - autoCategorizedCount)")
+                        Text("\(totalCount - autoCategorizedCount)")
                             .font(.title2)
                             .fontWeight(.semibold)
                         Text("Manual")

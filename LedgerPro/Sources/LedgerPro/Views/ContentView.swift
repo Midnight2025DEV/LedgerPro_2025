@@ -165,6 +165,16 @@ struct ContentView: View {
                 initialShowUncategorizedOnly: selectedTransactionFilter == .uncategorized,
                 triggerUncategorizedFilter: triggerUncategorizedFilter
             )
+            .onAppear {
+                // DEBUG: Log current data state when switching to transactions tab
+                AppLogger.shared.info("📱 ContentView: Transactions tab appeared")
+                AppLogger.shared.info("📊 Total transactions in dataManager: \(dataManager.transactions.count)")
+                AppLogger.shared.info("🏦 Total accounts in dataManager: \(dataManager.bankAccounts.count)")
+                for account in dataManager.bankAccounts {
+                    let accountTransactions = dataManager.transactions.filter { $0.accountId == account.id }
+                    AppLogger.shared.info("   Account: \(account.institution) - \(account.name) (\(account.id)): \(accountTransactions.count) transactions")
+                }
+            }
         case .accounts:
             AccountsView()
         case .insights:

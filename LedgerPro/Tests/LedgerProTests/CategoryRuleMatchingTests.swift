@@ -148,8 +148,8 @@ final class CategoryRuleMatchingTests: XCTestCase {
             ruleName: "Coffee Amount Range Rule"
         )
         rule.merchantContains = "STARBUCKS"
-        rule.amountMin = Decimal(-20)
-        rule.amountMax = Decimal(-2)
+        rule.amountMin = -20
+        rule.amountMax = -2
         rule.priority = 75
         rule.confidence = 0.80
         
@@ -417,8 +417,8 @@ final class CategoryRuleMatchingTests: XCTestCase {
             ruleName: "Multiple Condition Rule"
         )
         rule.merchantContains = "WALMART"
-        rule.amountMin = Decimal(-200)
-        rule.amountMax = Decimal(-50)
+        rule.amountMin = -200
+        rule.amountMax = -50
         rule.amountSign = .negative
         rule.priority = 85
         rule.confidence = 0.90

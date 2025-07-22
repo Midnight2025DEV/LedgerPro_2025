@@ -36,6 +36,9 @@ struct TransactionListView: View {
     // Track last filter criteria to avoid unnecessary updates
     @State private var lastFilterCriteria = FilterCriteria()
     
+    // Debug state
+    @State private var showDebugInspector = false
+    
     let onTransactionSelect: (Transaction) -> Void
     let initialShowUncategorizedOnly: Bool
     let triggerUncategorizedFilter: Bool
@@ -74,7 +77,8 @@ struct TransactionListView: View {
     
     // Use cached values instead of computed properties
     private var groupedTransactions: [String: [Transaction]] {
-        cachedGroupedTransactions
+        // Use cached grouped transactions for better performance
+        return cachedGroupedTransactions
     }
     
     private var autoCategorizedCount: Int {
@@ -82,13 +86,17 @@ struct TransactionListView: View {
     }
     
     private var filteredTransactions: [Transaction] {
-        cachedFilteredTransactions
+        // Use cached filtered transactions for better performance
+        return cachedFilteredTransactions
     }
     
     // Async filtering function that runs on background thread
     private func filterTransactions() async {
         // Cancel any existing filter operation
         filterTask?.cancel()
+        
+        // Start performance monitoring
+        PerformanceMonitor.shared.startTimer("filterTransactions")
         
         // Create new filter criteria
         let currentCriteria = FilterCriteria(
@@ -110,6 +118,18 @@ struct TransactionListView: View {
         filterTask = Task {
             // Capture current transactions
             let allTransactions = await MainActor.run { dataManager.transactions }
+            
+            // DEBUG: Log what we're working with
+            await MainActor.run {
+                AppLogger.shared.info("🔍 TransactionListView filtering \(allTransactions.count) total transactions")
+                AppLogger.shared.info("🔍 Filter criteria: searchText='\(currentCriteria.searchText)', category='\(currentCriteria.selectedCategory)', showUncategorized=\(currentCriteria.showUncategorizedOnly)")
+                
+                // Log sample of transactions for debugging
+                if allTransactions.count > 0 {
+                    let sample = allTransactions.prefix(5)
+                    AppLogger.shared.info("📊 Sample transactions: \(sample.map { "\($0.description) - \($0.category)" }.joined(separator: ", "))")
+                }
+            }
             
             // Perform filtering on background thread
             var filtered = allTransactions
@@ -143,10 +163,14 @@ struct TransactionListView: View {
             
             // Filter for uncategorized transactions
             if currentCriteria.showUncategorizedOnly {
+                let beforeCount = filtered.count
                 filtered = filtered.filter { transaction in
                     transaction.category.isEmpty || 
                     transaction.category == "Uncategorized" ||
                     transaction.category == "Other"
+                }
+                await MainActor.run {
+                    AppLogger.shared.info("📝 Uncategorized filter: \(beforeCount) → \(filtered.count) transactions")
                 }
             }
             
@@ -189,6 +213,16 @@ struct TransactionListView: View {
                     self.cachedAutoCategorizedCount = autoCount
                     self.lastFilterCriteria = currentCriteria
                     self.isFiltering = false
+                    
+                    // Stop performance monitoring
+                    PerformanceMonitor.shared.stopTimer("filterTransactions")
+                    
+                    // DEBUG: Log final results
+                    AppLogger.shared.info("✅ TransactionListView filter complete: \(filtered.count) transactions after filtering")
+                    AppLogger.shared.info("📅 Grouped into \(grouped.keys.count) date groups")
+                    if filtered.isEmpty && allTransactions.count > 0 {
+                        AppLogger.shared.warning("⚠️ All transactions were filtered out! Original count: \(allTransactions.count)")
+                    }
                 }
             }
         }
@@ -283,6 +317,20 @@ struct TransactionListView: View {
             
             Spacer()
             
+            Button("Show All") {
+                AppLogger.shared.info("🔍 Show All button clicked - bypassing all filters")
+                searchText = ""
+                selectedCategory = "All"
+                selectedCategoryObject = nil
+                showUncategorizedOnly = false
+                sortOrder = .dateDescending
+                lastFilterCriteria = FilterCriteria() // Force re-filter
+                Task {
+                    await filterTransactions()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            
             Button("Clear Filters") {
                 searchText = ""
                 selectedCategory = "All"
@@ -362,6 +410,28 @@ struct TransactionListView: View {
                 .font(.headline)
                 .foregroundColor(.secondary)
             
+            if dataManager.transactions.count > 0 {
+                Text("\(dataManager.transactions.count) transactions are hidden by current filters")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            if dataManager.transactions.count > 0 {
+                Button("Show All Transactions") {
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    lastFilterCriteria = FilterCriteria()
+                    Task {
+                        await filterTransactions()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
+            
             if !searchText.isEmpty || selectedCategory != "All" || selectedCategoryObject != nil {
                 Button("Clear Filters") {
                     searchText = ""
@@ -422,17 +492,121 @@ struct TransactionListView: View {
         }
     }
     
+    private var debugInspectorOverlay: some View {
+        Group {
+            if showDebugInspector {
+                TransactionStateInspector(
+                    filteredCount: filteredTransactions.count,
+                    searchText: searchText,
+                    selectedCategory: selectedCategory,
+                    showUncategorizedOnly: showUncategorizedOnly,
+                    sortOrder: sortOrder
+                )
+                .frame(maxWidth: 350)
+                .padding()
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .trailing).combined(with: .opacity)
+                ))
+                .animation(.easeInOut(duration: 0.3), value: showDebugInspector)
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetAllFilters"))) { _ in
+                    // Handle reset filters request from inspector
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    
+                    Task {
+                        lastFilterCriteria = FilterCriteria()
+                        await filterTransactions()
+                    }
+                }
+            }
+        }
+    }
+    
     var body: some View {
-        mainContent
-            .navigationTitle("Transactions (\(filteredTransactions.count))")
+        ZStack(alignment: .topTrailing) {
+            mainContent
+            
+            // Debug Inspector Overlay
+            debugInspectorOverlay
+        }
+        .navigationTitle("Transactions (\(filteredTransactions.count) of \(dataManager.transactions.count))")
             .onAppear {
                 Task {
+                    // Log initial state
+                    AppLogger.shared.info("📱 TransactionListView appeared with \(dataManager.transactions.count) transactions")
+                    
+                    // DEBUG: Log sample transactions to understand the data
+                    if dataManager.transactions.count > 0 {
+                        AppLogger.shared.info("📊 First 5 transactions:")
+                        for (index, transaction) in dataManager.transactions.prefix(5).enumerated() {
+                            AppLogger.shared.info("   \(index + 1). '\(transaction.description)' - \(transaction.formattedDate) - Category: '\(transaction.category)' - Amount: \(transaction.amount)")
+                        }
+                        
+                        // Check date distribution
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "yyyy-MM-dd"
+                        let dates = Set(dataManager.transactions.map { dateFormatter.string(from: $0.formattedDate) })
+                        AppLogger.shared.info("📅 Transactions span \(dates.count) unique dates: \(Array(dates.sorted()).joined(separator: ", "))")
+                    }
+                    
+                    // NUCLEAR OPTION: Always reset filters to ensure transactions are visible
+                    // This guarantees users see their data after import
+                    AppLogger.shared.info("🔄 Resetting all filters to ensure transactions are visible")
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    lastFilterCriteria = FilterCriteria() // Force re-filter
+                    
                     await filterTransactions()
+                }
+                
+                // Listen for import completion
+                NotificationCenter.default.addObserver(
+                    forName: NSNotification.Name("TransactionsImported"),
+                    object: nil,
+                    queue: .main
+                ) { notification in
+                    // Reset all filters to show imported transactions
+                    self.searchText = ""
+                    self.selectedCategory = "All"
+                    self.selectedCategoryObject = nil
+                    self.showUncategorizedOnly = false
+                    self.sortOrder = .dateDescending
+                    
+                    // Force refresh
+                    Task { @MainActor in
+                        self.lastFilterCriteria = FilterCriteria()
+                        await self.filterTransactions()
+                    }
+                    
+                    AppLogger.shared.info("📥 Import complete - reset filters to show all transactions")
                 }
             }
             .onChange(of: dataManager.transactions) { _, _ in
                 Task {
                     await filterTransactions()
+                }
+            }
+            .onChange(of: dataManager.lastImportTime) { _, newImportTime in
+                // Reset filters when new transactions are imported
+                if newImportTime != nil {
+                    AppLogger.shared.info("📥 New import detected - resetting filters to show all transactions")
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    
+                    Task { @MainActor in
+                        lastFilterCriteria = FilterCriteria()
+                        await filterTransactions()
+                    }
                 }
             }
             .onChange(of: selectedCategory) { _, _ in
@@ -496,6 +670,43 @@ struct TransactionListView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack {
+                    // Refresh Button
+                    Button(action: {
+                        AppLogger.shared.info("🔄 Refresh button clicked - reloading data from storage")
+                        dataManager.loadStoredData()
+                        
+                        Task {
+                            // Wait a moment for the data to load
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+                            AppLogger.shared.info("✅ Data reload complete - found \(dataManager.transactions.count) transactions")
+                            
+                            // Force re-filter after reload
+                            lastFilterCriteria = FilterCriteria() // Reset to force re-filter
+                            await filterTransactions()
+                        }
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .help("Refresh Transactions")
+                    
+                    // DEBUG: Force Show All Button
+                    Button(action: {
+                        AppLogger.shared.info("🚨 DEBUG: Force showing all transactions without filters")
+                        cachedFilteredTransactions = dataManager.transactions
+                        
+                        // Group by date without any filtering
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "yyyy-MM-dd"
+                        cachedGroupedTransactions = Dictionary(grouping: dataManager.transactions) { transaction in
+                            dateFormatter.string(from: transaction.formattedDate)
+                        }
+                        
+                        AppLogger.shared.info("🚨 DEBUG: Forced display of \(cachedFilteredTransactions.count) transactions")
+                    }) {
+                        Image(systemName: "eye.fill")
+                    }
+                    .help("DEBUG: Force Show All")
+                    
                     // Bulk Selection Toggle
                     Button(action: {
                         if selectedTransactions.isEmpty {
@@ -521,6 +732,13 @@ struct TransactionListView: View {
                         Image(systemName: "arrow.triangle.2.circlepath")
                     }
                     .help("Remove Duplicates")
+                    
+                    // Debug Inspector Toggle
+                    Button(action: { showDebugInspector.toggle() }) {
+                        Image(systemName: showDebugInspector ? "eye.circle.fill" : "eye.circle")
+                    }
+                    .help("Toggle Debug Inspector")
+                    .foregroundColor(showDebugInspector ? .blue : .primary)
                 }
             }
         }

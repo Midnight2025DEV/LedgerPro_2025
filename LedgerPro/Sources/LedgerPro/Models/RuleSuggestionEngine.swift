@@ -31,10 +31,9 @@ struct RuleSuggestion: Identifiable, Hashable {
     func toCategoryRule() -> CategoryRule {
         var rule = CategoryRule(
             categoryId: suggestedCategory,
-            ruleName: merchantPattern,
-            priority: max(70, min(90, Int(confidence * 100)))
+            ruleName: merchantPattern
         )
-        
+        rule.priority = max(70, min(90, Int(confidence * 100)))
         rule.merchantContains = merchantPattern
         rule.amountSign = averageAmount < 0 ? .negative : .positive
         rule.isActive = true
