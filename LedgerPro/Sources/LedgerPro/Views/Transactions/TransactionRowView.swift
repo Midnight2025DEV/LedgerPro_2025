@@ -67,7 +67,7 @@ struct DistributedTransactionRowView: View {
                         AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
                         AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
                         AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-                        AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
+                        AppLogger.shared.debug("   - hasForex: \(transaction.hasForex)")
                     }()
                     
                     // Simplified conditional check for forex data

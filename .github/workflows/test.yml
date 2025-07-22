@@ -9,13 +9,47 @@ on:
 jobs:
   test:
     name: CI / swift-tests
-    runs-on: macos-14  # Fixed: Use specific version instead of macos-14
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Select Xcode
-      run: sudo xcode-select -s /Applications/Xcode_15.0.app
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app
+    
+    - name: Set up Python for backend
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install backend dependencies
+      run: |
+        cd LedgerPro/backend
+        python -m pip install --upgrade pip
+        pip install numpy==1.26.0
+        pip install opencv-python==4.8.0.74
+        pip install -r requirements.txt
+    
+    - name: Start backend server
+      run: |
+        cd LedgerPro/backend
+        python api_server_real.py > backend.log 2>&1 &
+        echo $! > backend.pid
+        
+        # Wait for backend to start
+        echo "Waiting for backend to start..."
+        for i in {1..30}; do
+          if curl -s http://127.0.0.1:8000/api/health > /dev/null; then
+            echo "✅ Backend is running"
+            break
+          fi
+          if [ $i -eq 30 ]; then
+            echo "❌ Backend failed to start"
+            cat backend.log
+            exit 1
+          fi
+          sleep 1
+        done
       
     - name: Debug Test Environment
       run: |
@@ -92,6 +126,21 @@ jobs:
         swift test --filter CategoryServiceTests || echo "CategoryServiceTests not available"
         
         echo "📊 Fallback tests completed"
+    
+    - name: Upload backend logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-logs-test-suite
+        path: LedgerPro/backend/backend.log
+    
+    - name: Stop backend server
+      if: always()
+      run: |
+        if [ -f LedgerPro/backend/backend.pid ]; then
+          echo "Stopping backend server..."
+          kill $(cat LedgerPro/backend/backend.pid) || true
+        fi
       
     - name: Test Summary
       if: always()
@@ -101,7 +150,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Environment" >> $GITHUB_STEP_SUMMARY
         echo "- macOS: 14" >> $GITHUB_STEP_SUMMARY
-        echo "- Xcode: 15.0" >> $GITHUB_STEP_SUMMARY
+        echo "- Xcode: 15.2" >> $GITHUB_STEP_SUMMARY
         echo "- Swift: $(cd LedgerPro && swift --version | head -1)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Test Status" >> $GITHUB_STEP_SUMMARY
@@ -110,13 +159,13 @@ jobs:
 
   performance:
     name: Performance Tests
-    runs-on: macos-14  # Fixed: Use specific version instead of macos-14
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Select Xcode
-      run: sudo xcode-select -s /Applications/Xcode_15.0.app
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app
     
     - name: Run Performance Tests
       continue-on-error: true  # Don't fail the workflow on performance test issues
@@ -162,7 +211,7 @@ jobs:
 
   lint:
     name: Code Quality
-    runs-on: macos-14  # Fixed: Use specific version instead of macos-14
+    runs-on: macos-14
     
     steps:
     - uses: actions/checkout@v4
