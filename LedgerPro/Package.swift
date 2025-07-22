@@ -16,7 +16,12 @@ let package = Package(
         .executableTarget(
             name: "LedgerPro",
             dependencies: [],
-            path: "Sources/LedgerPro"
+            path: "Sources/LedgerPro",
+            exclude: [
+                "Services/FinancialDataManager.swift.backup3",
+                "Views/OverviewView.swift.backup",
+                "Debug/APIMonitor.swift.disabled"
+            ]
         ),
         .testTarget(
             name: "LedgerProTests",
