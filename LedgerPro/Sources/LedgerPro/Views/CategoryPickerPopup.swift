@@ -300,8 +300,9 @@ struct CategoryPickerPopup: View {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title2)
                         .foregroundColor(.secondary)
-                        .background(Circle().fill(Color(NSColor.windowBackgroundColor)))
                 }
+                .accessibilityIdentifier("categoryPickerCloseButton")
+                .background(Circle().fill(Color(NSColor.windowBackgroundColor)))
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -386,6 +387,7 @@ struct CategoryPickerPopup: View {
             
             TextField("Search or describe (e.g., 'food over $50')...", text: $searchText)
                 .textFieldStyle(.plain)
+                .accessibilityIdentifier("categorySearchField")
             
             if !searchText.isEmpty {
                 Button(action: { 

@@ -424,13 +424,12 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
 
         if result and "transactions" in result:
             for transaction in result["transactions"]:
-                # DEBUG: Log each transaction being processed
-                desc = transaction.get("description", "")[:50]
-                print(f"🔧 Processing transaction: {desc}")
-                print(f"- has_forex: {transaction.get('has_forex')}")
-                print(f"- original_currency: {transaction.get('original_currency')}")
-                print(f"- original_amount: {transaction.get('original_amount')}")
-                print(f"- exchange_rate: {transaction.get('exchange_rate')}")
+                # DEBUG: Log transaction processing (secure logging)
+                if os.getenv("DEBUG_MODE", "false").lower() == "true":
+                    desc = transaction.get("description", "")[:20]  # Truncate description
+                    print(f"🔧 Processing transaction: {desc}...")
+                    print(f"- has_forex: {transaction.get('has_forex')}")
+                    # Remove amount logging for security
 
                 # Map processor fields to API fields
                 amount = float(transaction.get("amount", 0))

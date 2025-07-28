@@ -7,17 +7,53 @@ struct StatCard: View {
     let subtitle: String?
     let color: Color
     let icon: String
+    let numericValue: Double?
     
-    init(title: String, value: String, change: String, subtitle: String? = nil, color: Color, icon: String) {
+    // Feature flag for gradual rollout of new design
+    static let useNewDesign = true
+    
+    init(
+        title: String, 
+        value: String, 
+        change: String, 
+        subtitle: String? = nil, 
+        color: Color, 
+        icon: String,
+        numericValue: Double? = nil
+    ) {
         self.title = title
         self.value = value
         self.change = change
         self.subtitle = subtitle
         self.color = color
         self.icon = icon
+        self.numericValue = numericValue
     }
     
     var body: some View {
+        Group {
+            if Self.useNewDesign {
+                // New premium animated design
+                AnimatedStatCard(
+                    title: title,
+                    value: value,
+                    numericValue: numericValue,
+                    change: change,
+                    subtitle: subtitle,
+                    color: color,
+                    icon: icon
+                )
+            } else {
+                // Legacy design for fallback
+                legacyDesign
+            }
+        }
+    }
+    
+    // MARK: - Legacy Design
+    
+    @ViewBuilder
+    private var legacyDesign: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)

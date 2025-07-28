@@ -18,15 +18,22 @@ let package = Package(
             dependencies: [],
             path: "Sources/LedgerPro",
             exclude: [
-                "Services/FinancialDataManager.swift.backup3",
-                "Views/OverviewView.swift.backup",
-                "Debug/APIMonitor.swift.disabled"
+                "Debug/APIMonitor.swift.disabled",
+                "Views/RulesManagementView.swift"
             ]
         ),
         .testTarget(
             name: "LedgerProTests",
             dependencies: ["LedgerPro"],
             path: "Tests/LedgerProTests"
+        ),
+        .testTarget(
+            name: "LedgerProUITests",
+            dependencies: ["LedgerPro"],
+            path: "LedgerProUITests",
+            resources: [
+                .process("TestResources")
+            ]
         )
     ]
 )

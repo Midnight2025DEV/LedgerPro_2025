@@ -20,6 +20,9 @@ class FinancialDataManager: ObservableObject {
         balanceChange: nil
     )
     
+    // MARK: - Batch Processing Support
+    @MainActor @Published var batchProgress: BatchProgress? = nil
+    
     private let userDefaults = UserDefaults.standard
     private let transactionsKey = "stored_transactions"
     private let accountsKey = "stored_accounts"
@@ -105,6 +108,67 @@ class FinancialDataManager: ObservableObject {
                 
                 self.updateSummaryOnMainThread()
                 self.isLoading = false
+            }
+        }
+    }
+    
+    func loadTestData() {
+        Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            await MainActor.run {
+                self.isLoading = true
+                
+                // Add test bank account
+                let testAccounts = [
+                    BankAccount(
+                        id: "test-account",
+                        name: "Test Checking",
+                        institution: "Test Bank",
+                        accountType: .checking,
+                        lastFourDigits: "1234",
+                        currency: "USD",
+                        isActive: true,
+                        createdAt: "2025-07-23"
+                    )
+                ]
+                
+                // Add test transactions with STRING dates
+                let testTransactions = [
+                    Transaction(
+                        id: "test1",
+                        date: "2025-07-23",
+                        description: "Test Coffee Shop",
+                        amount: -4.50,
+                        category: "Food & Dining",
+                        accountId: "test-account"
+                    ),
+                    Transaction(
+                        id: "test2",
+                        date: "2025-07-22",
+                        description: "Test Grocery Store",
+                        amount: -85.23,
+                        category: "Groceries",
+                        accountId: "test-account"
+                    ),
+                    Transaction(
+                        id: "test3",
+                        date: "2025-07-21",
+                        description: "Test Salary Deposit",
+                        amount: 2500.00,
+                        category: "Income",
+                        accountId: "test-account"
+                    )
+                ]
+                
+                self.transactions = testTransactions
+                self.bankAccounts = testAccounts
+                self.uploadedStatements = []
+                
+                self.updateSummaryOnMainThread()
+                self.isLoading = false
+                
+                AppLogger.shared.info("🧪 Loaded \(testTransactions.count) test transactions for UI testing")
             }
         }
     }
@@ -241,7 +305,11 @@ class FinancialDataManager: ObservableObject {
             if !forexTransactions.isEmpty {
                 AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
                 for transaction in forexTransactions {
-                    AppLogger.shared.debug("Foreign transaction: \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)")
+                    #if DEBUG
+                    AppLogger.shared.debug("Foreign transaction detected: \(transaction.hasForex)")
+                    #else
+                    AppLogger.shared.info("Processing transaction with forex data")
+                    #endif
                 }
             }
             
@@ -285,12 +353,14 @@ class FinancialDataManager: ObservableObject {
             
             // Add transactions with account linkage
             let transactionsWithAccounts = newTransactions.map { transaction in
+                #if DEBUG
                 // DEBUG: Log forex data for each transaction
                 AppLogger.shared.debug("Adding transaction: \(transaction.description)")
                 AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
                 AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
                 AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
                 AppLogger.shared.debug("   - hasForex: \(transaction.hasForex)")
+                #endif
                 
                 // Use existing accountId if present, otherwise use detected account
                 let accountIdToUse = transaction.accountId ?? finalAccount.id
@@ -1162,6 +1232,7 @@ extension FinancialDataManager {
         AppLogger.shared.info("Total Liabilities: $\(String(format: "%.2f", totalLiabilities))", category: "Data")
         AppLogger.shared.info("Net Worth (Assets - Liabilities): $\(String(format: "%.2f", trueNetWorth))", category: "Data")
         
+        #if DEBUG
         // Debug: Show some sample income transactions
         if actualIncomeTransactions.count > 0 {
             AppLogger.shared.debug("Sample income transactions:", category: "Data")
@@ -1178,6 +1249,7 @@ extension FinancialDataManager {
                 AppLogger.shared.debug("\(transaction.description) = $\(String(format: "%.2f", transaction.amount)) (Category: \(transaction.category))", category: "Data")
             }
         }
+        #endif
         
         return ContextAwareFinancialSummary(
             accountType: .mixed,
@@ -1433,6 +1505,158 @@ struct ContextMetric {
         case .neutral:
             return .blue
         }
+    }
+    
+    // MARK: - Batch Processing Methods
+    
+    /// Add transactions with batch processing for better performance on large datasets
+    func addTransactionsBatched(
+        _ transactions: [Transaction],
+        jobId: String,
+        filename: String,
+        batchSize: Int = 500
+    ) {
+        Task.detached { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                try await self.performBatchProcessing(transactions, jobId: jobId, filename: filename, batchSize: batchSize)
+            } catch {
+                AppLogger.shared.error("Batch processing failed: \(error)", category: "BatchProcessor")
+            }
+        }
+    }
+    
+    /// Internal async method that performs the actual batch processing
+    private func performBatchProcessing(
+        _ transactions: [Transaction],
+        jobId: String,
+        filename: String,
+        batchSize: Int = 500
+    ) async throws {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        AppLogger.shared.info("🔄 Starting batch processing of \(transactions.count) transactions (batch size: \(batchSize))", category: "BatchProcessor")
+        
+        // Create batches
+        let batches = transactions.chunked(into: batchSize)
+        var allProcessedTransactions: [Transaction] = []
+        
+        // Track batch processing start
+        Analytics.shared.track("batch_processing_started", properties: [
+            "total_items": transactions.count,
+            "batch_size": batchSize,
+            "estimated_batches": batches.count,
+            "job_id": jobId,
+            "filename": filename
+        ])
+        
+        // Process each batch
+        for (index, batch) in batches.enumerated() {
+            // Process batch with memory management
+                // Update progress
+                let processedCount = index * batchSize
+                let progress = BatchProgress(
+                    totalItems: transactions.count,
+                    processedItems: processedCount,
+                    currentBatch: index + 1,
+                    totalBatches: batches.count,
+                    estimatedTimeRemaining: estimateTimeRemaining(
+                        startTime: startTime,
+                        currentProgress: Double(processedCount) / Double(transactions.count)
+                    ),
+                    startTime: startTime
+                )
+                
+                await MainActor.run {
+                    self.batchProgress = progress
+                }
+                
+                // Create processor and process batch  
+                let processor = TransactionBatchProcessor(batchSize: batchSize, categoryService: CategoryService.shared)
+                let processedBatch = try await processor.processBatch(batch)
+                allProcessedTransactions.append(contentsOf: processedBatch)
+                
+                // Track batch completion
+                Analytics.shared.track("batch_completed", properties: [
+                    "batch_number": index + 1,
+                    "items_processed": batch.count,
+                    "total_processed": allProcessedTransactions.count,
+                    "memory_mb": PerformanceMonitor.shared.getCurrentMemoryUsage()
+                ])
+                
+                AppLogger.shared.debug("✅ Completed batch \(index + 1)/\(batches.count) - \(batch.count) transactions", category: "BatchProcessor")
+                
+                // Allow UI to breathe between batches
+                if index < batches.count - 1 {
+                    try await Task.sleep(nanoseconds: 10_000_000) // 10ms
+                }
+        }
+        
+        // Final processing and UI update
+        let totalDuration = CFAbsoluteTimeGetCurrent() - startTime
+        
+        await MainActor.run {
+            // Add to existing transactions
+            self.transactions.append(contentsOf: allProcessedTransactions)
+            
+            // Create bank account if needed
+            if let firstTransaction = allProcessedTransactions.first {
+                self.ensureAccountExistsForTransaction(firstTransaction, filename: filename)
+            }
+            
+            // Update summary
+            self.updateSummaryOnMainThread()
+            
+            // Clear batch progress
+            self.batchProgress = nil
+            
+            // Update import time
+            self.lastImportTime = Date()
+        }
+        
+        // Save in background
+        Task.detached(priority: .background) {
+            await self.saveData()
+        }
+        
+        // Track completion
+        Analytics.shared.track("batch_processing_completed", properties: [
+            "total_items": transactions.count,
+            "total_duration": totalDuration,
+            "throughput_per_second": Int(Double(transactions.count) / totalDuration),
+            "success": true,
+            "job_id": jobId
+        ])
+        
+        AppLogger.shared.info("🎉 Batch processing completed: \(transactions.count) transactions in \(String(format: "%.2f", totalDuration))s", category: "BatchProcessor")
+    }
+    
+    /// Estimate time remaining based on current progress
+    private func estimateTimeRemaining(startTime: CFAbsoluteTime, currentProgress: Double) -> TimeInterval {
+        guard currentProgress > 0 else { return 0 }
+        
+        let elapsedTime = CFAbsoluteTimeGetCurrent() - startTime
+        let estimatedTotalTime = elapsedTime / currentProgress
+        let remainingTime = estimatedTotalTime - elapsedTime
+        
+        return max(0, remainingTime)
+    }
+    
+    /// Ensure bank account exists for a transaction
+    @MainActor private func ensureAccountExistsForTransaction(_ transaction: Transaction, filename: String) {
+        guard let accountId = transaction.accountId else { return }
+        
+        // Check if account already exists
+        if self.bankAccounts.contains(where: { $0.id == accountId }) {
+            return
+        }
+        
+        // Create new account
+        let newAccount = self.createAccountFromId(accountId, filename: filename)
+        self.bankAccounts.append(newAccount)
+        
+        AppLogger.shared.info("🏦 Created new account: \(newAccount.name) (\(newAccount.institution))", category: "BatchProcessor")
     }
 }
 

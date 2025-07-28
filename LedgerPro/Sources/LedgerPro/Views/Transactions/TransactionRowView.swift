@@ -1,5 +1,201 @@
 import SwiftUI
 
+// MARK: - Performance Optimized Display Data
+
+/// Pre-computed display data for transactions to avoid expensive operations during rendering
+struct TransactionDisplayData {
+    let dayMonth: String
+    let dayOfWeek: String
+    let merchantName: String
+    let merchantLocation: String
+    let categoryIcon: String
+    let categoryBadgeIcon: String
+    let categoryColor: Color
+    let formattedAmount: String
+    let amountColor: Color
+    
+    // Static formatters for performance
+    private static let dayMonthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter
+    }()
+    
+    private static let dayOfWeekFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        return formatter
+    }()
+    
+    private static let currencyFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter
+    }()
+    
+    // Pre-computed merchant name mapping for performance
+    private static let merchantNameMappings: [String: String] = [
+        "Capital One": "Capital One Mobile Payment",
+        "UBER": "Uber Eats",
+        "WAL-MART": "Walmart",
+        "WALMART": "Walmart",
+        "CHEVRON": "Chevron",
+        "NETFLIX": "Netflix.com",
+        "FARM": "Farm Roma Hipodromo"
+    ]
+    
+    // Pre-computed location mappings
+    private static let locationMappings: [String: String] = [
+        "Ciudad de Mexico": "Ciudad de Mexico",
+        "San Diego CA": "San Diego CA",
+        "Los Gatos CA": "Los Gatos CA",
+        "Tijuana BCN": "Tijuana BCN"
+    ]
+    
+    // Pre-computed category mappings for icons and colors
+    private static let categoryIconMappings: [String: String] = [
+        "Groceries": "cart.fill",
+        "Food & Dining": "fork.knife",
+        "Transportation": "fuelpump.fill",
+        "Shopping": "bag.fill",
+        "Entertainment": "tv.fill",
+        "Bills & Utilities": "bolt.fill",
+        "Healthcare": "cross.fill",
+        "Travel": "airplane",
+        "Income": "plus.circle.fill",
+        "Deposits": "plus.circle.fill",
+        "Subscription": "tv.fill",
+        "Transfer": "creditcard.fill",
+        "Payment": "creditcard.fill"
+    ]
+    
+    private static let categoryBadgeIconMappings: [String: String] = [
+        "Groceries": "leaf.fill",
+        "Food & Dining": "fork.knife",
+        "Transportation": "car.fill",
+        "Shopping": "bag.fill",
+        "Entertainment": "tv.fill",
+        "Bills & Utilities": "bolt.fill",
+        "Healthcare": "cross.fill",
+        "Travel": "airplane",
+        "Income": "plus.circle.fill",
+        "Deposits": "plus.circle.fill",
+        "Subscription": "arrow.clockwise",
+        "Transfer": "arrow.left.arrow.right",
+        "Payment": "arrow.left.arrow.right"
+    ]
+    
+    private static let categoryColorMappings: [String: Color] = [
+        "Groceries": .green,
+        "Food & Dining": .orange,
+        "Transportation": .blue,
+        "Shopping": .purple,
+        "Entertainment": .pink,
+        "Bills & Utilities": .red,
+        "Healthcare": .mint,
+        "Travel": .teal,
+        "Income": .green,
+        "Deposits": .green,
+        "Subscription": .indigo,
+        "Transfer": .gray,
+        "Payment": .gray
+    ]
+    
+    init(transaction: Transaction) {
+        // Pre-compute date formatting
+        let date = transaction.formattedDate
+        self.dayMonth = Self.dayMonthFormatter.string(from: date)
+        self.dayOfWeek = Self.dayOfWeekFormatter.string(from: date)
+        
+        // Pre-compute merchant name
+        let description = transaction.description
+        var computedMerchantName = description
+        
+        // Check merchant mappings efficiently
+        for (key, value) in Self.merchantNameMappings {
+            if description.contains(key) {
+                computedMerchantName = value
+                break
+            }
+        }
+        
+        // If no mapping found, use first 3 words
+        if computedMerchantName == description {
+            computedMerchantName = description.components(separatedBy: " ").prefix(3).joined(separator: " ")
+        }
+        self.merchantName = computedMerchantName
+        
+        // Pre-compute merchant location
+        var computedLocation = "Transaction Details"
+        for (key, value) in Self.locationMappings {
+            if description.contains(key) {
+                computedLocation = value
+                break
+            }
+        }
+        if description.contains("AuthDate") {
+            computedLocation = "AuthDate " + (description.components(separatedBy: "AuthDate ").last ?? "")
+        }
+        self.merchantLocation = computedLocation
+        
+        // Pre-compute category data
+        let category = transaction.category
+        self.categoryIcon = Self.categoryIconMappings[category] ?? "circle.fill"
+        self.categoryBadgeIcon = Self.categoryBadgeIconMappings[category] ?? "circle.fill"
+        
+        // Handle special case for Capital One
+        if description.lowercased().contains("capital one") {
+            self.categoryColor = .gray
+        } else {
+            self.categoryColor = Self.categoryColorMappings[category] ?? .gray
+        }
+        
+        // Pre-compute complex amount formatting with all special cases
+        let usdAmount: String
+        
+        // Special handling for Capital One payment (show as transfer)
+        if description.lowercased().contains("capital one") {
+            usdAmount = Self.currencyFormatter.string(from: NSNumber(value: abs(transaction.amount))) ?? "$0.00"
+            self.amountColor = .secondary
+        } else if transaction.isExpense {
+            usdAmount = "-" + (Self.currencyFormatter.string(from: NSNumber(value: abs(transaction.amount))) ?? "$0.00")
+            self.amountColor = .primary
+        } else {
+            usdAmount = "+" + (Self.currencyFormatter.string(from: NSNumber(value: transaction.amount)) ?? "$0.00")
+            self.amountColor = .green
+        }
+        
+        // Add foreign currency display if available
+        if let originalAmount = transaction.originalAmount,
+           let originalCurrency = transaction.originalCurrency {
+            let foreignAmount = Self.formatForeignCurrency(originalAmount, currency: originalCurrency)
+            self.formattedAmount = "\(usdAmount)\n(\(foreignAmount))"
+        } else {
+            self.formattedAmount = usdAmount
+        }
+    }
+    
+    // Static method for foreign currency formatting
+    private static func formatForeignCurrency(_ amount: Double, currency: String) -> String {
+        // Handle specific currency formatting
+        switch currency {
+        case "MXN":
+            return String(format: "%.2f MXN", amount)
+        case "EUR":
+            return String(format: "%.2f €", amount)
+        case "GBP":
+            return String(format: "%.2f £", amount)
+        case "JPY":
+            return String(format: "%.0f ¥", amount)
+        case "CAD":
+            return String(format: "%.2f CAD", amount)
+        default:
+            return String(format: "%.2f %@", amount, currency)
+        }
+    }
+}
+
 // MARK: - Distributed Transaction Row
 struct DistributedTransactionRowView: View {
     let transaction: Transaction
@@ -7,6 +203,24 @@ struct DistributedTransactionRowView: View {
     let onTransactionSelect: (Transaction) -> Void
     @Binding var selectedTransactions: Set<String>
     let showCheckbox: Bool
+    
+    // MARK: - Cached Computed Properties for Performance
+    private let displayData: TransactionDisplayData
+    
+    init(
+        transaction: Transaction,
+        onTransactionSelect: @escaping (Transaction) -> Void,
+        selectedTransactions: Binding<Set<String>>,
+        showCheckbox: Bool
+    ) {
+        self.transaction = transaction
+        self.onTransactionSelect = onTransactionSelect
+        self._selectedTransactions = selectedTransactions
+        self.showCheckbox = showCheckbox
+        
+        // Pre-compute expensive display data once
+        self.displayData = TransactionDisplayData(transaction: transaction)
+    }
     
     private var isSelected: Bool {
         selectedTransactions.contains(transaction.id)
@@ -171,53 +385,21 @@ struct DistributedTransactionRowView: View {
         .autoCategorizedStyle(transaction)
     }
     
-    // MARK: - Computed Properties
+    // MARK: - Optimized Computed Properties
     private var dayMonth: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: transaction.formattedDate)
+        displayData.dayMonth
     }
     
     private var dayOfWeek: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter.string(from: transaction.formattedDate)
+        displayData.dayOfWeek
     }
     
     private var merchantName: String {
-        // Simplify long merchant names
-        let desc = transaction.description
-        if desc.contains("Capital One") {
-            return "Capital One Mobile Payment"
-        } else if desc.contains("UBER") {
-            return "Uber Eats"
-        } else if desc.contains("WAL-MART") || desc.contains("WALMART") {
-            return "Walmart"
-        } else if desc.contains("CHEVRON") {
-            return "Chevron"
-        } else if desc.contains("NETFLIX") {
-            return "Netflix.com"
-        } else if desc.contains("FARM") {
-            return "Farm Roma Hipodromo"
-        }
-        return desc.components(separatedBy: " ").prefix(3).joined(separator: " ")
+        displayData.merchantName
     }
     
     private var merchantLocation: String {
-        let desc = transaction.description
-        // Extract location info if available
-        if desc.contains("Ciudad de Mexico") {
-            return "Ciudad de Mexico"
-        } else if desc.contains("San Diego CA") {
-            return "San Diego CA"
-        } else if desc.contains("Los Gatos CA") {
-            return "Los Gatos CA"
-        } else if desc.contains("Tijuana BCN") {
-            return "Tijuana BCN"
-        } else if desc.contains("AuthDate") {
-            return "AuthDate " + (desc.components(separatedBy: "AuthDate ").last ?? "")
-        }
-        return "Transaction Details"
+        displayData.merchantLocation
     }
     
     private var paymentMethod: String {
@@ -265,99 +447,23 @@ struct DistributedTransactionRowView: View {
     }
     
     private var categoryIcon: String {
-        switch transaction.category {
-        case "Groceries": return "cart.fill"
-        case "Food & Dining": return "fork.knife"
-        case "Transportation": return "fuelpump.fill"
-        case "Shopping": return "bag.fill"
-        case "Entertainment": return "tv.fill"
-        case "Bills & Utilities": return "bolt.fill"
-        case "Healthcare": return "cross.fill"
-        case "Travel": return "airplane"
-        case "Income", "Deposits": return "plus.circle.fill"
-        case "Subscription": return "tv.fill"
-        case "Transfer", "Payment": return "creditcard.fill"
-        default: return "circle.fill"
-        }
+        displayData.categoryIcon
     }
     
     private var categoryBadgeIcon: String {
-        switch transaction.category {
-        case "Groceries": return "leaf.fill"
-        case "Food & Dining": return "fork.knife"
-        case "Transportation": return "car.fill"
-        case "Shopping": return "bag.fill"
-        case "Entertainment": return "tv.fill"
-        case "Bills & Utilities": return "bolt.fill"
-        case "Healthcare": return "cross.fill"
-        case "Travel": return "airplane"
-        case "Income", "Deposits": return "plus.circle.fill"
-        case "Subscription": return "arrow.clockwise"
-        case "Transfer", "Payment": return "arrow.left.arrow.right"
-        default: return "circle.fill"
-        }
+        displayData.categoryBadgeIcon
     }
     
     private var categoryColor: Color {
-        // Handle Transfer/Payment as gray
-        if transaction.description.lowercased().contains("capital one") {
-            return .gray
-        }
-        
-        switch transaction.category {
-        case "Groceries": return .green
-        case "Food & Dining": return .orange
-        case "Transportation": return .blue
-        case "Shopping": return .purple
-        case "Entertainment": return .pink
-        case "Bills & Utilities": return .red
-        case "Healthcare": return .mint
-        case "Travel": return .teal
-        case "Income", "Deposits": return .green
-        case "Subscription": return .indigo
-        case "Transfer", "Payment": return .gray
-        default: return .gray
-        }
+        displayData.categoryColor
     }
     
     private var amountColor: Color {
-        // Special handling for Capital One payment (Transfer)
-        if transaction.description.lowercased().contains("capital one") {
-            return .secondary
-        }
-        
-        if transaction.isIncome {
-            return .green
-        } else {
-            return .primary
-        }
+        displayData.amountColor
     }
     
     private var formattedAmount: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        
-        let usdAmount: String
-        
-        // Special handling for Capital One payment (show as transfer)
-        if transaction.description.lowercased().contains("capital one") {
-            usdAmount = formatter.string(from: NSNumber(value: abs(transaction.amount))) ?? "$0.00"
-        } else if transaction.isExpense {
-            usdAmount = "-" + (formatter.string(from: NSNumber(value: abs(transaction.amount))) ?? "$0.00")
-        } else {
-            usdAmount = "+" + (formatter.string(from: NSNumber(value: transaction.amount)) ?? "$0.00")
-        }
-        
-        // Add foreign currency display if available
-        if let originalAmount = transaction.originalAmount,
-           let originalCurrency = transaction.originalCurrency {
-            
-            let foreignAmount = formatForeignCurrency(originalAmount, currency: originalCurrency)
-            return "\(usdAmount)\n(\(foreignAmount))"
-        }
-        
-        return usdAmount
+        displayData.formattedAmount
     }
     
     private func formatForeignCurrency(_ amount: Double, currency: String) -> String {

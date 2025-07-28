@@ -1,0 +1,16 @@
+# Add these to your Package.swift if you want to try SPM-based UI testing (experimental):
+
+// In products array:
+.executable(
+    name: "LedgerProTestRunner",
+    targets: ["LedgerProTestRunner"]
+),
+
+// In targets array:
+.executableTarget(
+    name: "LedgerProTestRunner",
+    dependencies: ["LedgerPro"],
+    path: "Sources/LedgerProTestRunner"
+),
+
+// Note: Full UI testing still requires Xcode project

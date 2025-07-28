@@ -1,13 +1,13 @@
 import Foundation
 import SwiftUI
 
-struct Transaction: Codable, Identifiable, Hashable {
-    let id: String
-    let date: String
-    let description: String
-    let amount: Double
-    var category: String
-    var confidence: Double?
+public struct Transaction: Codable, Identifiable, Hashable {
+    public let id: String
+    public let date: String
+    public let description: String
+    public let amount: Double
+    public var category: String
+    public var confidence: Double?
     let jobId: String?
     let accountId: String?
     let rawData: [String: String]?
@@ -67,7 +67,7 @@ struct Transaction: Codable, Identifiable, Hashable {
     }
     
     // Decoder initializer for JSON parsing
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         // If id is missing, generate one from other fields
@@ -196,17 +196,17 @@ struct FinancialSummary: Codable {
     }
 }
 
-struct BankAccount: Codable, Identifiable, Hashable {
-    let id: String
-    let name: String
-    let institution: String
-    let accountType: AccountType
-    let lastFourDigits: String?
-    let currency: String
-    let isActive: Bool
-    let createdAt: String
+public struct BankAccount: Codable, Identifiable, Hashable {
+    public let id: String
+    public let name: String
+    public let institution: String
+    public let accountType: AccountType
+    public let lastFourDigits: String?
+    public let currency: String
+    public let isActive: Bool
+    public let createdAt: String
     
-    enum AccountType: String, Codable, CaseIterable {
+    public enum AccountType: String, Codable, CaseIterable {
         case checking = "checking"
         case savings = "savings"
         case credit = "credit"
@@ -252,19 +252,25 @@ struct BankAccount: Codable, Identifiable, Hashable {
     }
 }
 
-struct UploadedStatement: Codable, Identifiable {
-    let id: String
-    let jobId: String
-    let filename: String
-    let uploadDate: String
-    let transactionCount: Int
-    let accountId: String
-    let summary: StatementSummary
+public struct UploadedStatement: Codable, Identifiable {
+    public let id: String
+    public let jobId: String
+    public let filename: String
+    public let uploadDate: String
+    public let transactionCount: Int
+    public let accountId: String
+    public let summary: StatementSummary
     
-    struct StatementSummary: Codable {
-        let totalIncome: Double
-        let totalExpenses: Double
-        let netAmount: Double
+    public struct StatementSummary: Codable {
+        public let totalIncome: Double
+        public let totalExpenses: Double
+        public let netAmount: Double
+        
+        public init(totalIncome: Double, totalExpenses: Double, netAmount: Double) {
+            self.totalIncome = totalIncome
+            self.totalExpenses = totalExpenses
+            self.netAmount = netAmount
+        }
     }
     
     init(jobId: String, filename: String, uploadDate: String, transactionCount: Int, accountId: String, summary: StatementSummary) {
@@ -347,7 +353,7 @@ extension Transaction {
     }
     
     var displayDetailAmount: String {
-        let formatter = NumberFormatter.currencyFormatter
+        let formatter = NumberFormatter.currency
         
         if description.lowercased().contains("capital one") {
             return formatter.string(from: NSNumber(value: abs(amount))) ?? "$0.00"
@@ -365,15 +371,6 @@ extension Transaction {
     }
 }
 
-// MARK: - Performance Optimizations
-extension NumberFormatter {
-    static let currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter
-    }()
-}
 
 extension DateFormatter {
     static let fullDateFormatter: DateFormatter = {

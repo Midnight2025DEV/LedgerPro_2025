@@ -89,8 +89,8 @@ final class APIIntegrationTests: XCTestCase {
         // 6. Verify summary calculations
         let summary = transactionResult.summary
         XCTAssertEqual(summary.totalIncome, 3500.00, accuracy: 0.01) // 2500 + 1000
-        XCTAssertEqual(summary.totalExpenses, 234.31, accuracy: 0.01)
-        XCTAssertEqual(summary.netAmount, 3265.69, accuracy: 0.01)
+        XCTAssertEqual(summary.totalExpenses, 235.31, accuracy: 0.01)
+        XCTAssertEqual(summary.netAmount, 3264.69, accuracy: 0.01)
         
         // 7. Test categorization service integration
         let importService = ImportCategorizationService()

@@ -403,8 +403,11 @@ class CategoryService: ObservableObject {
             AppLogger.shared.info("🔍 SAMPLE VALID RULES:")
             for (index, rule) in validRules.enumerated() {
                 if index < 5 {
-                    let cat = category(by: rule.categoryId)!
-                    AppLogger.shared.info("   '\(rule.ruleName)' -> '\(cat.name)' (ID: \(rule.categoryId))")
+                    if let cat = category(by: rule.categoryId) {
+                        AppLogger.shared.info("   '\(rule.ruleName)' -> '\(cat.name)' (ID: \(rule.categoryId))")
+                    } else {
+                        AppLogger.shared.warning("⚠️ Diagnostic inconsistency: Rule '\(rule.ruleName)' category \(rule.categoryId) is now missing")
+                    }
                 } else if index == 5 {
                     break
                 }
