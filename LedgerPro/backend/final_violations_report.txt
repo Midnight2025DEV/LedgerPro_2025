@@ -1,0 +1,249 @@
+=== Flake8 Violation Summary ===
+Total remaining: ./api_server_real.py:31:1: I201 Missing newline between import groups. 'from pydantic import BaseModel' is identified as Third Party and 'from fastapi.middleware.cors import CORSMiddleware' is identified as Third Party.
+./api_server_real.py:34:1: I100 Import statements are in the wrong order. 'from processors.python.camelot_processor import CamelotFinancialProcessor' should be before 'from pydantic import BaseModel' and in a different group.
+./api_server_real.py:46:89: E501 line too long (124 > 88 characters)
+./api_server_real.py:139:42: B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+./api_server_real.py:164:89: E501 line too long (152 > 88 characters)
+./api_server_real.py:509:89: E501 line too long (90 > 88 characters)
+./api_server_real.py:532:13: SIM105 Use 'contextlib.suppress(OSError)'
+./api_server_secure.py:42:1: I201 Missing newline between import groups. 'from pydantic import BaseModel' is identified as Third Party and 'from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer' is identified as Third Party.
+./api_server_secure.py:48:1: I201 Missing newline between import groups. 'from starlette.middleware.base import BaseHTTPMiddleware' is identified as Third Party and 'from slowapi.util import get_remote_address' is identified as Third Party.
+./api_server_secure.py:51:1: I100 Import statements are in the wrong order. 'from processors.python.camelot_processor import CamelotFinancialProcessor' should be before 'from starlette.middleware.base import BaseHTTPMiddleware' and in a different group.
+./api_server_secure.py:94:89: E501 line too long (114 > 88 characters)
+./api_server_secure.py:105:89: E501 line too long (91 > 88 characters)
+./api_server_secure.py:167:59: B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+./api_server_secure.py:237:89: E501 line too long (104 > 88 characters)
+./api_server_secure.py:377:24: B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+./api_server_secure.py:378:18: B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+./api_server_secure.py:425:89: E501 line too long (96 > 88 characters)
+./api_server_secure.py:434:89: E501 line too long (108 > 88 characters)
+./api_server_secure.py:472:89: E501 line too long (102 > 88 characters)
+./api_server_secure.py:561:36: B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+./api_server_secure.py:762:89: E501 line too long (90 > 88 characters)
+./api_server_secure.py:780:9: SIM102 Use a single if-statement instead of nested if-statements
+./api_server_secure.py:904:89: E501 line too long (90 > 88 characters)
+./api_server_secure.py:927:9: SIM102 Use a single if-statement instead of nested if-statements
+./api_server_secure.py:933:13: SIM105 Use 'contextlib.suppress(OSError)'
+./api_server_secure_fixed.py:30:1: I201 Missing newline between import groups. 'from pydantic import BaseModel' is identified as Third Party and 'from fastapi.middleware.cors import CORSMiddleware' is identified as Third Party.
+./api_server_secure_fixed.py:33:1: I100 Import statements are in the wrong order. 'from config.secure_auth import secure_auth' should be before 'from pydantic import BaseModel' and in a different group.
+./api_server_secure_fixed.py:34:1: I201 Missing newline between import groups. 'from middleware.security_headers import SecurityHeadersMiddleware' is identified as Third Party and 'from config.secure_auth import secure_auth' is identified as Third Party.
+./api_server_secure_fixed.py:39:1: I201 Missing newline between import groups. 'from utils.secure_file_handler import secure_file_handler' is identified as Third Party and 'from processors.python.csv_processor_enhanced import EnhancedCSVProcessor' is identified as Third Party.
+./api_server_secure_fixed.py:50:89: E501 line too long (113 > 88 characters)
+./api_server_secure_fixed.py:124:89: E501 line too long (93 > 88 characters)
+./api_server_secure_fixed.py:178:42: B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+./api_server_secure_fixed.py:244:21: F541 f-string is missing placeholders
+./api_server_secure_fixed.py:271:19: F541 f-string is missing placeholders
+./api_server_secure_fixed.py:334:89: E501 line too long (90 > 88 characters)
+./api_server_secure_fixed.py:383:19: F541 f-string is missing placeholders
+./api_server_secure_fixed.py:429:89: E501 line too long (90 > 88 characters)
+./api_server_secure_fixed.py:539:89: E501 line too long (105 > 88 characters)
+./config/secure_auth.py:36:89: E501 line too long (95 > 88 characters)
+./config/secure_auth.py:66:23: F541 f-string is missing placeholders
+./config/secure_auth.py:66:56: E231 missing whitespace after ':'
+./config/secure_auth.py:67:23: F541 f-string is missing placeholders
+./config/secure_auth.py:70:89: E501 line too long (92 > 88 characters)
+./config/security_config.py:46:89: E501 line too long (98 > 88 characters)
+./config/security_config.py:128:89: E501 line too long (89 > 88 characters)
+./config/security_config.py:129:86: W291 trailing whitespace
+./generate_secret_key.py:25:11: F541 f-string is missing placeholders
+./generate_secret_key.py:25:35: E231 missing whitespace after ':'
+./generate_secret_key.py:28:11: F541 f-string is missing placeholders
+./generate_secret_key.py:28:41: E231 missing whitespace after ':'
+./generate_secret_key.py:31:11: F541 f-string is missing placeholders
+./generate_secret_key.py:31:33: E231 missing whitespace after ':'
+./generate_secret_key.py:32:11: F541 f-string is missing placeholders
+./generate_secret_key.py:33:11: F541 f-string is missing placeholders
+./generate_secret_key.py:34:11: F541 f-string is missing placeholders
+./generate_secret_key.py:35:11: F541 f-string is missing placeholders
+./middleware/security_headers.py:12:1: I201 Missing newline between import groups. 'from starlette.middleware.base import BaseHTTPMiddleware' is identified as Third Party and 'from fastapi import Request' is identified as Third Party.
+./middleware/security_headers.py:30:89: E501 line too long (89 > 88 characters)
+./processors/python/camelot_processor.py:18:1: I201 Missing newline between import groups. 'import pandas' is identified as Third Party and 'import camelot' is identified as Third Party.
+./processors/python/camelot_processor.py:19:1: I201 Missing newline between import groups. 'import pdfminer.high_level' is identified as Third Party and 'import pandas' is identified as Third Party.
+./processors/python/camelot_processor.py:49:28: SIM910 Use 'config.get("table_areas")' instead of 'config.get('table_areas', None)'
+./processors/python/camelot_processor.py:50:24: SIM910 Use 'config.get("columns")' instead of 'config.get('columns', None)'
+./processors/python/camelot_processor.py:79:89: E501 line too long (119 > 88 characters)
+./processors/python/camelot_processor.py:149:5: C901 'CamelotProcessor.extract_tables_with_camelot' is too complex (14)
+./processors/python/camelot_processor.py:186:89: E501 line too long (119 > 88 characters)
+./processors/python/camelot_processor.py:186:112: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:195:89: E501 line too long (109 > 88 characters)
+./processors/python/camelot_processor.py:195:103: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:203:89: E501 line too long (109 > 88 characters)
+./processors/python/camelot_processor.py:203:102: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:378:5: C901 'CamelotProcessor.extract_transactions_from_tables' is too complex (17)
+./processors/python/camelot_processor.py:389:89: E501 line too long (101 > 88 characters)
+./processors/python/camelot_processor.py:413:89: E501 line too long (109 > 88 characters)
+./processors/python/camelot_processor.py:426:89: E501 line too long (103 > 88 characters)
+./processors/python/camelot_processor.py:438:89: E501 line too long (89 > 88 characters)
+./processors/python/camelot_processor.py:466:35: F541 f-string is missing placeholders
+./processors/python/camelot_processor.py:474:89: E501 line too long (94 > 88 characters)
+./processors/python/camelot_processor.py:492:89: E501 line too long (92 > 88 characters)
+./processors/python/camelot_processor.py:501:89: E501 line too long (111 > 88 characters)
+./processors/python/camelot_processor.py:558:5: C901 'CamelotProcessor.parse_capital_one_transaction_row' is too complex (17)
+./processors/python/camelot_processor.py:610:13: B001 Do not use bare `except:`, it also catches unexpected events like memory errors, interrupts, system exit, and so on.  Prefer `except Exception:`.  If you're sure what you're doing, be explicit and write `except BaseException:`.
+./processors/python/camelot_processor.py:610:13: E722 do not use bare 'except'
+./processors/python/camelot_processor.py:635:13: B001 Do not use bare `except:`, it also catches unexpected events like memory errors, interrupts, system exit, and so on.  Prefer `except Exception:`.  If you're sure what you're doing, be explicit and write `except BaseException:`.
+./processors/python/camelot_processor.py:635:13: E722 do not use bare 'except'
+./processors/python/camelot_processor.py:675:89: E501 line too long (123 > 88 characters)
+./processors/python/camelot_processor.py:693:89: E501 line too long (124 > 88 characters)
+./processors/python/camelot_processor.py:700:89: E501 line too long (100 > 88 characters)
+./processors/python/camelot_processor.py:730:89: E501 line too long (96 > 88 characters)
+./processors/python/camelot_processor.py:746:89: E501 line too long (94 > 88 characters)
+./processors/python/camelot_processor.py:828:13: SIM102 Use a single if-statement instead of nested if-statements
+./processors/python/camelot_processor.py:879:9: SIM110 Use 'return any(re.search(pattern, value) for pattern in date_patterns + amount_patterns)'
+./processors/python/camelot_processor.py:1226:89: E501 line too long (115 > 88 characters)
+./processors/python/camelot_processor.py:1269:89: E501 line too long (96 > 88 characters)
+./processors/python/camelot_processor.py:1492:64: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1493:68: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1494:70: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1515:80: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1569:11: F541 f-string is missing placeholders
+./processors/python/camelot_processor.py:1569:35: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1571:61: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1576:15: F541 f-string is missing placeholders
+./processors/python/camelot_processor.py:1576:37: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1582:84: E231 missing whitespace after ':'
+./processors/python/camelot_processor.py:1582:89: E501 line too long (89 > 88 characters)
+./processors/python/csv_processor.py:9:1: C901 'process_csv_file' is too complex (20)
+./processors/python/csv_processor.py:108:89: E501 line too long (119 > 88 characters)
+./processors/python/csv_processor_backup.py:9:1: C901 'process_csv_file' is too complex (20)
+./processors/python/csv_processor_backup.py:108:89: E501 line too long (119 > 88 characters)
+./processors/python/csv_processor_enhanced.py:191:5: C901 'EnhancedCSVProcessor.process_single_header_csv' is too complex (30)
+./processors/python/csv_processor_enhanced.py:299:89: E501 line too long (94 > 88 characters)
+./processors/python/csv_processor_enhanced.py:332:33: SIM105 Use 'contextlib.suppress(Exception)'
+./processors/python/csv_processor_enhanced.py:334:33: B001 Do not use bare `except:`, it also catches unexpected events like memory errors, interrupts, system exit, and so on.  Prefer `except Exception:`.  If you're sure what you're doing, be explicit and write `except BaseException:`.
+./processors/python/csv_processor_enhanced.py:334:33: E722 do not use bare 'except'
+./processors/python/csv_processor_enhanced.py:337:89: E501 line too long (90 > 88 characters)
+./processors/python/csv_processor_enhanced.py:338:25: SIM102 Use a single if-statement instead of nested if-statements
+./processors/python/csv_processor_enhanced.py:383:47: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced.py:529:9: SIM904 Initialize dictionary 'mapping' directly
+./processors/python/csv_processor_enhanced.py:651:11: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced.py:651:33: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced.py:656:15: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced.py:656:41: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced.py:659:89: E501 line too long (109 > 88 characters)
+./processors/python/csv_processor_enhanced.py:659:104: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced.py:663:89: E501 line too long (133 > 88 characters)
+./processors/python/csv_processor_enhanced_broken_backup.py:240:9: SIM904 Initialize dictionary 'mapping' directly
+./processors/python/csv_processor_enhanced_broken_backup.py:266:5: C901 'EnhancedCSVProcessor.process_section' is too complex (18)
+./processors/python/csv_processor_enhanced_broken_backup.py:335:27: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:338:23: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:349:23: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:356:23: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:366:27: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:369:23: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:374:23: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:425:89: E501 line too long (94 > 88 characters)
+./processors/python/csv_processor_enhanced_broken_backup.py:431:9: SIM110 Use 'return any(re.match(pattern, row, re.IGNORECASE) for pattern in divider_patterns)'
+./processors/python/csv_processor_enhanced_broken_backup.py:583:51: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_broken_backup.py:587:89: E501 line too long (92 > 88 characters)
+./processors/python/csv_processor_enhanced_broken_backup.py:596:89: E501 line too long (91 > 88 characters)
+./processors/python/csv_processor_enhanced_broken_backup.py:633:11: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:633:33: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_broken_backup.py:638:15: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_broken_backup.py:638:41: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_broken_backup.py:641:89: E501 line too long (109 > 88 characters)
+./processors/python/csv_processor_enhanced_broken_backup.py:641:104: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_broken_backup.py:645:89: E501 line too long (133 > 88 characters)
+./processors/python/csv_processor_enhanced_fixed.py:173:5: C901 'EnhancedCSVProcessor.process_single_header_csv' is too complex (19)
+./processors/python/csv_processor_enhanced_fixed.py:268:33: SIM105 Use 'contextlib.suppress(Exception)'
+./processors/python/csv_processor_enhanced_fixed.py:270:33: B001 Do not use bare `except:`, it also catches unexpected events like memory errors, interrupts, system exit, and so on.  Prefer `except Exception:`.  If you're sure what you're doing, be explicit and write `except BaseException:`.
+./processors/python/csv_processor_enhanced_fixed.py:270:33: E722 do not use bare 'except'
+./processors/python/csv_processor_enhanced_fixed.py:314:47: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_fixed.py:460:9: SIM904 Initialize dictionary 'mapping' directly
+./processors/python/csv_processor_enhanced_fixed.py:582:11: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_fixed.py:582:33: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_fixed.py:587:15: F541 f-string is missing placeholders
+./processors/python/csv_processor_enhanced_fixed.py:587:41: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_fixed.py:590:89: E501 line too long (109 > 88 characters)
+./processors/python/csv_processor_enhanced_fixed.py:590:104: E231 missing whitespace after ':'
+./processors/python/csv_processor_enhanced_fixed.py:594:89: E501 line too long (133 > 88 characters)
+./test_backend_startup.py:64:23: E231 missing whitespace after ':'
+./test_backend_startup.py:65:23: E231 missing whitespace after ':'
+./test_navy_federal.py:33:48: E231 missing whitespace after ':'
+./test_navy_federal.py:35:32: E231 missing whitespace after ':'
+./test_navy_federal.py:52:11: F541 f-string is missing placeholders
+./test_navy_federal.py:52:32: E231 missing whitespace after ':'
+./test_navy_federal.py:57:15: F541 f-string is missing placeholders
+./test_navy_federal.py:57:39: E231 missing whitespace after ':'
+./test_navy_federal.py:59:42: E231 missing whitespace after ':'
+./test_navy_federal.py:62:48: E231 missing whitespace after ':'
+./test_navy_federal.py:66:89: E501 line too long (110 > 88 characters)
+./test_navy_federal.py:90:11: F541 f-string is missing placeholders
+./test_navy_federal.py:92:66: E231 missing whitespace after ':'
+./tests/test_api_endpoints.py:1:1: D100 Missing docstring in public module
+./tests/test_api_endpoints.py:11:1: I100 Import statements are in the wrong order. 'from fastapi.testclient import TestClient' should be before 'import pytest' and in a different group.
+./tests/test_api_endpoints.py:11:1: I201 Missing newline between import groups. 'from fastapi.testclient import TestClient' is identified as Third Party and 'import pytest' is identified as Third Party.
+./tests/test_api_endpoints.py:16:1: I100 Import statements are in the wrong order. 'from api_server_real import app, file_hashes, processing_jobs' should be before 'from fastapi.testclient import TestClient' and in a different group.
+./tests/test_api_endpoints.py:16:1: E402 module level import not at top of file
+./tests/test_api_endpoints.py:535:23: E231 missing whitespace after ','
+./tests/test_api_endpoints.py:535:35: E231 missing whitespace after ','
+./tests/test_api_endpoints.py:535:54: E231 missing whitespace after ','
+./tests/test_api_endpoints.py:535:67: E231 missing whitespace after ','
+./tests/test_api_endpoints.py:571:89: E501 line too long (118 > 88 characters)
+./tests/test_api_endpoints.py:595:48: E231 missing whitespace after ':'
+./tests/test_api_endpoints.py:639:51: E231 missing whitespace after ':'
+./tests/test_api_endpoints.py:639:56: E231 missing whitespace after ':'
+./tests/test_api_endpoints.py:639:59: E231 missing whitespace after ':'
+./tests/test_security.py:19:1: I100 Import statements are in the wrong order. 'from fastapi.testclient import TestClient' should be before 'import pytest' and in a different group.
+./tests/test_security.py:19:1: I201 Missing newline between import groups. 'from fastapi.testclient import TestClient' is identified as Third Party and 'import pytest' is identified as Third Party.
+./tests/test_security.py:22:1: I100 Import statements are in the wrong order. 'from api_server_secure import app, ip_job_counts, processing_jobs, request_metrics, user_sessions' should be before 'from fastapi.testclient import TestClient' and in a different group.
+./tests/test_security.py:166:44: E712 comparison to True should be 'if cond is True:' or 'if cond:'
+./tests/test_security.py:170:44: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./tests/test_security.py:174:44: E712 comparison to True should be 'if cond is True:' or 'if cond:'
+./tests/test_security.py:249:13: B007 Loop control variable 'i' not used within the loop body. If this is intended, start the name with an underscore.
+./tests/test_security_comprehensive.py:16:1: I100 Import statements are in the wrong order. 'from config.secure_auth import SecureAuthConfig' should be before 'import pytest' and in a different group.
+./tests/test_security_comprehensive.py:17:1: I201 Missing newline between import groups. 'from middleware.security_headers import SecurityHeadersMiddleware' is identified as Third Party and 'from config.secure_auth import SecureAuthConfig' is identified as Third Party.
+./tests/test_security_comprehensive.py:18:1: I201 Missing newline between import groups. 'from utils.secure_file_handler import SecureFileHandler' is identified as Third Party and 'from middleware.security_headers import SecurityHeadersMiddleware' is identified as Third Party.
+./tests/test_security_comprehensive.py:59:89: E501 line too long (106 > 88 characters)
+./tests/test_security_comprehensive.py:134:89: E501 line too long (124 > 88 characters)
+./utils/secure_file_handler.py:18:1: I201 Missing newline between import groups. 'import magic' is identified as Third Party and 'import aiofiles' is identified as Third Party.
+./utils/secure_file_handler.py:75:89: E501 line too long (97 > 88 characters)
+./utils/secure_file_handler.py:81:29: F541 f-string is missing placeholders
+./utils/secure_file_handler.py:88:25: F541 f-string is missing placeholders
+./utils/secure_file_handler.py:240:5: F811 redefinition of unused 'magic' from line 18
+./utils/secure_file_handler.py:248:1: I100 Import statements are in the wrong order. 'from datetime import datetime' should be before 'import magic' and in a different group.
+./utils/secure_file_handler.py:248:1: E402 module level import not at top of file
+204
+
+=== By Error Code ===
+  58 E501
+  44 E231
+  33 F541
+  14 I201
+   9 I100
+   8 C901
+   6 B008
+   4 SIM105
+   4 SIM102
+   4 E722
+   4 B001
+   3 SIM904
+   3 E712
+   2 SIM910
+   2 SIM110
+   2 E402
+   1 W291
+   1 F811
+   1 D100
+   1 B007
+
+=== By File ===
+  46 ./processors/python/camelot_processor.py
+  21 ./processors/python/csv_processor_enhanced_broken_backup.py
+  18 ./api_server_secure.py
+  16 ./processors/python/csv_processor_enhanced.py
+  14 ./tests/test_api_endpoints.py
+  13 ./processors/python/csv_processor_enhanced_fixed.py
+  13 ./api_server_secure_fixed.py
+  11 ./test_navy_federal.py
+  10 ./generate_secret_key.py
+   7 ./utils/secure_file_handler.py
+   7 ./tests/test_security.py
+   7 ./api_server_real.py
+   5 ./tests/test_security_comprehensive.py
+   5 ./config/secure_auth.py
+   3 ./config/security_config.py
+   2 ./test_backend_startup.py
+   2 ./processors/python/csv_processor.py
+   2 ./processors/python/csv_processor_backup.py
+   2 ./middleware/security_headers.py
