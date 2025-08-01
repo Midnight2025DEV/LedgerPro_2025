@@ -19,8 +19,7 @@ let package = Package(
             dependencies: [],
             path: "Sources/LedgerPro",
             exclude: [
-                "Debug/APIMonitor.swift.disabled",
-                "Views/RulesManagementView.swift"
+                "Debug/APIMonitor.swift.disabled"
             ]
         ),
         .testTarget(
