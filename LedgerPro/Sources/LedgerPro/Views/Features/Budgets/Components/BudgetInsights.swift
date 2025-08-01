@@ -298,7 +298,6 @@ struct BudgetInsights: View {
         #endif
         
         // Handle recommendation action based on type
-        print("Handling recommendation: \(recommendation.action)")
     }
 }
 

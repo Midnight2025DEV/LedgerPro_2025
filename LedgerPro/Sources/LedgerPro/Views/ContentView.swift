@@ -74,15 +74,15 @@ struct ContentViewModernDashboard: View {
     
     @ViewBuilder
     private var modernBudgetsSection: some View {
-        if !Budget.sampleBudgets.isEmpty {
+        if !dataManager.activeBudgets.isEmpty {
             VStack(alignment: .leading, spacing: DSSpacing.lg) {
                 Text("Active Budgets")
                     .font(DSTypography.title.title3)
                     .foregroundColor(DSColors.neutral.text)
                 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DSSpacing.lg), count: 2), spacing: DSSpacing.lg) {
-                    ForEach(Budget.sampleBudgets.prefix(4)) { budget in
-                        BudgetCard(budget: budget, spending: Double.random(in: 100...budget.amount))
+                    ForEach(dataManager.activeBudgets.prefix(4)) { budget in
+                        BudgetCard(budget: budget, spending: budget.calculateSpending(transactions: dataManager.transactions))
                     }
                 }
             }
@@ -96,11 +96,13 @@ struct ContentViewModernDashboard: View {
                 .font(DSTypography.title.title3)
                 .foregroundColor(DSColors.neutral.text)
             
-            BudgetInsights(
-                budget: Budget.sampleBudgets.first ?? Budget(name: "General", amount: 1000, period: .monthly),
-                currentSpending: 650,
-                insights: []
-            )
+            if let firstBudget = dataManager.activeBudgets.first {
+                BudgetInsights(
+                    budget: firstBudget,
+                    currentSpending: firstBudget.calculateSpending(transactions: dataManager.transactions),
+                    insights: []
+                )
+            }
         }
     }
     
@@ -246,56 +248,65 @@ struct ModernTransactionRow: View {
     let onTap: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: DSSpacing.md) {
-                // Category icon with modern styling
-                Circle()
-                    .fill(categoryColor.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Image(systemName: categoryIcon)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(categoryColor)
-                    )
-                
-                // Transaction details
-                VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                    Text(transaction.description)
-                        .font(DSTypography.body.semibold)
-                        .foregroundColor(DSColors.neutral.text)
-                        .lineLimit(1)
+        VStack(spacing: 0) {
+            Button(action: onTap) {
+                HStack(spacing: DSSpacing.md) {
+                    // Category icon with modern styling
+                    Circle()
+                        .fill(categoryColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            Image(systemName: categoryIcon)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(categoryColor)
+                        )
                     
-                    HStack(spacing: DSSpacing.xs) {
-                        Text(transaction.category.isEmpty ? "Uncategorized" : transaction.category)
-                            .font(DSTypography.caption.regular)
-                            .foregroundColor(DSColors.neutral.textSecondary)
+                    // Transaction details
+                    VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                        Text(transaction.description)
+                            .font(DSTypography.body.semibold)
+                            .foregroundColor(DSColors.neutral.text)
+                            .lineLimit(1)
                         
-                        Text("•")
-                            .font(DSTypography.caption.regular)
-                            .foregroundColor(DSColors.neutral.textTertiary)
-                        
-                        Text(transaction.formattedDate.formatted(date: .abbreviated, time: .omitted))
-                            .font(DSTypography.caption.regular)
-                            .foregroundColor(DSColors.neutral.textTertiary)
+                        HStack(spacing: DSSpacing.xs) {
+                            Text(transaction.category.isEmpty ? "Uncategorized" : transaction.category)
+                                .font(DSTypography.caption.regular)
+                                .foregroundColor(DSColors.neutral.textSecondary)
+                            
+                            Text("•")
+                                .font(DSTypography.caption.regular)
+                                .foregroundColor(DSColors.neutral.textTertiary)
+                            
+                            Text(transaction.formattedDate.formatted(date: .abbreviated, time: .omitted))
+                                .font(DSTypography.caption.regular)
+                                .foregroundColor(DSColors.neutral.textTertiary)
+                        }
                     }
+                    
+                    Spacer()
+                    
+                    // Amount with animated number
+                    AnimatedNumber(value: transaction.amount, format: .currency())
+                        .font(DSTypography.body.semibold)
+                        .foregroundColor(transaction.amount < 0 ? DSColors.error.main : DSColors.success.main)
                 }
-                
-                Spacer()
-                
-                // Amount with animated number
-                AnimatedNumber(value: transaction.amount, format: .currency())
-                    .font(DSTypography.body.semibold)
-                    .foregroundColor(transaction.amount < 0 ? DSColors.error.main : DSColors.success.main)
+                .padding(DSSpacing.lg)
             }
-            .padding(DSSpacing.lg)
-            .background(.ultraThinMaterial)
-            .cornerRadius(DSSpacing.radius.lg)
-            .overlay(
-                RoundedRectangle(cornerRadius: DSSpacing.radius.lg)
-                    .stroke(DSColors.neutral.border.opacity(0.1), lineWidth: 1)
-            )
+            .buttonStyle(.plain)
+            
+            // AI Helper for uncategorized transactions
+            if transaction.category.isEmpty || transaction.category == "Uncategorized" {
+                AITransactionHelper(transaction: transaction)
+                    .padding(.horizontal, DSSpacing.lg)
+                    .padding(.bottom, DSSpacing.md)
+            }
         }
-        .buttonStyle(.plain)
+        .background(.ultraThinMaterial)
+        .cornerRadius(DSSpacing.radius.lg)
+        .overlay(
+            RoundedRectangle(cornerRadius: DSSpacing.radius.lg)
+                .stroke(DSColors.neutral.border.opacity(0.1), lineWidth: 1)
+        )
     }
     
     private var categoryColor: Color {
@@ -355,9 +366,6 @@ struct ContentView: View {
     @State private var selectedTransaction: Transaction?
     @State private var showingHealthAlert = false
     @State private var healthCheckMessage = ""
-    @State private var showingCategoryTest = false
-    @State private var showingRulesWindow = false
-    @State private var showingLearningWindow = false
     @State private var selectedTransactionFilter: TransactionFilter = .all
     @State private var shouldNavigateToTransactions = false
     @State private var triggerUncategorizedFilter = false
@@ -373,6 +381,7 @@ struct ContentView: View {
         case transactions = "Transactions"
         case accounts = "Accounts"
         case insights = "Insights"
+        case tools = "Tools"
         case settings = "Settings"
         
         var systemImage: String {
@@ -381,6 +390,7 @@ struct ContentView: View {
             case .transactions: return "list.bullet"
             case .accounts: return "building.columns"
             case .insights: return "brain"
+            case .tools: return "wrench.and.screwdriver"
             case .settings: return "gear"
             }
         }
@@ -394,58 +404,18 @@ struct ContentView: View {
         }
         .navigationTitle("LedgerPro")
         .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button(action: { showingRulesWindow = true }) {
-                    Image(systemName: "gearshape.2")
-                        .foregroundColor(.purple)
+            CleanToolbar(
+                onRefresh: {
+                    dataManager.loadStoredData()
+                },
+                onSettings: {
+                    selectedTab = .settings
                 }
-                .help("Manage Rules")
-                
-                Button(action: { showingLearningWindow = true }) {
-                    Image(systemName: "brain")
-                        .foregroundColor(.blue)
-                }
-                .help("Learning Analytics")
-                
-                Button(action: { showingCategoryTest = true }) {
-                    Image(systemName: "folder.badge.gearshape")
-                        .foregroundColor(.blue)
-                }
-                .help("Test Category System")
-                
-                Button(action: checkHealth) {
-                    Image(systemName: apiService.isHealthy ? "heart.fill" : "heart")
-                        .foregroundColor(apiService.isHealthy ? .green : .red)
-                }
-                .help("Check Backend Health")
-                
-                // MCP Status Indicator
-                MCPStatusIndicator(mcpBridge: mcpBridge)
-                
-                Button(action: { 
-                    AppLogger.shared.debug("Upload button clicked in ContentView")
-                    showingUploadSheet = true 
-                }) {
-                    Image(systemName: "plus")
-                }
-                .help("Upload Statement")
-            }
+            )
         }
         .sheet(isPresented: $showingUploadSheet) {
             NavigationStack {
                 FileUploadView()
-            }
-        }
-        .sheet(isPresented: $showingRulesWindow) {
-            Text("Rules Management (Temporarily Disabled)")
-                .frame(width: 400, height: 300)
-        }
-        .sheet(isPresented: $showingLearningWindow) {
-            LearningAnalyticsView()
-        }
-        .sheet(isPresented: $showingCategoryTest) {
-            NavigationStack {
-                CategoryTestView()
             }
         }
         .sheet(item: $selectedTransaction) { transaction in
@@ -473,6 +443,9 @@ struct ContentView: View {
                     triggerUncategorizedFilter.toggle()
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenTools"))) { _ in
+            selectedTab = .tools
         }
         .task {
             checkHealth()
@@ -524,6 +497,8 @@ struct ContentView: View {
             AccountsView()
         case .insights:
             InsightsView()
+        case .tools:
+            ToolsHubView()
         case .settings:
             SettingsView()
         }

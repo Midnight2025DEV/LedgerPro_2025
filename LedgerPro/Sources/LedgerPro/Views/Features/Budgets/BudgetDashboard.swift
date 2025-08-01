@@ -6,7 +6,6 @@ import SwiftUI
 /// and intelligent insights that make users WANT to budget.
 struct BudgetDashboard: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
-    @State private var budgets: [Budget] = Budget.sampleBudgets
     @State private var selectedPeriod: PeriodFilter = .thisMonth
     @State private var showingCreateBudget = false
     @State private var hasAppeared = false
@@ -310,7 +309,7 @@ struct BudgetDashboard: View {
             columns: Array(repeating: GridItem(.flexible(), spacing: DSSpacing.lg), count: 2),
             spacing: DSSpacing.lg
         ) {
-            ForEach(Array(budgets.enumerated()), id: \.element.id) { index, budget in
+            ForEach(Array(dataManager.activeBudgets.enumerated()), id: \.element.id) { index, budget in
                 BudgetCard(
                     budget: budget,
                     spending: budget.calculateSpending(transactions: dataManager.transactions)
@@ -426,6 +425,9 @@ struct BudgetDashboard: View {
     // MARK: - Actions
     
     private func setupInitialState() {
+        // Load sample budgets if no budgets exist
+        dataManager.loadSampleBudgetsIfNeeded()
+        
         calculateOverviewMetrics()
         
         withAnimation(.spring(response: 0.8, dampingFraction: 0.8).delay(0.2)) {
@@ -436,17 +438,17 @@ struct BudgetDashboard: View {
     private func calculateOverviewMetrics() {
         let dateRange = selectedPeriod.dateRange
         
-        totalBudget = budgets.reduce(0) { $0 + $1.amount }
-        totalSpent = budgets.reduce(0) { sum, budget in
+        totalBudget = dataManager.activeBudgets.reduce(0) { $0 + $1.amount }
+        totalSpent = dataManager.activeBudgets.reduce(0) { sum, budget in
             sum + budget.calculateSpending(transactions: dataManager.transactions)
         }
         
-        budgetsOnTrack = budgets.filter { budget in
+        budgetsOnTrack = dataManager.activeBudgets.filter { budget in
             let spending = budget.calculateSpending(transactions: dataManager.transactions)
             return !budget.isOverBudget(spending: spending)
         }.count
         
-        budgetsOverspent = budgets.filter { budget in
+        budgetsOverspent = dataManager.activeBudgets.filter { budget in
             let spending = budget.calculateSpending(transactions: dataManager.transactions)
             return budget.isOverBudget(spending: spending)
         }.count

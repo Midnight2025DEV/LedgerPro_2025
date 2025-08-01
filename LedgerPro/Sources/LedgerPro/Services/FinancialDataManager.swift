@@ -6,6 +6,7 @@ class FinancialDataManager: ObservableObject {
     @MainActor @Published var transactions: [Transaction] = []
     @MainActor @Published var bankAccounts: [BankAccount] = []
     @MainActor @Published var uploadedStatements: [UploadedStatement] = []
+    @MainActor @Published var budgets: [Budget] = []
     @MainActor @Published var isLoading = false
     @MainActor @Published var lastImportTime: Date? = nil
     @MainActor @Published var summary: FinancialSummary = FinancialSummary(
@@ -27,6 +28,7 @@ class FinancialDataManager: ObservableObject {
     private let transactionsKey = "stored_transactions"
     private let accountsKey = "stored_accounts"
     private let statementsKey = "stored_statements"
+    private let budgetsKey = "stored_budgets"
     
     init() {
         loadStoredData()
@@ -49,6 +51,7 @@ class FinancialDataManager: ObservableObject {
             let loadedTransactions: [Transaction]
             let loadedAccounts: [BankAccount] 
             let loadedStatements: [UploadedStatement]
+            let loadedBudgets: [Budget]
             
             // Load transactions
             if let transactionData = userDefaults.data(forKey: self.transactionsKey) {
@@ -89,16 +92,31 @@ class FinancialDataManager: ObservableObject {
                 loadedStatements = []
             }
             
+            // Load budgets
+            if let budgetData = userDefaults.data(forKey: self.budgetsKey) {
+                do {
+                    let decoder = JSONDecoder()
+                    loadedBudgets = try decoder.decode([Budget].self, from: budgetData)
+                } catch {
+                    AppLogger.shared.error("Failed to load budgets: \(error)")
+                    loadedBudgets = []
+                }
+            } else {
+                loadedBudgets = []
+            }
+            
             // Update UI on main thread
             await MainActor.run {
                 self.transactions = loadedTransactions
                 self.bankAccounts = loadedAccounts
                 self.uploadedStatements = loadedStatements
+                self.budgets = loadedBudgets
                 
                 // DEBUG: Log what was loaded
                 AppLogger.shared.info("💾 Loaded \(loadedTransactions.count) transactions from storage")
                 AppLogger.shared.info("💾 Loaded \(loadedAccounts.count) accounts from storage")
                 AppLogger.shared.info("💾 Loaded \(loadedStatements.count) statements from storage")
+                AppLogger.shared.info("💾 Loaded \(loadedBudgets.count) budgets from storage")
                 
                 // If we have transactions but no accounts, create accounts from transaction data
                 if !self.transactions.isEmpty && self.bankAccounts.isEmpty {
@@ -178,14 +196,15 @@ class FinancialDataManager: ObservableObject {
             guard let self = self else { return }
             
             // Capture current state on main thread
-            let (currentTransactions, currentAccounts, currentStatements) = await MainActor.run {
-                (self.transactions, self.bankAccounts, self.uploadedStatements)
+            let (currentTransactions, currentAccounts, currentStatements, currentBudgets) = await MainActor.run {
+                (self.transactions, self.bankAccounts, self.uploadedStatements, self.budgets)
             }
             
             // DEBUG: Log what we're saving
             AppLogger.shared.info("💾 Saving \(currentTransactions.count) transactions to storage")
             AppLogger.shared.info("💾 Saving \(currentAccounts.count) accounts to storage")
             AppLogger.shared.info("💾 Saving \(currentStatements.count) statements to storage")
+            AppLogger.shared.info("💾 Saving \(currentBudgets.count) budgets to storage")
             
             // Perform encoding and UserDefaults operations in background
             let encoder = JSONEncoder()
@@ -204,6 +223,11 @@ class FinancialDataManager: ObservableObject {
             // Save uploaded statements
             if let statementData = try? encoder.encode(currentStatements) {
                 userDefaults.set(statementData, forKey: self.statementsKey)
+            }
+            
+            // Save budgets
+            if let budgetData = try? encoder.encode(currentBudgets) {
+                userDefaults.set(budgetData, forKey: self.budgetsKey)
             }
         }
     }
@@ -545,10 +569,12 @@ class FinancialDataManager: ObservableObject {
         transactions.removeAll()
         bankAccounts.removeAll()
         uploadedStatements.removeAll()
+        budgets.removeAll()
         
         userDefaults.removeObject(forKey: transactionsKey)
         userDefaults.removeObject(forKey: accountsKey)
         userDefaults.removeObject(forKey: statementsKey)
+        userDefaults.removeObject(forKey: budgetsKey)
         
         updateSummary()
     }
@@ -1290,7 +1316,8 @@ extension FinancialDataManager {
                     format: .number,
                     trend: .neutral,
                     description: "Number of different accounts"
-                )
+                ),
+                generateBudgetMetric(transactions: transactions)
             ],
             insights: generateMixedAccountInsights(
                 netWorth: trueNetWorth,
@@ -1320,6 +1347,44 @@ extension FinancialDataManager {
         let highSpendingTransactions = expenses.filter { abs($0.amount) > 100 }.count
         
         return Double(highSpendingTransactions) / Double(expenses.count)
+    }
+    
+    // MARK: - Budget Metrics Generator
+    
+    @MainActor private func generateBudgetMetric(transactions: [Transaction]) -> ContextMetric {
+        let activeBudgets = self.activeBudgets
+        let totalBudgets = activeBudgets.count
+        
+        if totalBudgets == 0 {
+            return ContextMetric(
+                title: "Active Budgets",
+                value: 0,
+                format: .number,
+                trend: .neutral,
+                description: "No budgets set up"
+            )
+        }
+        
+        let budgetsOnTrack = activeBudgets.filter { budget in
+            let spending = budget.calculateSpending(transactions: transactions)
+            return !budget.isOverBudget(spending: spending)
+        }.count
+        
+        let budgetsOverBudget = totalBudgets - budgetsOnTrack
+        
+        let description = totalBudgets == 1 
+            ? "1 budget, \(budgetsOnTrack) on track, \(budgetsOverBudget) over budget"
+            : "\(totalBudgets) budgets, \(budgetsOnTrack) on track, \(budgetsOverBudget) over budget"
+        
+        let trend: ContextTrendDirection = budgetsOverBudget == 0 ? .positive : (budgetsOnTrack > budgetsOverBudget ? .neutral : .negative)
+        
+        return ContextMetric(
+            title: "Active Budgets",
+            value: Double(totalBudgets),
+            format: .number,
+            trend: trend,
+            description: description
+        )
     }
     
     // MARK: - Insight Generators
@@ -1455,57 +1520,6 @@ extension FinancialDataManager {
     private func generateMixedAccountRecommendations(transactions: [Transaction]) -> [String] {
         return ["Review individual account performance for optimization opportunities"]
     }
-}
-
-// MARK: - Context-Aware Models
-
-struct ContextAwareFinancialSummary {
-    let accountType: AccountType
-    let primaryMetrics: [ContextMetric]
-    let secondaryMetrics: [ContextMetric]
-    let insights: [String]
-    let recommendations: [String]
-}
-
-struct ContextMetric {
-    let title: String
-    let value: Double
-    let format: MetricFormat
-    let trend: ContextTrendDirection
-    let description: String
-    
-    var formattedValue: String {
-        switch format {
-        case .currency:
-            return value.formatAsCurrency()
-        case .percentage:
-            return String(format: "%.1f%%", value * 100)
-        case .number:
-            return String(format: "%.0f", value)
-        }
-    }
-    
-    var icon: String {
-        switch format {
-        case .currency:
-            return value >= 0 ? "dollarsign.circle.fill" : "minus.circle.fill"
-        case .percentage:
-            return "percent"
-        case .number:
-            return "number.circle.fill"
-        }
-    }
-    
-    var color: Color {
-        switch trend {
-        case .positive:
-            return .green
-        case .negative:
-            return .red
-        case .neutral:
-            return .blue
-        }
-    }
     
     // MARK: - Batch Processing Methods
     
@@ -1554,43 +1568,43 @@ struct ContextMetric {
         // Process each batch
         for (index, batch) in batches.enumerated() {
             // Process batch with memory management
-                // Update progress
-                let processedCount = index * batchSize
-                let progress = BatchProgress(
-                    totalItems: transactions.count,
-                    processedItems: processedCount,
-                    currentBatch: index + 1,
-                    totalBatches: batches.count,
-                    estimatedTimeRemaining: estimateTimeRemaining(
-                        startTime: startTime,
-                        currentProgress: Double(processedCount) / Double(transactions.count)
-                    ),
-                    startTime: startTime
-                )
-                
-                await MainActor.run {
-                    self.batchProgress = progress
-                }
-                
-                // Create processor and process batch  
-                let processor = TransactionBatchProcessor(batchSize: batchSize, categoryService: CategoryService.shared)
-                let processedBatch = try await processor.processBatch(batch)
-                allProcessedTransactions.append(contentsOf: processedBatch)
-                
-                // Track batch completion
-                Analytics.shared.track("batch_completed", properties: [
-                    "batch_number": index + 1,
-                    "items_processed": batch.count,
-                    "total_processed": allProcessedTransactions.count,
-                    "memory_mb": PerformanceMonitor.shared.getCurrentMemoryUsage()
-                ])
-                
-                AppLogger.shared.debug("✅ Completed batch \(index + 1)/\(batches.count) - \(batch.count) transactions", category: "BatchProcessor")
-                
-                // Allow UI to breathe between batches
-                if index < batches.count - 1 {
-                    try await Task.sleep(nanoseconds: 10_000_000) // 10ms
-                }
+            // Update progress
+            let processedCount = index * batchSize
+            let progress = BatchProgress(
+                totalItems: transactions.count,
+                processedItems: processedCount,
+                currentBatch: index + 1,
+                totalBatches: batches.count,
+                estimatedTimeRemaining: estimateTimeRemaining(
+                    startTime: startTime,
+                    currentProgress: Double(processedCount) / Double(transactions.count)
+                ),
+                startTime: startTime
+            )
+            
+            await MainActor.run {
+                self.batchProgress = progress
+            }
+            
+            // Create processor and process batch  
+            let processor = TransactionBatchProcessor(batchSize: batchSize, categoryService: CategoryService.shared)
+            let processedBatch = try await processor.processBatch(batch)
+            allProcessedTransactions.append(contentsOf: processedBatch)
+            
+            // Track batch completion
+            Analytics.shared.track("batch_completed", properties: [
+                "batch_number": index + 1,
+                "items_processed": batch.count,
+                "total_processed": allProcessedTransactions.count,
+                "memory_mb": PerformanceMonitor.shared.getCurrentMemoryUsage()
+            ])
+            
+            AppLogger.shared.debug("✅ Completed batch \(index + 1)/\(batches.count) - \(batch.count) transactions", category: "BatchProcessor")
+            
+            // Allow UI to breathe between batches
+            if index < batches.count - 1 {
+                try await Task.sleep(nanoseconds: 10_000_000) // 10ms
+            }
         }
         
         // Final processing and UI update
@@ -1660,6 +1674,57 @@ struct ContextMetric {
     }
 }
 
+// MARK: - Context-Aware Models
+
+struct ContextAwareFinancialSummary {
+    let accountType: AccountType
+    let primaryMetrics: [ContextMetric]
+    let secondaryMetrics: [ContextMetric]
+    let insights: [String]
+    let recommendations: [String]
+}
+
+struct ContextMetric {
+    let title: String
+    let value: Double
+    let format: MetricFormat
+    let trend: ContextTrendDirection
+    let description: String
+    
+    var formattedValue: String {
+        switch format {
+        case .currency:
+            return value.formatAsCurrency()
+        case .percentage:
+            return String(format: "%.1f%%", value * 100)
+        case .number:
+            return String(format: "%.0f", value)
+        }
+    }
+    
+    var icon: String {
+        switch format {
+        case .currency:
+            return value >= 0 ? "dollarsign.circle.fill" : "minus.circle.fill"
+        case .percentage:
+            return "percent"
+        case .number:
+            return "number.circle.fill"
+        }
+    }
+    
+    var color: Color {
+        switch trend {
+        case .positive:
+            return .green
+        case .negative:
+            return .red
+        case .neutral:
+            return .blue
+        }
+    }
+}
+
 enum AccountType {
     case creditCard
     case checking
@@ -1714,10 +1779,190 @@ enum ContextTrendDirection {
     }
 }
 
+// MARK: - Ultra Features Support
+
+extension FinancialDataManager {
+    
+    // MARK: - Transaction Rules Support
+    
+    /// Add a new transaction rule
+    @MainActor func addRule(_ rule: TransactionRule) {
+        // Store rule in UserDefaults or Core Data
+        var existingRules = getUserRules()
+        existingRules.append(rule)
+        saveUserRules(existingRules)
+        
+        AppLogger.shared.info("Added new transaction rule: \(rule.name)")
+    }
+    
+    /// Get all user-created transaction rules
+    @MainActor func getUserRules() -> [TransactionRule] {
+        guard let data = UserDefaults.standard.data(forKey: "transaction_rules"),
+              let rules = try? JSONDecoder().decode([TransactionRule].self, from: data) else {
+            return []
+        }
+        return rules
+    }
+    
+    /// Save user rules to storage
+    @MainActor private func saveUserRules(_ rules: [TransactionRule]) {
+        if let data = try? JSONEncoder().encode(rules) {
+            UserDefaults.standard.set(data, forKey: "transaction_rules")
+        }
+    }
+    
+    // MARK: - Transaction Updates for Ultra Features
+    
+    /// Update a specific transaction's category by ID
+    @MainActor func updateTransactionCategory(_ transactionId: UUID, category: String) {
+        guard let index = transactions.firstIndex(where: { $0.id == transactionId.uuidString }) else {
+            return
+        }
+        
+        let oldTransaction = transactions[index]
+        let newTransaction = Transaction(
+            id: oldTransaction.id,
+            date: oldTransaction.date,
+            description: oldTransaction.description,
+            amount: oldTransaction.amount,
+            category: category,
+            confidence: oldTransaction.confidence,
+            jobId: oldTransaction.jobId,
+            accountId: oldTransaction.accountId,
+            rawData: oldTransaction.rawData
+        )
+        
+        transactions[index] = newTransaction
+        updateSummary()
+        saveData()
+        
+        AppLogger.shared.info("Updated transaction category: \(oldTransaction.category) → \(category)")
+    }
+    
+    /// Mark transaction as reviewed
+    @MainActor func markTransactionAsReviewed(_ transactionId: UUID) {
+        // For now, we can add a flag to the rawData or create a separate reviewed set
+        var reviewedTransactions = Set(UserDefaults.standard.stringArray(forKey: "reviewed_transactions") ?? [])
+        reviewedTransactions.insert(transactionId.uuidString)
+        UserDefaults.standard.set(Array(reviewedTransactions), forKey: "reviewed_transactions")
+        
+        AppLogger.shared.info("Marked transaction as reviewed: \(transactionId)")
+    }
+    
+    /// Check if transaction is reviewed
+    @MainActor func isTransactionReviewed(_ transactionId: UUID) -> Bool {
+        let reviewedTransactions = Set(UserDefaults.standard.stringArray(forKey: "reviewed_transactions") ?? [])
+        return reviewedTransactions.contains(transactionId.uuidString)
+    }
+    
+    /// Hide transaction from normal views
+    @MainActor func hideTransaction(_ transactionId: UUID) {
+        var hiddenTransactions = Set(UserDefaults.standard.stringArray(forKey: "hidden_transactions") ?? [])
+        hiddenTransactions.insert(transactionId.uuidString)
+        UserDefaults.standard.set(Array(hiddenTransactions), forKey: "hidden_transactions")
+        
+        AppLogger.shared.info("Hid transaction: \(transactionId)")
+    }
+    
+    /// Mark transaction as split
+    @MainActor func markTransactionAsSplit(_ transactionId: UUID) {
+        var splitTransactions = Set(UserDefaults.standard.stringArray(forKey: "split_transactions") ?? [])
+        splitTransactions.insert(transactionId.uuidString)
+        UserDefaults.standard.set(Array(splitTransactions), forKey: "split_transactions")
+        
+        AppLogger.shared.info("Marked transaction as split: \(transactionId)")
+    }
+    
+    /// Add a new transaction (for split transactions)
+    @MainActor func addTransaction(_ transaction: Transaction) {
+        transactions.append(transaction)
+        updateSummary()
+        saveData()
+        
+        AppLogger.shared.info("Added new transaction: \(transaction.description)")
+    }
+    
+    // MARK: - Merchant Logo Support
+    
+    /// Get merchant logo data
+    @MainActor func getMerchantLogo(for merchantName: String) -> MerchantLogoData? {
+        guard let data = UserDefaults.standard.data(forKey: "merchant_logo_\(merchantName)"),
+              let logoData = try? JSONDecoder().decode(MerchantLogoData.self, from: data) else {
+            return nil
+        }
+        return logoData
+    }
+    
+    /// Save merchant logo data
+    @MainActor func saveMerchantLogo(_ logoData: MerchantLogoData) {
+        if let data = try? JSONEncoder().encode(logoData) {
+            UserDefaults.standard.set(data, forKey: "merchant_logo_\(logoData.merchantName)")
+        }
+        
+        AppLogger.shared.info("Saved merchant logo for: \(logoData.merchantName)")
+    }
+    
+    /// Get all merchants that have custom logos
+    @MainActor func getMerchantsWithLogos() -> Set<String> {
+        let defaults = UserDefaults.standard
+        let keys = defaults.dictionaryRepresentation().keys
+        let logoKeys = keys.filter { $0.hasPrefix("merchant_logo_") }
+        return Set(logoKeys.compactMap { key in
+            guard key.hasPrefix("merchant_logo_") else { return nil }
+            return String(key.dropFirst("merchant_logo_".count))
+        })
+    }
+    
+    /// Get transaction count for a specific merchant
+    @MainActor func transactionCount(for merchantName: String) -> Int {
+        return transactions.filter { $0.merchantName == merchantName }.count
+    }
+    
+    // MARK: - Budget Management
+    
+    /// Add a new budget
+    @MainActor func addBudget(_ budget: Budget) {
+        budgets.append(budget)
+        saveData()
+        AppLogger.shared.info("Added new budget: \(budget.name)")
+    }
+    
+    /// Update an existing budget
+    @MainActor func updateBudget(_ budget: Budget) {
+        if let index = budgets.firstIndex(where: { $0.id == budget.id }) {
+            budgets[index] = budget
+            saveData()
+            AppLogger.shared.info("Updated budget: \(budget.name)")
+        }
+    }
+    
+    /// Delete a budget
+    @MainActor func deleteBudget(_ budgetId: UUID) {
+        budgets.removeAll { $0.id == budgetId }
+        saveData()
+        AppLogger.shared.info("Deleted budget with ID: \(budgetId)")
+    }
+    
+    /// Get active budgets
+    @MainActor var activeBudgets: [Budget] {
+        return budgets.filter { $0.isActive }
+    }
+    
+    /// Load sample budgets if no budgets exist
+    @MainActor func loadSampleBudgetsIfNeeded() {
+        if budgets.isEmpty {
+            budgets = Budget.sampleBudgets
+            saveData()
+            AppLogger.shared.info("Loaded sample budgets")
+        }
+    }
+}
+
 // MARK: - Array Extensions
 private extension Array {
     func removingDuplicates<T: Hashable>(by keyPath: (Element) -> T) -> [Element] {
         var seen = Set<T>()
         return filter { seen.insert(keyPath($0)).inserted }
     }
+    
 }
