@@ -201,7 +201,7 @@ class APIService: ObservableObject {
             request.timeoutInterval = 120.0
             
             AppLogger.shared.info("📤 Uploading file: \(filename) (\(fileData.count) bytes)", category: "Network")
-            AppLogger.shared.debug("🔍 Request headers: \(request.allHTTPHeaderFields ?? [:])", category: "Network")
+            AppLogger.shared.debug("📤 Making request: POST \(request.url?.absoluteString ?? "unknown")", category: "Network")
             
             // Simulate upload progress
             Task {
@@ -220,8 +220,7 @@ class APIService: ObservableObject {
                 throw APIError.networkError("Invalid response")
             }
             
-            AppLogger.shared.debug("📊 Response status: \(httpResponse.statusCode)", category: "Network")
-            AppLogger.shared.debug("📊 Response headers: \(httpResponse.allHeaderFields)", category: "Network")
+            AppLogger.shared.debug("📊 Response status: \(httpResponse.statusCode) for \(request.url?.absoluteString ?? "unknown")", category: "Network")
             
             let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode response"
             AppLogger.shared.debug("📄 Response body: \(responseString)", category: "Network")
@@ -275,13 +274,15 @@ class APIService: ObservableObject {
         let forexTransactions = results.transactions.filter { $0.originalCurrency != nil }
         AppLogger.shared.info("Transactions with forex data: \(forexTransactions.count)")
         
+        #if DEBUG
         for transaction in forexTransactions.prefix(3) {
             AppLogger.shared.debug("API Forex Transaction: \(transaction.description)")
             AppLogger.shared.debug("   - originalCurrency: \(transaction.originalCurrency ?? "nil")")
             AppLogger.shared.debug("   - originalAmount: \(transaction.originalAmount ?? 0)")
             AppLogger.shared.debug("   - exchangeRate: \(transaction.exchangeRate ?? 0)")
-            AppLogger.shared.debug("   - hasForex: \(transaction.hasForex ?? false)")
+            AppLogger.shared.debug("   - hasForex: \(transaction.hasForex)")
         }
+        #endif
         
         return results
     }

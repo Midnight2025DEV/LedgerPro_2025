@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Performance Optimization Data
-struct TransactionDisplayData {
+struct TransactionDetailDisplayData {
     let merchantName: String
     let detailedAmount: String
     let formattedDate: String
@@ -129,11 +129,11 @@ struct TransactionDetailView: View {
     @EnvironmentObject private var categoryService: CategoryService
     
     // Pre-computed values to avoid repeated calculations
-    private let displayData: TransactionDisplayData
+    private let displayData: TransactionDetailDisplayData
     
     init(transaction: Transaction) {
         self.transaction = transaction
-        self.displayData = TransactionDisplayData(transaction: transaction)
+        self.displayData = TransactionDetailDisplayData(transaction: transaction)
     }
     
     var body: some View {

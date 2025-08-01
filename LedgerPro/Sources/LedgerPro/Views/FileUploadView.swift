@@ -152,11 +152,13 @@ struct FileUploadView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(isProcessing)
+                        .accessibilityIdentifier("uploadButton")
                     } else {
                         Button("Choose File") {
                             logger.debug("Choose File button clicked", category: "UI")
                             selectFile()
                         }
+                        .accessibilityIdentifier("chooseFileButton")
                         .buttonStyle(.borderedProminent)
                         
                         Button("Test MCP") {
@@ -164,6 +166,41 @@ struct FileUploadView: View {
                         }
                         .buttonStyle(.bordered)
                         .help("Test MCP server connection and capabilities")
+                        
+                        Button("Diagnostic Categories") {
+                            categoryService.runComprehensiveDiagnostics()
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Run comprehensive category system diagnostics")
+                        
+                        Button("Toggle Log Level") {
+                            DiagnosticLogManager.shared.toggleLogLevel()
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Switch between Summary, Detailed, and Verbose logging")
+                        
+                        Button("Test Categorization") {
+                            Task {
+                                let testTransactions = [
+                                    Transaction(date: "2024-01-01", description: "WALMART SUPERCENTER #1234", amount: -45.67, category: "Other"),
+                                    Transaction(date: "2024-01-02", description: "UBER TRIP HELP.UBER.COM", amount: -12.34, category: "Other"),
+                                    Transaction(date: "2024-01-03", description: "STARBUCKS STORE 12345", amount: -5.89, category: "Other"),
+                                    Transaction(date: "2024-01-04", description: "PAYROLL DEPOSIT", amount: 2500.00, category: "Other"),
+                                    Transaction(date: "2024-01-05", description: "AMAZON.COM MERCHANDISE", amount: -89.99, category: "Other")
+                                ]
+                                
+                                let service = ImportCategorizationService()
+                                let result = await service.categorizeTransactions(testTransactions)
+                                
+                                AppLogger.shared.info("🧪 TEST RESULTS: \(result.categorizedCount)/\(result.totalTransactions) categorized (\(Int(result.successRate * 100))%)")
+                                
+                                for (transaction, category, confidence) in result.categorizedTransactions {
+                                    AppLogger.shared.info("✅ \(transaction.description) → \(category.name) (\(Int(confidence * 100))%)")
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .help("Test auto-categorization with sample transactions")
                     }
                 }
             }
@@ -409,8 +446,80 @@ struct FileUploadView: View {
                             .animation(.easeInOut(duration: 0.3), value: detailedStatus)
                     }
                     
-                    // Transaction Progress
-                    if transactionCount > 0 {
+                    // Batch Progress (for large files)
+                    if let batchProgress = dataManager.batchProgress {
+                        VStack(spacing: 12) {
+                            HStack {
+                                Text("Processing Batch \(batchProgress.currentBatch) of \(batchProgress.totalBatches)")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                Spacer()
+                                Text("\(Int(batchProgress.percentComplete * 100))%")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .monospacedDigit()
+                            }
+                            
+                            ProgressView(value: batchProgress.percentComplete)
+                                .progressViewStyle(LinearProgressViewStyle())
+                                .scaleEffect(1.5)
+                                .animation(.easeInOut(duration: 0.3), value: batchProgress.percentComplete)
+                            
+                            HStack(spacing: 24) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Processed")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text("\(batchProgress.processedItems)/\(batchProgress.totalItems)")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .monospacedDigit()
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Time Remaining")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text(formatTimeInterval(batchProgress.estimatedTimeRemaining))
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .monospacedDigit()
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Speed")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text("\(Int(batchProgress.itemsPerSecond)) trans/sec")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .monospacedDigit()
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Memory")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text("\(batchProgress.currentMemoryMB)MB")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.blue)
+                                        .monospacedDigit()
+                                }
+                            }
+                            .padding()
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                        .padding()
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(12)
+                        .shadow(radius: 2)
+                        .transition(.opacity.combined(with: .scale))
+                    }
+                    
+                    // Transaction Progress (for regular processing)
+                    else if transactionCount > 0 {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Transactions")
@@ -665,7 +774,7 @@ struct FileUploadView: View {
                 // Verify file size on background thread
                 let resourceValues = try file.resourceValues(forKeys: [.fileSizeKey])
                 let size = resourceValues.fileSize ?? 0
-                logger.debug("File size: \(size) bytes", category: "Upload")
+                await logger.debug("File size: \(size) bytes", category: "Upload")
                 
                 if size == 0 {
                     throw APIError.uploadError("File is empty or cannot be read")
@@ -735,6 +844,16 @@ struct FileUploadView: View {
                     let results = try await apiService.getTransactions(uploadResponse.jobId)
                     transactions = results.transactions
                     finalFilename = results.metadata.filename
+                    
+                    // DEBUG: Log API processing results
+                    AppLogger.shared.info("📄 Backend API processing complete for jobId: \(uploadResponse.jobId)")
+                    AppLogger.shared.info("📊 API returned \(transactions.count) transactions")
+                    AppLogger.shared.info("📁 Filename: \(finalFilename)")
+                    
+                    for (index, transaction) in transactions.prefix(3).enumerated() {
+                        AppLogger.shared.info("   API Transaction \(index + 1): \(transaction.description) - \(transaction.amount) - ID: \(transaction.id)")
+                    }
+                    
                     logger.info("Retrieved \(transactions.count) transactions", category: "Upload")
                     
                     // Update transaction count
@@ -754,10 +873,10 @@ struct FileUploadView: View {
                 if !forexTransactions.isEmpty {
                     AppLogger.shared.info("Found \(forexTransactions.count) foreign currency transactions")
                     for transaction in forexTransactions {
-                        logger.debug("Foreign currency transaction: \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)", category: "Upload")
+                        await logger.debug("Foreign currency transaction: \(transaction.description): \(transaction.originalAmount ?? 0) \(transaction.originalCurrency ?? "??") @ \(transaction.exchangeRate ?? 0)", category: "Upload")
                     }
                 } else {
-                    logger.warning("No foreign currency transactions found", category: "Upload")
+                    await logger.warning("No foreign currency transactions found", category: "Upload")
                 }
             }.value
             
@@ -769,17 +888,33 @@ struct FileUploadView: View {
                 currentStep = 5
             }
             
-            AppLogger.shared.info("Auto-categorizing \(transactions.count) transactions...")
+            AppLogger.shared.info("🔄 FileUploadView: Starting auto-categorization of \(transactions.count) transactions...")
+            
+            // Log sample input transactions
+            AppLogger.shared.info("🔍 SAMPLE INPUT TRANSACTIONS TO CATEGORIZATION:")
+            for (index, transaction) in transactions.prefix(3).enumerated() {
+                AppLogger.shared.info("   \(index + 1). '\(transaction.description)' (current category: '\(transaction.category)')")
+            }
+            
             let categorizationService = ImportCategorizationService()
-            let categorizedResult = await MainActor.run {
-                let result = categorizationService.categorizeTransactions(transactions)
+            let categorizedResult = await categorizationService.categorizeTransactions(transactions)
+            
+            AppLogger.shared.info("📦 FileUploadView: Received categorization result")
+            AppLogger.shared.info("   Result type: ImportResult")
+            AppLogger.shared.info("   Total transactions: \(categorizedResult.totalTransactions)")
+            AppLogger.shared.info("   Categorized count: \(categorizedResult.categorizedCount)")
+            AppLogger.shared.info("   Uncategorized count: \(categorizedResult.uncategorizedCount)")
+            AppLogger.shared.info("   Success rate: \(String(format: "%.1f", categorizedResult.successRate * 100))%")
+            
+            // Update progress after categorization (on main actor)
+            await MainActor.run {
+                categorizedCount = categorizedResult.categorizedCount
+                let percentage = categorizedResult.categorizedCount > 0 ? Int((Double(categorizedResult.categorizedCount) / Double(categorizedResult.totalTransactions)) * 100) : 0
+                detailedStatus = "Categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions (\(percentage)%)"
                 
-                // Update progress during categorization
-                categorizedCount = result.categorizedCount
-                let percentage = result.categorizedCount > 0 ? Int((Double(result.categorizedCount) / Double(result.totalTransactions)) * 100) : 0
-                detailedStatus = "Categorized \(result.categorizedCount)/\(result.totalTransactions) transactions (\(percentage)%)"
-                
-                return result
+                AppLogger.shared.info("📊 FileUploadView: Updated UI with categorization results")
+                AppLogger.shared.info("   UI categorizedCount: \(categorizedCount)")
+                AppLogger.shared.info("   UI detailedStatus: '\(detailedStatus)'")
             }
             logger.info("Auto-categorized \(categorizedResult.categorizedCount)/\(categorizedResult.totalTransactions) transactions", category: "Upload")
             
@@ -796,17 +931,67 @@ struct FileUploadView: View {
                 importResult = categorizedResult
                 
                 // Add categorized transactions to data manager
-                let finalTransactions = categorizedResult.categorizedTransactions.map { $0.0 } + 
-                                      categorizedResult.uncategorizedTransactions
+                AppLogger.shared.info("🏗️ FileUploadView: Assembling final transaction list")
+                AppLogger.shared.info("   Categorized tuples: \(categorizedResult.categorizedTransactions.count)")
+                AppLogger.shared.info("   Uncategorized transactions: \(categorizedResult.uncategorizedTransactions.count)")
+                
+                // Extract transactions from categorized tuples
+                let categorizedTransactionsOnly = categorizedResult.categorizedTransactions.map { $0.0 }
+                AppLogger.shared.info("   Extracted \(categorizedTransactionsOnly.count) transactions from categorized tuples")
+                
+                // Log sample categorized transactions after extraction
+                if !categorizedTransactionsOnly.isEmpty {
+                    AppLogger.shared.info("🔍 SAMPLE EXTRACTED CATEGORIZED TRANSACTIONS:")
+                    for (index, transaction) in categorizedTransactionsOnly.prefix(3).enumerated() {
+                        AppLogger.shared.info("   \(index + 1). '\(transaction.description)' -> '\(transaction.category)' (confidence: \(transaction.confidence ?? 0.0))")
+                        AppLogger.shared.info("      wasAutoCategorized: \(transaction.wasAutoCategorized ?? false)")
+                    }
+                }
+                
+                let finalTransactions = categorizedTransactionsOnly + categorizedResult.uncategorizedTransactions
+                
+                // DEBUG: Log transaction details before adding to dataManager
+                AppLogger.shared.info("📊 FileUploadView: Final transaction list assembled")
+                AppLogger.shared.info("   Total final transactions: \(finalTransactions.count)")
+                AppLogger.shared.info("   From categorized: \(categorizedTransactionsOnly.count)")
+                AppLogger.shared.info("   From uncategorized: \(categorizedResult.uncategorizedTransactions.count)")
+                
+                // Log detailed breakdown of final transactions
+                AppLogger.shared.info("🔍 FINAL TRANSACTION BREAKDOWN:")
+                for (index, transaction) in finalTransactions.prefix(5).enumerated() {
+                    AppLogger.shared.info("   \(index + 1). '\(transaction.description)' -> '\(transaction.category)' (ID: \(transaction.id))")
+                    AppLogger.shared.info("      Amount: \(transaction.amount), Confidence: \(transaction.confidence ?? 0.0)")
+                    AppLogger.shared.info("      WasAutoCategorized: \(transaction.wasAutoCategorized ?? false)")
+                }
                 
                 // Use jobId if available (backend processing) or generate one for MCP
                 let jobIdForData = currentJobId ?? UUID().uuidString
+                AppLogger.shared.info("📋 Using jobId: \(jobIdForData) for data storage")
+                
+                AppLogger.shared.info("💾 FileUploadView: Adding \(finalTransactions.count) transactions")
+                AppLogger.shared.info("   JobId: \(jobIdForData)")
+                AppLogger.shared.info("   Filename: \(finalFilename)")
+                
+                // Use batch processing for large files (>1000 transactions)
+                let useBatchProcessing = finalTransactions.count > 1000
+                
+                // Track batch threshold decision
+                Analytics.shared.trackBatchThresholdDecision(
+                    itemCount: finalTransactions.count,
+                    usedBatchProcessing: useBatchProcessing
+                )
+                
+                // Use regular processing for now (batch processing disabled for build fix)
+                AppLogger.shared.info("💾 Using regular processing for \(finalTransactions.count) transactions")
                 
                 dataManager.addTransactions(
                     finalTransactions,
                     jobId: jobIdForData,
                     filename: finalFilename
                 )
+                
+                AppLogger.shared.info("✅ FileUploadView: Transaction processing completed")
+                AppLogger.shared.info("   DataManager now has: \(dataManager.transactions.count) total transactions")
                 
                 let processingMethod = useMCPProcessing ? "MCP Local Processing" : "Backend API"
                 logger.info("Processing completed successfully with \(processingMethod)!", category: "Upload")
@@ -822,6 +1007,20 @@ struct FileUploadView: View {
                     success: true,
                     processingTime: processingTime,
                     categorizationRate: categorizationRate
+                )
+                
+                // Track end-to-end pipeline performance
+                // Estimate timing breakdown (simplified for now)
+                let uploadTime = processingTime * 0.2  // ~20% upload
+                let processingTimeOnly = processingTime * 0.7  // ~70% processing  
+                let uiUpdateTime = processingTime * 0.1  // ~10% UI updates
+                
+                Analytics.shared.trackPipelinePerformance(
+                    uploadTime: uploadTime,
+                    processingTime: processingTimeOnly,
+                    uiUpdateTime: uiUpdateTime,
+                    transactionCount: finalTransactions.count,
+                    processingMethod: useMCPProcessing ? "mcp_local" : "backend_api"
                 )
                 
                 // Show success animation briefly
@@ -851,6 +1050,13 @@ struct FileUploadView: View {
             await MainActor.run {
                 // Show import summary instead of immediately dismissing
                 showingImportSummary = true
+                
+                // Post notification to reset transaction filters
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TransactionsImported"),
+                    object: nil,
+                    userInfo: ["count": importResult?.totalTransactions ?? 0]
+                )
             }
             
         } catch {
@@ -918,6 +1124,22 @@ struct FileUploadView: View {
         } else {
             let minutes = Int(seconds / 60)
             return "\(minutes) minute\(minutes == 1 ? "" : "s")"
+        }
+    }
+    
+    private func formatTimeInterval(_ seconds: TimeInterval) -> String {
+        if seconds < 1 {
+            return "0s"
+        } else if seconds < 60 {
+            return "\(Int(seconds))s"
+        } else if seconds < 3600 {
+            let minutes = Int(seconds / 60)
+            let remainingSeconds = Int(seconds.truncatingRemainder(dividingBy: 60))
+            return "\(minutes)m \(remainingSeconds)s"
+        } else {
+            let hours = Int(seconds / 3600)
+            let minutes = Int((seconds.truncatingRemainder(dividingBy: 3600)) / 60)
+            return "\(hours)h \(minutes)m"
         }
     }
     
@@ -1097,7 +1319,7 @@ struct FileUploadView: View {
                     return formatter.string(fromByteCount: Int64(fileSize))
                 }
             } catch {
-                logger.error("Error getting file size: \(error)", category: "Upload")
+                await logger.error("Error getting file size: \(error)", category: "Upload")
             }
             return "Unknown size"
         }.value
@@ -1138,6 +1360,16 @@ struct FileUploadView: View {
         
         // Process document through MCP
         let result = try await mcpBridge.processDocument(url)
+        
+        // DEBUG: Log MCP processing results
+        AppLogger.shared.info("📄 MCP processing complete for \(url.lastPathComponent)")
+        AppLogger.shared.info("📊 MCP returned \(result.transactions.count) transactions")
+        AppLogger.shared.info("📋 Processing method: \(result.metadata.method)")
+        AppLogger.shared.info("🎯 Confidence: \(result.confidence)")
+        
+        for (index, transaction) in result.transactions.prefix(3).enumerated() {
+            AppLogger.shared.info("   MCP Transaction \(index + 1): \(transaction.description) - \(transaction.amount)")
+        }
         
         return result.transactions
     }

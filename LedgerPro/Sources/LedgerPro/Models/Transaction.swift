@@ -1,25 +1,35 @@
 import Foundation
 import SwiftUI
 
-struct Transaction: Codable, Identifiable, Hashable {
-    let id: String
-    let date: String
-    let description: String
-    let amount: Double
-    let category: String
-    let confidence: Double?
+public struct Transaction: Codable, Identifiable, Hashable {
+    public let id: String
+    public let date: String
+    public let description: String
+    public let amount: Double
+    public var category: String
+    public var confidence: Double?
     let jobId: String?
     let accountId: String?
     let rawData: [String: String]?
     
     // Foreign currency fields
-    let originalAmount: Double?     // Original foreign amount
-    let originalCurrency: String?   // Currency code (EUR, GBP, MXN, etc.)
-    let exchangeRate: Double?       // Exchange rate used
-    let hasForex: Bool?            // Flag for foreign transactions
+    var originalAmount: Double?     // Original foreign amount
+    var originalCurrency: String?   // Currency code (EUR, GBP, MXN, etc.)
+    var exchangeRate: Double?       // Exchange rate used
+    
+    // FIXED: Make hasForex a computed property
+    var hasForex: Bool {
+        // Check if we have valid forex data (not just non-nil)
+        let hasValidCurrency = originalCurrency != nil && !originalCurrency!.isEmpty
+        let hasAmount = originalAmount != nil
+        let hasRate = exchangeRate != nil && exchangeRate! > 0
+        
+        // Need at least currency and one of amount/rate to be valid forex
+        return hasValidCurrency && (hasAmount || hasRate)
+    }
     
     // Auto-categorization tracking
-    let wasAutoCategorized: Bool?   // Whether this was auto-categorized
+    var wasAutoCategorized: Bool?   // Whether this was auto-categorized
     let categorizationMethod: String? // "merchant_rule", "smart_rule", "ai_suggestion"
     
     enum CodingKeys: String, CodingKey {
@@ -28,13 +38,12 @@ struct Transaction: Codable, Identifiable, Hashable {
         case originalAmount = "original_amount"
         case originalCurrency = "original_currency"
         case exchangeRate = "exchange_rate"
-        case hasForex = "has_forex"
         case wasAutoCategorized = "was_auto_categorized"
         case categorizationMethod = "categorization_method"
     }
     
     // Memberwise initializer for creating transactions manually
-    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
         if let providedId = id {
             self.id = providedId
         } else {
@@ -53,13 +62,12 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.originalAmount = originalAmount
         self.originalCurrency = originalCurrency
         self.exchangeRate = exchangeRate
-        self.hasForex = hasForex
         self.wasAutoCategorized = wasAutoCategorized
         self.categorizationMethod = categorizationMethod
     }
     
     // Decoder initializer for JSON parsing
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         // If id is missing, generate one from other fields
@@ -86,18 +94,12 @@ struct Transaction: Codable, Identifiable, Hashable {
         self.originalAmount = try container.decodeIfPresent(Double.self, forKey: .originalAmount)
         self.originalCurrency = try container.decodeIfPresent(String.self, forKey: .originalCurrency)
         self.exchangeRate = try container.decodeIfPresent(Double.self, forKey: .exchangeRate)
-        self.hasForex = try container.decodeIfPresent(Bool.self, forKey: .hasForex)
         self.wasAutoCategorized = try container.decodeIfPresent(Bool.self, forKey: .wasAutoCategorized)
         self.categorizationMethod = try container.decodeIfPresent(String.self, forKey: .categorizationMethod)
     }
     
-    // MARK: - Safe String Operations
-    
-    /// Safely truncate description to prevent range errors
+    /// Safely truncate description to specified length
     static func safeTruncateDescription(_ description: String, maxLength: Int) -> String {
-        // Handle empty or invalid strings
-        guard !description.isEmpty else { return "empty" }
-        
         // Safe truncation that handles all edge cases
         if description.count <= maxLength {
             return description
@@ -194,17 +196,17 @@ struct FinancialSummary: Codable {
     }
 }
 
-struct BankAccount: Codable, Identifiable, Hashable {
-    let id: String
-    let name: String
-    let institution: String
-    let accountType: AccountType
-    let lastFourDigits: String?
-    let currency: String
-    let isActive: Bool
-    let createdAt: String
+public struct BankAccount: Codable, Identifiable, Hashable {
+    public let id: String
+    public let name: String
+    public let institution: String
+    public let accountType: AccountType
+    public let lastFourDigits: String?
+    public let currency: String
+    public let isActive: Bool
+    public let createdAt: String
     
-    enum AccountType: String, Codable, CaseIterable {
+    public enum AccountType: String, Codable, CaseIterable {
         case checking = "checking"
         case savings = "savings"
         case credit = "credit"
@@ -250,19 +252,25 @@ struct BankAccount: Codable, Identifiable, Hashable {
     }
 }
 
-struct UploadedStatement: Codable, Identifiable {
-    let id: String
-    let jobId: String
-    let filename: String
-    let uploadDate: String
-    let transactionCount: Int
-    let accountId: String
-    let summary: StatementSummary
+public struct UploadedStatement: Codable, Identifiable {
+    public let id: String
+    public let jobId: String
+    public let filename: String
+    public let uploadDate: String
+    public let transactionCount: Int
+    public let accountId: String
+    public let summary: StatementSummary
     
-    struct StatementSummary: Codable {
-        let totalIncome: Double
-        let totalExpenses: Double
-        let netAmount: Double
+    public struct StatementSummary: Codable {
+        public let totalIncome: Double
+        public let totalExpenses: Double
+        public let netAmount: Double
+        
+        public init(totalIncome: Double, totalExpenses: Double, netAmount: Double) {
+            self.totalIncome = totalIncome
+            self.totalExpenses = totalExpenses
+            self.netAmount = netAmount
+        }
     }
     
     init(jobId: String, filename: String, uploadDate: String, transactionCount: Int, accountId: String, summary: StatementSummary) {
@@ -345,7 +353,7 @@ extension Transaction {
     }
     
     var displayDetailAmount: String {
-        let formatter = NumberFormatter.currencyFormatter
+        let formatter = NumberFormatter.currency
         
         if description.lowercased().contains("capital one") {
             return formatter.string(from: NSNumber(value: abs(amount))) ?? "$0.00"
@@ -363,15 +371,6 @@ extension Transaction {
     }
 }
 
-// MARK: - Performance Optimizations
-extension NumberFormatter {
-    static let currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter
-    }()
-}
 
 extension DateFormatter {
     static let fullDateFormatter: DateFormatter = {
@@ -380,4 +379,3 @@ extension DateFormatter {
         return formatter
     }()
 }
-

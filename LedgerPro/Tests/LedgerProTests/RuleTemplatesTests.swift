@@ -7,7 +7,7 @@ final class RuleTemplatesTests: XCTestCase {
         let templates = CategoryRule.commonRuleTemplates
         
         XCTAssertFalse(templates.isEmpty)
-        XCTAssertEqual(templates.count, 21)
+        XCTAssertEqual(templates.count, 27)
     }
     
     func test_ruleTemplates_haveValidCategories() {
@@ -34,7 +34,8 @@ final class RuleTemplatesTests: XCTestCase {
         for template in templates {
             let hasPattern = template.merchantContains != nil || 
                            template.merchantExact != nil || 
-                           template.regexPattern != nil
+                           template.regexPattern != nil ||
+                           template.descriptionContains != nil
             XCTAssertTrue(hasPattern, 
                          "Template '\(template.ruleName)' has no merchant patterns")
         }
@@ -44,7 +45,7 @@ final class RuleTemplatesTests: XCTestCase {
         let testCases: [(description: String, shouldMatch: [String])] = [
             ("STARBUCKS #1234 SEATTLE WA", ["Starbucks"]),
             ("AMAZON.COM MARKETPLACE", ["Amazon"]),
-            ("UBER TRIP HELP.UBER.COM", ["Uber"]),
+            ("UBER TRIP HELP.UBER.COM", ["Uber Rides"]),
             ("TARGET 00012345 ANYTOWN US", ["Target"]),
             ("SPOTIFY USA", ["Spotify"])
         ]
@@ -91,7 +92,8 @@ final class RuleTemplatesTests: XCTestCase {
     
     func test_ruleTemplates_expensesAreNegative() {
         let templates = CategoryRule.commonRuleTemplates
-        let expenseTemplates = templates.filter { $0.ruleName != "Credit Card Payments" }
+        let incomeTemplates = ["Credit Card Payments", "Salary Deposits", "General Income", "Capital One Payments"]
+        let expenseTemplates = templates.filter { !incomeTemplates.contains($0.ruleName) }
         
         for template in expenseTemplates {
             XCTAssertEqual(template.amountSign, .negative,

@@ -12,7 +12,7 @@ class RuleBuilder: ObservableObject {
     @Published var amountMax: String = ""
     @Published var accountType: BankAccount.AccountType?
     @Published var dayOfWeek: Set<Int> = []
-    @Published var amountSign: AmountSign = .any
+    @Published var amountSign: CategoryRule.AmountSign? = nil
     @Published var regexPattern: String = ""
     @Published var isActive: Bool = true
     
@@ -28,7 +28,7 @@ class RuleBuilder: ObservableObject {
         !amountMax.isEmpty ||
         accountType != nil ||
         !dayOfWeek.isEmpty ||
-        amountSign != .any ||
+        amountSign != nil ||
         !regexPattern.isEmpty
     }
     
@@ -69,9 +69,9 @@ class RuleBuilder: ObservableObject {
         
         var rule = CategoryRule(
             categoryId: categoryId,
-            ruleName: ruleName,
-            priority: priority
+            ruleName: ruleName
         )
+        rule.priority = priority
         
         if !merchantContains.isEmpty {
             rule.merchantContains = merchantContains
@@ -86,20 +86,20 @@ class RuleBuilder: ObservableObject {
         }
         
         if !amountMin.isEmpty, let min = Decimal(string: amountMin) {
-            rule.amountMin = min
+            rule.amountMin = Double(truncating: min as NSDecimalNumber)
         }
         
         if !amountMax.isEmpty, let max = Decimal(string: amountMax) {
-            rule.amountMax = max
+            rule.amountMax = Double(truncating: max as NSDecimalNumber)
         }
         
-        rule.accountType = accountType
+        rule.accountType = accountType?.rawValue
         
-        if !dayOfWeek.isEmpty {
-            rule.dayOfWeek = dayOfWeek
+        if let firstDay = dayOfWeek.first {
+            rule.dayOfWeek = firstDay
         }
         
-        if amountSign != .any {
+        if let amountSign = amountSign {
             rule.amountSign = amountSign
         }
         
@@ -131,7 +131,7 @@ class RuleBuilder: ObservableObject {
         amountMax = ""
         accountType = nil
         dayOfWeek = []
-        amountSign = .any
+        amountSign = nil
         regexPattern = ""
         isActive = true
     }

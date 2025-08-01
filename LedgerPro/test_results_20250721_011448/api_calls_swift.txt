@@ -1,0 +1,20 @@
+Sources/LedgerPro/Debug/APIMonitor.swift:            report += "\n\n### \(endpoint)"
+Sources/LedgerPro/Debug/APIMonitor.swift:        // Group by endpoint
+Sources/LedgerPro/Debug/APIMonitor.swift:        for (endpoint, requests) in endpointGroups.sorted(by: { $0.key < $1.key }) {
+Sources/LedgerPro/Debug/APIMonitor.swift:        let endpointGroups = Dictionary(grouping: history) { record in
+Sources/LedgerPro/Debug/APIMonitor.swift:    func logRequest(_ request: URLRequest) -> UUID {
+Sources/LedgerPro/Debug/APIMonitor.swift:    func monitoredData(for request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (Data, URLResponse) {
+Sources/LedgerPro/Debug/APIMonitor.swift:    func monitoredDataTask(with request: URLRequest) async throws -> (Data, URLResponse) {
+Sources/LedgerPro/Services/APIService.swift:                endpoint: "/api/health",
+Sources/LedgerPro/Services/APIService.swift:            // Debug: Print raw JSON for transactions endpoint
+Sources/LedgerPro/Services/APIService.swift:            AppLogger.shared.info("Request successful for \(endpoint)")
+Sources/LedgerPro/Services/APIService.swift:            endpoint: "/api/jobs/\(jobId)",
+Sources/LedgerPro/Services/APIService.swift:            endpoint: "/api/transactions/\(jobId)",
+Sources/LedgerPro/Services/APIService.swift:            if endpoint.contains("/transactions/") {
+Sources/LedgerPro/Services/APIService.swift:            var request = URLRequest(url: url)
+Sources/LedgerPro/Services/APIService.swift:        endpoint: String,
+Sources/LedgerPro/Services/APIService.swift:        guard let url = URL(string: "\(baseURL)/api/upload") else {
+Sources/LedgerPro/Services/APIService.swift:        guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+Sources/LedgerPro/Services/APIService.swift:        var request = URLRequest(url: url)
+Sources/LedgerPro/Services/MCP/MCPServer.swift:        var urlRequest = URLRequest(url: url)
+Sources/LedgerPro/Services/MCPService.swift:        var request = URLRequest(url: url)

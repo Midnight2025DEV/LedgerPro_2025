@@ -1,0 +1,704 @@
+Building for debugging...
+[0/5] Write swift-version--58304C5D6DBC2206.txt
+[2/16] Compiling LedgerProTests RangeErrorPinpointTest.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorPinpointTest.swift:34:27: error: expression is 'async' but is not marked with 'await'
+ 32 |         
+ 33 |         print("🔍 Step 1: Testing ImportService.categorizeTransactions...")
+ 34 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+ 35 |         print("✅ Categorization completed successfully")
+ 36 |         print("   - Categorized: \(categorized.categorizedCount)")
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorPinpointTest.swift:81:27: error: expression is 'async' but is not marked with 'await'
+ 79 |         
+ 80 |         print("🔍 Step 1: Categorizing positive transaction...")
+ 81 |         let categorized = importService.categorizeTransactions([positiveTransaction])
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+ 82 |         print("✅ Categorization of positive transaction completed")
+ 83 |         
+[3/16] Compiling LedgerProTests RuleStorageServiceTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleStorageServiceTests.swift:15:26: warning: no 'async' operations occur within 'await' expression
+ 13 |         testFileName = "test_rules_\(UUID().uuidString).json"
+ 14 |         // Create isolated test instance with unique filename
+ 15 |         storageService = await RuleStorageService(testFileName: testFileName)
+    |                          `- warning: no 'async' operations occur within 'await' expression
+ 16 |     }
+ 17 |     
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleStorageServiceTests.swift:21:9: warning: no 'async' operations occur within 'await' expression
+ 19 |     override func tearDown() async throws {
+ 20 |         // Clean up test file
+ 21 |         await storageService.cleanupTestFile()
+    |         `- warning: no 'async' operations occur within 'await' expression
+ 22 |         try await super.tearDown()
+ 23 |     }
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleStorageServiceTests.swift:33:30: error: cannot assign value of type 'Decimal' to type 'Double?'
+ 31 |         )
+ 32 |         customRule.merchantContains = "TARGET"
+ 33 |         customRule.amountMin = Decimal(-100)
+    |                              `- error: cannot assign value of type 'Decimal' to type 'Double?'
+ 34 |         customRule.amountMax = Decimal(-10)
+ 35 |         customRule.priority = 85
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleStorageServiceTests.swift:34:30: error: cannot assign value of type 'Decimal' to type 'Double?'
+ 32 |         customRule.merchantContains = "TARGET"
+ 33 |         customRule.amountMin = Decimal(-100)
+ 34 |         customRule.amountMax = Decimal(-10)
+    |                              `- error: cannot assign value of type 'Decimal' to type 'Double?'
+ 35 |         customRule.priority = 85
+ 36 |         
+[4/16] Emitting module LedgerProTests
+[5/16] Compiling LedgerProTests CriticalWorkflowTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift:53:27: error: expression is 'async' but is not marked with 'await'
+ 51 |         
+ 52 |         // Step 1: Categorize transactions
+ 53 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+ 54 |         XCTAssertEqual(categorized.totalTransactions, 3)
+ 55 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift:128:33: error: expression is 'async' but is not marked with 'await'
+126 |         
+127 |         // Step 5: Verify pattern learning helps with categorization
+128 |         let categorizedResult = importService.categorizeTransactions([newTransaction])
+    |                                 |- error: expression is 'async' but is not marked with 'await'
+    |                                 `- note: call is 'async'
+129 |         
+130 |         // Should either be categorized correctly or at least processed
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift:172:27: error: expression is 'async' but is not marked with 'await'
+170 |         
+171 |         // Step 2: Import and categorize
+172 |         let categorized = importService.categorizeTransactions(capitalOneTransactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+173 |         financialManager.addTransactions(
+174 |             categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions,
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift:212:27: error: expression is 'async' but is not marked with 'await'
+210 |         
+211 |         // Step 1: Categorize all transactions
+212 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+213 |         
+214 |         // Step 2: Save to database (now works with range error fixes)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift:305:27: error: expression is 'async' but is not marked with 'await'
+303 |         
+304 |         // Step 1: Categorization service
+305 |         let categorized = importService.categorizeTransactions([testTransaction])
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+306 |         XCTAssertEqual(categorized.totalTransactions, 1)
+307 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/Integration/CriticalWorkflowTests.swift:351:31: error: expression is 'async' but is not marked with 'await'
+349 |             
+350 |             // Process each batch
+351 |             let categorized = importService.categorizeTransactions(batchTransactions)
+    |                               |- error: expression is 'async' but is not marked with 'await'
+    |                               `- note: call is 'async'
+352 |             
+353 |             // Import all transactions (now works with range error fixes)
+[6/16] Compiling LedgerProTests RangeErrorDebugTest.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift:115:27: error: expression is 'async' but is not marked with 'await'
+113 |         ]
+114 |         
+115 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+116 |         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
+117 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift:133:27: error: expression is 'async' but is not marked with 'await'
+131 |         ]
+132 |         
+133 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+134 |         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
+135 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift:153:27: error: expression is 'async' but is not marked with 'await'
+151 |         ]
+152 |         
+153 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+154 |         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
+155 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift:172:27: error: expression is 'async' but is not marked with 'await'
+170 |         ]
+171 |         
+172 |         let categorized = importService.categorizeTransactions(transactions)
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+173 |         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
+174 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift:195:49: warning: immutable value 'confidence' was never used; consider replacing with '_' or removing it
+193 |         
+194 |         if !categorized.categorizedTransactions.isEmpty {
+195 |             let (transactionFromCategorized, _, confidence) = categorized.categorizedTransactions[0]
+    |                                                 `- warning: immutable value 'confidence' was never used; consider replacing with '_' or removing it
+196 |             print("Categorized transaction description: '\(transactionFromCategorized.description)'")
+197 |             print("Categorized transaction ID: '\(transactionFromCategorized.id)'")
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RangeErrorDebugTest.swift:187:27: error: expression is 'async' but is not marked with 'await'
+185 |         let transaction = Transaction(id: "test", date: "2024-01-01", description: "STARBUCKS", amount: -5.50, category: "Uncategorized")
+186 |         
+187 |         let categorized = importService.categorizeTransactions([transaction])
+    |                           |- error: expression is 'async' but is not marked with 'await'
+    |                           `- note: call is 'async'
+188 |         
+189 |         // Examine the structure
+[7/16] Compiling LedgerProTests APIServiceEnhancedTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIServiceEnhancedTests.swift:477:15: error: call can throw but is not marked with 'try'
+475 |         
+476 |         // When/Then
+477 |         await withURLSession(mockSession) {
+    |               |                           `- note: call is to 'rethrows' function, but argument function can throw
+    |               `- error: call can throw but is not marked with 'try'
+478 |             do {
+479 |                 _ = try await apiService.uploadFile(URL(fileURLWithPath: "test.txt"))
+[8/16] Compiling LedgerProTests CategoryRuleTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:41:26: error: cannot assign value of type 'Decimal' to type 'Double?'
+ 39 |             ruleName: "Large Purchase Rule"
+ 40 |         ).with {
+ 41 |             $0.amountMin = Decimal(-1000)
+    |                          `- error: cannot assign value of type 'Decimal' to type 'Double?'
+ 42 |             $0.amountMax = Decimal(-100)
+ 43 |             $0.amountSign = .negative
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:117:26: error: cannot assign value of type 'Decimal' to type 'Double?'
+115 |         ).with {
+116 |             $0.merchantExact = "uber"
+117 |             $0.amountMin = Decimal(-50)
+    |                          `- error: cannot assign value of type 'Decimal' to type 'Double?'
+118 |             $0.amountMax = Decimal(-10)
+119 |             $0.confidence = 0.8
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:156:26: error: cannot assign value of type 'Decimal' to type 'Double?'
+154 |             ruleName: "Invalid Amount Rule"
+155 |         ).with {
+156 |             $0.amountMin = Decimal(100)
+    |                          `- error: cannot assign value of type 'Decimal' to type 'Double?'
+157 |             $0.amountMax = Decimal(50) // Max < Min
+158 |         }
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:161:33: error: value of type 'CategoryRule' has no member 'isValid'
+159 |         
+160 |         // When & Then
+161 |         XCTAssertTrue(validRule.isValid, "Valid rule should pass validation")
+    |                                 `- error: value of type 'CategoryRule' has no member 'isValid'
+162 |         XCTAssertFalse(invalidRule.isValid, "Rule with empty name should fail validation")
+163 |         XCTAssertFalse(invalidAmountRule.isValid, "Rule with invalid amount range should fail validation")
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:162:36: error: value of type 'CategoryRule' has no member 'isValid'
+160 |         // When & Then
+161 |         XCTAssertTrue(validRule.isValid, "Valid rule should pass validation")
+162 |         XCTAssertFalse(invalidRule.isValid, "Rule with empty name should fail validation")
+    |                                    `- error: value of type 'CategoryRule' has no member 'isValid'
+163 |         XCTAssertFalse(invalidAmountRule.isValid, "Rule with invalid amount range should fail validation")
+164 |     }
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:173:26: error: cannot assign value of type 'Decimal' to type 'Double?'
+171 |         ).with {
+172 |             $0.merchantContains = "uber"
+173 |             $0.amountMin = Decimal(-50)
+    |                          `- error: cannot assign value of type 'Decimal' to type 'Double?'
+174 |             $0.amountMax = Decimal(-10)
+175 |             $0.amountSign = .negative
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleTests.swift:254:30: error: value of type 'CategoryRule' has no member 'lastMatched'
+252 |         XCTAssertEqual(rule.matchCount, initialMatchCount + 1, "Match count should increment")
+253 |         XCTAssertGreaterThan(rule.confidence, initialConfidence, "Confidence should increase slightly")
+254 |         XCTAssertNotNil(rule.lastMatched, "Last matched date should be set")
+    |                              `- error: value of type 'CategoryRule' has no member 'lastMatched'
+255 |     }
+256 |     
+[9/16] Compiling LedgerProTests RuleTemplatesTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:7:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+  5 |     
+  6 |     func test_ruleTemplates_exist() {
+  7 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+  8 |         
+  9 |         XCTAssertFalse(templates.isEmpty)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:14:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 12 |     
+ 13 |     func test_ruleTemplates_haveValidCategories() {
+ 14 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 15 |         let validCategoryIds = Set(Category.systemCategories.map { $0.id })
+ 16 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:24:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 22 |     
+ 23 |     func test_ruleTemplates_haveUniqueNames() {
+ 24 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 25 |         let names = templates.map { $0.ruleName }
+ 26 |         let uniqueNames = Set(names)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:32:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 30 |     
+ 31 |     func test_ruleTemplates_haveMerchantPatterns() {
+ 32 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 33 |         
+ 34 |         for template in templates {
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:52:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 50 |         ]
+ 51 |         
+ 52 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 53 |         
+ 54 |         for testCase in testCases {
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:76:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 74 |     
+ 75 |     func test_ruleTemplates_havePriorities() {
+ 76 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 77 |         
+ 78 |         for template in templates {
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:85:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 83 |     
+ 84 |     func test_ruleTemplates_creditCardPaymentIsPositive() {
+ 85 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 86 |         let creditCardTemplate = templates.first { $0.ruleName == "Credit Card Payments" }
+ 87 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/RuleTemplatesTests.swift:93:38: error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 91 |     
+ 92 |     func test_ruleTemplates_expensesAreNegative() {
+ 93 |         let templates = CategoryRule.commonRuleTemplates
+    |                                      `- error: type 'CategoryRule' has no member 'commonRuleTemplates'
+ 94 |         let expenseTemplates = templates.filter { $0.ruleName != "Credit Card Payments" }
+ 95 |         
+[10/16] Compiling LedgerProTests APIIntegrationTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:78:33: error: cannot convert value of type 'Double?' to expected argument type 'Double'
+ 76 |         let walmart = transactionResult.transactions.first { $0.description.contains("WALMART") }
+ 77 |         XCTAssertNotNil(walmart)
+ 78 |         XCTAssertEqual(walmart?.amount, -45.67, accuracy: 0.01)
+    |                                 `- error: cannot convert value of type 'Double?' to expected argument type 'Double'
+ 79 |         XCTAssertEqual(walmart?.category, "Shopping")
+ 80 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:83:33: error: cannot convert value of type 'Double?' to expected argument type 'Double'
+ 81 |         let payroll = transactionResult.transactions.first { $0.description.contains("PAYROLL") }
+ 82 |         XCTAssertNotNil(payroll)
+ 83 |         XCTAssertEqual(payroll?.amount, 2500.00, accuracy: 0.01)
+    |                                 `- error: cannot convert value of type 'Double?' to expected argument type 'Double'
+ 84 |         
+ 85 |         // 6. Verify summary calculations
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:99:52: error: value of type 'ImportResult' has no member 'transactions'
+ 97 |         
+ 98 |         // 8. Verify categories applied correctly
+ 99 |         for transaction in categorizedTransactions.transactions {
+    |                                                    `- error: value of type 'ImportResult' has no member 'transactions'
+100 |             if transaction.description.contains("WALMART") || transaction.description.contains("AMAZON") {
+101 |                 XCTAssertEqual(transaction.category, "Shopping")
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:189:40: error: cannot convert value of type 'Double?' to expected argument type 'Double'
+187 |         XCTAssertEqual(eurTransaction?.hasForex, true)
+188 |         XCTAssertEqual(eurTransaction?.originalCurrency, "EUR")
+189 |         XCTAssertEqual(eurTransaction?.originalAmount, -50.00, accuracy: 0.01)
+    |                                        `- error: cannot convert value of type 'Double?' to expected argument type 'Double'
+190 |         XCTAssertNotNil(eurTransaction?.exchangeRate)
+191 |         
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:202:42: error: value of type 'APIService' has no member 'valueForKey'
+200 |     func testUploadRecoveryAfterNetworkError() async throws {
+201 |         // This test simulates network issues by temporarily changing the base URL
+202 |         let originalBaseURL = apiService.valueForKey("baseURL") as? String ?? ""
+    |                                          `- error: value of type 'APIService' has no member 'valueForKey'
+203 |         
+204 |         // Create test file
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:209:20: error: value of type 'APIService' has no member 'setValue'
+207 |         
+208 |         // First attempt with invalid URL
+209 |         apiService.setValue("http://invalid.local:9999", forKey: "baseURL")
+    |                    `- error: value of type 'APIService' has no member 'setValue'
+210 |         
+211 |         do {
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/API/APIIntegrationTests.swift:221:20: error: value of type 'APIService' has no member 'setValue'
+219 |         
+220 |         // Restore valid URL
+221 |         apiService.setValue(originalBaseURL, forKey: "baseURL")
+    |                    `- error: value of type 'APIService' has no member 'setValue'
+222 |         
+223 |         // Second attempt should succeed
+[11/16] Compiling LedgerProTests TransactionTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:10:43: error: missing argument for parameter 'date' in call
+  8 |     func testBasicTransactionCreation() {
+  9 |         let transaction = Transaction(
+ 10 |             description: "Amazon Purchase",
+    |                                           `- error: missing argument for parameter 'date' in call
+ 11 |             amount: -49.99,
+ 12 |             category: "Shopping"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:24:50: error: missing argument for parameter 'date' in call
+ 22 |     func testTransactionWithForexData() {
+ 23 |         var transaction = Transaction(
+ 24 |             description: "International Purchase",
+    |                                                  `- error: missing argument for parameter 'date' in call
+ 25 |             amount: -41.70,
+ 26 |             category: "Shopping"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:44:44: error: missing argument for parameter 'date' in call
+ 42 |     func testHasForexProperty() {
+ 43 |         var transaction = Transaction(
+ 44 |             description: "Test Transaction",
+    |                                            `- error: missing argument for parameter 'date' in call
+ 45 |             amount: -100.0,
+ 46 |             category: "Test"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:71:38: error: missing argument for parameter 'date' in call
+ 69 |     func testForexCalculationAccuracy() {
+ 70 |         let transaction = Transaction(
+ 71 |             description: "Forex Test",
+    |                                      `- error: missing argument for parameter 'date' in call
+ 72 |             amount: -111.20,
+ 73 |             originalAmount: 100.0,
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:97:19: error: cannot convert value of type 'Date' to expected argument type 'String'
+ 95 |         
+ 96 |         let transaction = Transaction(
+ 97 |             date: testDate,
+    |                   `- error: cannot convert value of type 'Date' to expected argument type 'String'
+ 98 |             description: "Date Test",
+ 99 |             amount: -50.0,
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:114:62: error: missing argument for parameter 'date' in call
+112 |     func testMerchantNameExtraction() {
+113 |         let transaction1 = Transaction(
+114 |             description: "AMAZON.COM*2K3L45 AMZN.COM/BILL WA",
+    |                                                              `- error: missing argument for parameter 'date' in call
+115 |             amount: -29.99,
+116 |             category: "Shopping"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:123:55: error: missing argument for parameter 'date' in call
+121 |         
+122 |         let transaction2 = Transaction(
+123 |             description: "STARBUCKS #1234 NEW YORK NY",
+    |                                                       `- error: missing argument for parameter 'date' in call
+124 |             amount: -5.95,
+125 |             category: "Food & Dining"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:135:35: error: missing argument for parameter 'date' in call
+133 |     func testAmountFormatting() {
+134 |         let expenseTransaction = Transaction(
+135 |             description: "Expense",
+    |                                   `- error: missing argument for parameter 'date' in call
+136 |             amount: -123.45,
+137 |             category: "Test"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:141:34: error: missing argument for parameter 'date' in call
+139 |         
+140 |         let incomeTransaction = Transaction(
+141 |             description: "Income",
+    |                                  `- error: missing argument for parameter 'date' in call
+142 |             amount: 1000.00,
+143 |             category: "Salary"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:159:56: error: missing argument for parameter 'date' in call
+157 |     func testAutoCategorization() {
+158 |         var transaction = Transaction(
+159 |             description: "Auto Categorized Transaction",
+    |                                                        `- error: missing argument for parameter 'date' in call
+160 |             amount: -50.0,
+161 |             category: "Shopping"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:173:48: error: missing argument for parameter 'date' in call
+171 |     func testCategoryChanges() {
+172 |         var transaction = Transaction(
+173 |             description: "Category Change Test",
+    |                                                `- error: missing argument for parameter 'date' in call
+174 |             amount: -25.0,
+175 |             category: "Other"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:193:19: error: cannot convert value of type 'Date' to expected argument type 'String'
+191 |         
+192 |         let transaction1 = Transaction(
+193 |             date: date,
+    |                   `- error: cannot convert value of type 'Date' to expected argument type 'String'
+194 |             description: "Duplicate Test",
+195 |             amount: -50.0,
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:200:19: error: cannot convert value of type 'Date' to expected argument type 'String'
+198 |         
+199 |         let transaction2 = Transaction(
+200 |             date: date,
+    |                   `- error: cannot convert value of type 'Date' to expected argument type 'String'
+201 |             description: "Duplicate Test",
+202 |             amount: -50.0,
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:218:39: error: missing argument for parameter 'date' in call
+216 |     func testZeroAmountTransaction() {
+217 |         let transaction = Transaction(
+218 |             description: "Zero Amount",
+    |                                       `- error: missing argument for parameter 'date' in call
+219 |             amount: 0.0,
+220 |             category: "Test"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:229:28: error: missing argument for parameter 'date' in call
+227 |     func testEmptyDescriptionHandling() {
+228 |         let transaction = Transaction(
+229 |             description: "",
+    |                            `- error: missing argument for parameter 'date' in call
+230 |             amount: -10.0,
+231 |             category: "Test"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:241:40: error: missing argument for parameter 'date' in call
+239 |     func testLargeAmountHandling() {
+240 |         let transaction = Transaction(
+241 |             description: "Large Amount",
+    |                                        `- error: missing argument for parameter 'date' in call
+242 |             amount: -999999.99,
+243 |             category: "Test"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/TransactionTests.swift:255:57: error: missing argument for parameter 'date' in call
+253 |             for i in 0..<1000 {
+254 |                 let _ = Transaction(
+255 |                     description: "Performance Test \(i)",
+    |                                                         `- error: missing argument for parameter 'date' in call
+256 |                     amount: Double(i) * -1.0,
+257 |                     category: "Test"
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Sources/LedgerPro/Models/Transaction.swift:37:5: note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 35 |     
+ 36 |     // Memberwise initializer for creating transactions manually
+ 37 |     init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, hasForex: Bool? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    |     `- note: 'init(id:date:description:amount:category:confidence:jobId:accountId:rawData:originalAmount:originalCurrency:exchangeRate:hasForex:wasAutoCategorized:categorizationMethod:)' declared here
+ 38 |         if let providedId = id {
+ 39 |             self.id = providedId
+[12/16] Compiling LedgerProTests CategoryRuleMatchingTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleMatchingTests.swift:151:24: error: cannot assign value of type 'Decimal' to type 'Double?'
+149 |         )
+150 |         rule.merchantContains = "STARBUCKS"
+151 |         rule.amountMin = Decimal(-20)
+    |                        `- error: cannot assign value of type 'Decimal' to type 'Double?'
+152 |         rule.amountMax = Decimal(-2)
+153 |         rule.priority = 75
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleMatchingTests.swift:152:24: error: cannot assign value of type 'Decimal' to type 'Double?'
+150 |         rule.merchantContains = "STARBUCKS"
+151 |         rule.amountMin = Decimal(-20)
+152 |         rule.amountMax = Decimal(-2)
+    |                        `- error: cannot assign value of type 'Decimal' to type 'Double?'
+153 |         rule.priority = 75
+154 |         rule.confidence = 0.80
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleMatchingTests.swift:305:13: warning: initialization of immutable value 'uberSystemRule' was never used; consider replacing with assignment to '_' or removing it
+303 |         // Test that custom rules can override system rules with higher priority
+304 |         let systemRules = CategoryRule.systemRules
+305 |         let uberSystemRule = systemRules.first { $0.merchantContains == "UBER" }
+    |             `- warning: initialization of immutable value 'uberSystemRule' was never used; consider replacing with assignment to '_' or removing it
+306 |         
+307 |         var customUberRule = CategoryRule(
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleMatchingTests.swift:420:24: error: cannot assign value of type 'Decimal' to type 'Double?'
+418 |         )
+419 |         rule.merchantContains = "WALMART"
+420 |         rule.amountMin = Decimal(-200)
+    |                        `- error: cannot assign value of type 'Decimal' to type 'Double?'
+421 |         rule.amountMax = Decimal(-50)
+422 |         rule.amountSign = .negative
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryRuleMatchingTests.swift:421:24: error: cannot assign value of type 'Decimal' to type 'Double?'
+419 |         rule.merchantContains = "WALMART"
+420 |         rule.amountMin = Decimal(-200)
+421 |         rule.amountMax = Decimal(-50)
+    |                        `- error: cannot assign value of type 'Decimal' to type 'Double?'
+422 |         rule.amountSign = .negative
+423 |         rule.priority = 85
+[13/16] Compiling LedgerProTests CategoryServiceCustomRuleTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceCustomRuleTests.swift:72:30: error: cannot assign value of type 'Decimal' to type 'Double?'
+ 70 |         )
+ 71 |         customRule.merchantContains = "spotify"
+ 72 |         customRule.amountMin = Decimal(-20)
+    |                              `- error: cannot assign value of type 'Decimal' to type 'Double?'
+ 73 |         customRule.amountMax = Decimal(-5)
+ 74 |         customRule.priority = 90
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceCustomRuleTests.swift:73:30: error: cannot assign value of type 'Decimal' to type 'Double?'
+ 71 |         customRule.merchantContains = "spotify"
+ 72 |         customRule.amountMin = Decimal(-20)
+ 73 |         customRule.amountMax = Decimal(-5)
+    |                              `- error: cannot assign value of type 'Decimal' to type 'Double?'
+ 74 |         customRule.priority = 90
+ 75 |         customRule.confidence = 0.85
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceCustomRuleTests.swift:124:24: warning: immutable value 'confidence' was never used; consider replacing with '_' or removing it
+122 |         )
+123 |         
+124 |         let (category, confidence) = categoryService.suggestCategory(for: transaction)
+    |                        `- warning: immutable value 'confidence' was never used; consider replacing with '_' or removing it
+125 |         
+126 |         // Then - Should use a matching rule (either Entertainment or Subscriptions is valid)
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceCustomRuleTests.swift:141:29: error: cannot assign value of type 'Decimal' to type 'Double?'
+139 |         )
+140 |         regexRule.regexPattern = "RENT|LEASE|APT\\s*#?\\d+"
+141 |         regexRule.amountMin = Decimal(-5000)
+    |                             `- error: cannot assign value of type 'Decimal' to type 'Double?'
+142 |         regexRule.amountMax = Decimal(-500)
+143 |         regexRule.priority = 95
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategoryServiceCustomRuleTests.swift:142:29: error: cannot assign value of type 'Decimal' to type 'Double?'
+140 |         regexRule.regexPattern = "RENT|LEASE|APT\\s*#?\\d+"
+141 |         regexRule.amountMin = Decimal(-5000)
+142 |         regexRule.amountMax = Decimal(-500)
+    |                             `- error: cannot assign value of type 'Decimal' to type 'Double?'
+143 |         regexRule.priority = 95
+144 |         
+[14/16] Compiling LedgerProTests CategorizationRateTests.swift
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategorizationRateTests.swift:69:22: error: 'async' call in a function that does not support concurrency
+ 17 |     
+ 18 |     @MainActor
+ 19 |     func testEnhancedCategorizationRate() {
+    |          `- note: add 'async' to function 'testEnhancedCategorizationRate()' to make it asynchronous
+ 20 |         // Given - Real world transaction examples that should be categorized with new rules
+ 21 |         let transactions = [
+    :
+ 67 |         
+ 68 |         // When
+ 69 |         let result = categorizationService.categorizeTransactions(transactions)
+    |                      `- error: 'async' call in a function that does not support concurrency
+ 70 |         
+ 71 |         // Then
+
+/Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/Tests/LedgerProTests/CategorizationRateTests.swift:144:26: error: 'async' call in a function that does not support concurrency
+108 |     
+109 |     @MainActor
+110 |     func testSpecificNewRules() {
+    |          `- note: add 'async' to function 'testSpecificNewRules()' to make it asynchronous
+111 |         // Test individual new rules to ensure they're working
+112 |         let testCases: [(description: String, expectedCategory: String)] = [
+    :
+142 |             )
+143 |             
+144 |             let result = categorizationService.categorizeTransactions([transaction])
+    |                          `- error: 'async' call in a function that does not support concurrency
+145 |             
+146 |             if result.categorizedCount > 0 {
+error: fatalError

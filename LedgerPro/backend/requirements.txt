@@ -27,3 +27,4 @@ pytz==2024.1
 requests==2.31.0
 tabula-py==2.9.0
 uvicorn==0.24.0
+slowapi==0.1.9

@@ -17,6 +17,12 @@ struct LedgerProApp: App {
         
         // Setup MCP servers if needed
         MCPServerLauncher.setupMCPServersIfNeeded()
+        
+        // Handle UI testing mode
+        if ProcessInfo.processInfo.arguments.contains("--uitesting") {
+            // Disable animations for UI tests on macOS
+            NSAnimationContext.current.duration = 0
+        }
     }
     
     var body: some Scene {
@@ -30,8 +36,12 @@ struct LedgerProApp: App {
                         window.center()
                     }
                     
-                    // Load stored data
-                    dataManager.loadStoredData()
+                    // Load stored data or test data
+                    if ProcessInfo.processInfo.arguments.contains("--uitesting") {
+                        dataManager.loadTestData()
+                    } else {
+                        dataManager.loadStoredData()
+                    }
                     
                     // Start MCP servers
                     Task {

@@ -1,0 +1,99 @@
+import Foundation
+import CoreData
+
+/// Simple test setup for Core Data without full app integration
+public class CoreDataTestSetup {
+    
+    public static func testCoreDataComponents() {
+        print("🧪 Testing Core Data Components...")
+        
+        // Test 1: CoreDataManager initialization
+        print("1️⃣ Testing CoreDataManager...")
+        Task {
+            let manager = CoreDataManager.shared
+            // Wait for initialization
+            while !manager.isInitialized {
+                try await Task.sleep(nanoseconds: 100_000_000)
+            }
+            print("✅ CoreDataManager initialized successfully")
+        }
+        
+        // Test 2: Sample data creation
+        print("2️⃣ Testing sample data creation...")
+        let sampleTransaction = Transaction(
+            date: "2024-01-15",
+            description: "Test Transaction",
+            amount: -25.50,
+            category: "Food & Dining",
+            confidence: 0.9
+        )
+        
+        let sampleAccount = BankAccount(
+            id: "test_account_123",
+            name: "Test Checking",
+            institution: "Test Bank",
+            accountType: .checking,
+            lastFourDigits: "1234",
+            currency: "USD",
+            isActive: true,
+            createdAt: "2024-01-15T10:00:00Z"
+        )
+        
+        print("✅ Sample domain models created successfully")
+        print("   Transaction: \(sampleTransaction.description) - $\(sampleTransaction.amount)")
+        print("   Account: \(sampleAccount.name) at \(sampleAccount.institution)")
+        
+        // Test 3: Migration service
+        print("3️⃣ Testing migration service...")
+        Task {
+            let migrationService = CoreDataMigrationService()
+            let needsMigration = await migrationService.needsMigration()
+            print("✅ Migration check completed. Needs migration: \(needsMigration)")
+        }
+        
+        print("🎉 Core Data component test completed!")
+    }
+    
+    /// Create minimal test data
+    public static func createTestData() -> ([Transaction], [BankAccount]) {
+        let account = BankAccount(
+            id: "test_account_001",
+            name: "Test Checking Account",
+            institution: "Test Bank",
+            accountType: .checking,
+            lastFourDigits: "1234",
+            currency: "USD",
+            isActive: true,
+            createdAt: "2024-01-01T00:00:00Z"
+        )
+        
+        let transactions = [
+            Transaction(
+                date: "2024-01-15",
+                description: "STARBUCKS COFFEE",
+                amount: -5.75,
+                category: "Food & Dining",
+                confidence: 0.95,
+                accountId: account.id
+            ),
+            Transaction(
+                date: "2024-01-14", 
+                description: "PAYROLL DEPOSIT",
+                amount: 2500.00,
+                category: "Income",
+                confidence: 1.0,
+                accountId: account.id
+            ),
+            Transaction(
+                date: "2024-01-13",
+                description: "UBER RIDE",
+                amount: -18.50,
+                category: "Transportation",
+                confidence: 0.85,
+                accountId: account.id
+            )
+        ]
+        
+        return (transactions, [account])
+    }
+}

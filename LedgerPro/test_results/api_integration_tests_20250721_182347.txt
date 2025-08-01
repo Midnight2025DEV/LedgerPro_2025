@@ -1,0 +1,602 @@
+Building for debugging...
+[0/5] Write sources
+[1/5] Write swift-version--58304C5D6DBC2206.txt
+[3/5] Compiling LedgerProTests APIIntegrationTests.swift
+[4/5] Emitting module LedgerProTests
+[4/6] Write Objects.LinkFileList
+[5/6] Linking LedgerProPackageTests
+Build complete! (1.44s)
+Test Suite 'Selected tests' started at 2025-07-21 18:23:49.477.
+Test Suite 'LedgerProPackageTests.xctest' started at 2025-07-21 18:23:49.478.
+Test Suite 'APIIntegrationTests' started at 2025-07-21 18:23:49.478.
+Test Case '-[LedgerProTests.APIIntegrationTests testCompleteUploadFlow]' started.
+ℹ️ 18:23:49.479 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:23:49.479 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:23:49.482 INFO [CategoryService:36] loadCategories() - 🔍 DIAGNOSTIC: Categories initialization needed: false
+ℹ️ 18:23:49.482 INFO [CategoryService:44] loadCategories() - 🔍 DIAGNOSTIC: Categories already initialized, skipping system initialization
+ℹ️ 18:23:49.482 INFO [CategoryService:49] loadCategories() - 🔍 DIAGNOSTIC: Loaded 31 categories from storage
+🔍 18:23:49.482 DEBUG [CategoryService:101] organizeCategories(_:) - Category hierarchy organized: 4 root, 31 total
+ℹ️ 18:23:49.482 INFO [CategoryService:54] loadCategories() - Loaded 31 categories (4 root categories)
+ℹ️ 18:23:49.482 INFO [CategoryService:298] logCategoryDiagnostics() - 📊 ========== CATEGORY SYSTEM DIAGNOSTICS ==========
+ℹ️ 18:23:49.482 INFO [CategoryService:301] logCategoryDiagnostics() - 🔍 SYSTEM CATEGORY IDS CONSTANT:
+ℹ️ 18:23:49.482 INFO [CategoryService:302] logCategoryDiagnostics() -    Transportation: 00000000-0000-0000-0000-000000000022
+ℹ️ 18:23:49.482 INFO [CategoryService:303] logCategoryDiagnostics() -    Food & Dining: 00000000-0000-0000-0000-000000000023
+ℹ️ 18:23:49.482 INFO [CategoryService:304] logCategoryDiagnostics() -    Shopping: 00000000-0000-0000-0000-000000000031
+ℹ️ 18:23:49.482 INFO [CategoryService:305] logCategoryDiagnostics() -    Other: 00000000-0000-0000-0000-000000000999
+ℹ️ 18:23:49.482 INFO [CategoryService:306] logCategoryDiagnostics() -    Income: 00000000-0000-0000-0000-000000000001
+ℹ️ 18:23:49.482 INFO [CategoryService:307] logCategoryDiagnostics() -    Salary: 00000000-0000-0000-0000-000000000011
+ℹ️ 18:23:49.482 INFO [CategoryService:308] logCategoryDiagnostics() -    Credit Card Payment: 00000000-0000-0000-0000-000000000052
+ℹ️ 18:23:49.482 INFO [CategoryService:311] logCategoryDiagnostics() - 🔍 ACTUALLY LOADED CATEGORIES (31 total):
+ℹ️ 18:23:49.482 INFO [CategoryService:315] logCategoryDiagnostics() -    Income (ID: 00000000-0000-0000-0000-000000000001, System: true)
+ℹ️ 18:23:49.482 INFO [CategoryService:315] logCategoryDiagnostics() -    Salary (ID: 00000000-0000-0000-0000-000000000011, System: true)
+ℹ️ 18:23:49.482 INFO [CategoryService:315] logCategoryDiagnostics() -    Housing (ID: 00000000-0000-0000-0000-000000000021, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Account Transfer (ID: 00000000-0000-0000-0000-000000000051, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Expenses (ID: 00000000-0000-0000-0000-000000000002, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Freelance (ID: 00000000-0000-0000-0000-000000000012, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Transportation (ID: 00000000-0000-0000-0000-000000000022, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Credit Card Payment (ID: 00000000-0000-0000-0000-000000000052, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Transfers (ID: 00000000-0000-0000-0000-000000000003, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    Investment Returns (ID: 00000000-0000-0000-0000-000000000013, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Food & Dining (ID: 00000000-0000-0000-0000-000000000023, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Loan Payment (ID: 00000000-0000-0000-0000-000000000053, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Bonus (ID: 00000000-0000-0000-0000-000000000014, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Utilities (ID: 00000000-0000-0000-0000-000000000024, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Other Income (ID: 00000000-0000-0000-0000-000000000015, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Healthcare (ID: 00000000-0000-0000-0000-000000000025, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Shopping (ID: 00000000-0000-0000-0000-000000000031, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Entertainment (ID: 00000000-0000-0000-0000-000000000032, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Travel (ID: 00000000-0000-0000-0000-000000000033, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:315] logCategoryDiagnostics() -    [showing first 20]Education (ID: 00000000-0000-0000-0000-000000000034, System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:317] logCategoryDiagnostics() -    ... and 11 more categories
+ℹ️ 18:23:49.483 INFO [CategoryService:323] logCategoryDiagnostics() - 🔍 SYSTEM CATEGORY EXISTENCE CHECK:
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Transportation: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000022)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Transportation' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Food & Dining: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000023)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Food & Dining' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Shopping: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000031)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Shopping' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Other: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000999)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Other' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Income: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000001)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Income' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Salary: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000011)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Salary' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:337] logCategoryDiagnostics() -    Credit Card Payment: ✅ EXISTS (ID: 00000000-0000-0000-0000-000000000052)
+ℹ️ 18:23:49.483 INFO [CategoryService:339] logCategoryDiagnostics() -       Found as: 'Credit Card Payment' (System: true)
+ℹ️ 18:23:49.483 INFO [CategoryService:345] logCategoryDiagnostics() - 🔍 Category.systemCategories RETURNS 31 categories:
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Income (ID: 00000000-0000-0000-0000-000000000001)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Expenses (ID: 00000000-0000-0000-0000-000000000002)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Transfers (ID: 00000000-0000-0000-0000-000000000003)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Salary (ID: 00000000-0000-0000-0000-000000000011)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Freelance (ID: 00000000-0000-0000-0000-000000000012)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Investment Returns (ID: 00000000-0000-0000-0000-000000000013)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Bonus (ID: 00000000-0000-0000-0000-000000000014)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Other Income (ID: 00000000-0000-0000-0000-000000000015)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Housing (ID: 00000000-0000-0000-0000-000000000021)
+ℹ️ 18:23:49.483 INFO [CategoryService:348] logCategoryDiagnostics() -    Transportation (ID: 00000000-0000-0000-0000-000000000022)
+ℹ️ 18:23:49.483 INFO [CategoryService:350] logCategoryDiagnostics() -    ... and 21 more
+ℹ️ 18:23:49.483 INFO [CategoryService:355] logCategoryDiagnostics() - 📊 ========== END CATEGORY DIAGNOSTICS ==========
+ℹ️ 18:23:49.483 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:23:49.483 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:23:49.483 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:23:49.496 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:23:49.497 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:49.497 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_549E5615-E28B-425C-858A-D7ECE4AE6298.csv
+🔍 18:23:49.497 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:49.497 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:49.497 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_549E5615-E28B-425C-858A-D7ECE4AE6298.csv
+🔍 18:23:49.497 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_549E5615-E28B-425C-858A-D7ECE4AE6298.csv
+🔍 18:23:49.497 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:49.497 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:49.497 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:49 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988694, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:49 +0000, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileSize): 435, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0]
+🔍 18:23:49.497 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 435 bytes
+🔍 18:23:49.497 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 435 bytes
+🔍 18:23:49.497 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_549E5615-E28B-425C-858A-D7ECE4AE6298.csv
+🔍 18:23:49.497 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 435 bytes
+ℹ️ 18:23:49.497 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_549E5615-E28B-425C-858A-D7ECE4AE6298.csv (435 bytes)
+🔍 18:23:49.497 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-DF15BB75-8062-4E76-8073-29A1E183784A"]
+🔍 18:23:49.499 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:49.499 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Date"): Tue, 22 Jul 2025 01:23:49 GMT, AnyHashable("Content-Length"): 152, AnyHashable("Server"): uvicorn, AnyHashable("Content-Type"): application/json]
+🔍 18:23:49.499 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"935fc57e-3cbd-4607-835d-8015b3a870d9","status":"processing","message":"Processing started for test_549E5615-E28B-425C-858A-D7ECE4AE6298.csv"}
+ℹ️ 18:23:49.499 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 935fc57e-3cbd-4607-835d-8015b3a870d9
+🔍 18:23:49.499 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/935fc57e-3cbd-4607-835d-8015b3a870d9
+ℹ️ 18:23:49.500 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/935fc57e-3cbd-4607-835d-8015b3a870d9
+🔍 18:23:51.536 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/935fc57e-3cbd-4607-835d-8015b3a870d9
+ℹ️ 18:23:51.538 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/935fc57e-3cbd-4607-835d-8015b3a870d9
+🔍 18:23:51.538 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/935fc57e-3cbd-4607-835d-8015b3a870d9
+🔍 18:23:51.540 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:51.540 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"935fc57e-3cbd-4607-835d-8015b3a870d9","status":"completed","transactions":[{"date":"2024-01-01","description":"WALMART SUPERCENTER","amount":-45.67,"category":"Shopping","confidence":1.0,"raw_data":{"Date":"2024-01-01","Description":"WALMART SUPERCENTER","Amount":"-45.67","Category":"Shopping"}},{"date":"2024-01-02","description":"UBER TRIP HELP.UBER.COM","amount":-12.34,"category":"Transportation","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"UBER TRIP HELP.UBER.COM
+ℹ️ 18:23:51.540 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/935fc57e-3cbd-4607-835d-8015b3a870d9
+ℹ️ 18:23:51.540 INFO [APIService:274] getTransactions(_:) - API Response received with 8 transactions
+ℹ️ 18:23:51.540 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+ℹ️ 18:23:51.541 INFO [ImportCategorizationService:9] categorizeTransactions(_:) - 🔄 ImportCategorizationService: Starting categorization of 8 transactions
+ℹ️ 18:23:51.541 INFO [ImportCategorizationService:20] categorizeTransactions(_:) - 📊 Categories available: 31
+ℹ️ 18:23:51.541 INFO [ImportCategorizationService:29] categorizeTransactions(_:) - 🔍 Processing transaction 1: 'WALMART SUPERCENTER'
+🔍 18:23:51.541 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'WALMART SUPERCENTER'
+🔍 18:23:51.550 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Lodging, confidence: 0.46, source: merchantDatabase
+🔍 18:23:51.550 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.46, source: merchantDatabase
+🔍 18:23:51.551 DEBUG [RuleStorageService:69] loadRules() - Loaded 3 custom rules
+🔍 18:23:51.551 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.553 DEBUTest Case '-[LedgerProTests.APIIntegrationTests testCompleteUploadFlow]' passed (2.172 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testConcurrentUploads]' started.
+G [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.553 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Walmart' -> Shopping, confidence: 0.90
+🔍 18:23:51.553 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.9, calculated=0.90
+🔍 18:23:51.553 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Shopping, 0.90)
+ℹ️ 18:23:51.553 INFO [ImportCategorizationService:35] categorizeTransactions(_:) - 📤 Suggestion: Shopping (confidence: 0.90)
+ℹ️ 18:23:51.553 INFO [ImportCategorizationService:29] categorizeTransactions(_:) - 🔍 Processing transaction 2: 'UBER TRIP HELP.UBER.COM'
+🔍 18:23:51.553 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'UBER TRIP HELP.UBER.COM'
+🔍 18:23:51.557 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Transportation, confidence: 0.73, source: merchantDatabase
+🔍 18:23:51.557 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.73, source: merchantDatabase
+🔍 18:23:51.557 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.557 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.557 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Uber Rides' -> Transportation, confidence: 0.90
+🔍 18:23:51.557 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.9, calculated=0.90
+🔍 18:23:51.557 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Transportation, 0.90)
+ℹ️ 18:23:51.557 INFO [ImportCategorizationService:35] categorizeTransactions(_:) - 📤 Suggestion: Transportation (confidence: 0.90)
+ℹ️ 18:23:51.557 INFO [ImportCategorizationService:29] categorizeTransactions(_:) - 🔍 Processing transaction 3: 'STARBUCKS STORE 12345'
+🔍 18:23:51.557 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'STARBUCKS STORE 12345'
+🔍 18:23:51.562 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Food & Dining, confidence: 0.83, source: merchantDatabase
+🔍 18:23:51.562 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.83, source: merchantDatabase
+🔍 18:23:51.562 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.562 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.562 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Starbucks' -> Food & Dining, confidence: 0.95
+🔍 18:23:51.562 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.95, calculated=0.95
+🔍 18:23:51.562 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Food & Dining, 0.95)
+ℹ️ 18:23:51.562 INFO [ImportCategorizationService:35] categorizeTransactions(_:) - 📤 Suggestion: Food & Dining (confidence: 0.95)
+🔍 18:23:51.562 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'PAYROLL DEPOSIT'
+🔍 18:23:51.591 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Other, confidence: 0.10, source: unknown
+🔍 18:23:51.591 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.10, source: unknown
+🔍 18:23:51.591 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.591 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 2 matching rules
+🔍 18:23:51.591 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Salary Deposits' -> Salary, confidence: 0.95
+🔍 18:23:51.591 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.95, calculated=0.95
+🔍 18:23:51.591 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Salary, 0.95)
+🔍 18:23:51.591 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'AMAZON.COM MERCHANDISE'
+🔍 18:23:51.594 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Subscriptions, confidence: 0.44, source: merchantDatabase
+🔍 18:23:51.594 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.44, source: merchantDatabase
+🔍 18:23:51.594 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.594 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.594 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Amazon' -> Shopping, confidence: 0.90
+🔍 18:23:51.594 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.9, calculated=0.90
+🔍 18:23:51.594 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Shopping, 0.90)
+🔍 18:23:51.594 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'TRANSFER FROM SAVINGS'
+🔍 18:23:51.600 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Shopping, confidence: 0.35, source: merchantDatabase
+🔍 18:23:51.600 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.35, source: merchantDatabase
+🔍 18:23:51.600 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.600 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.600 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Bank Transfers' -> Other, confidence: 0.85
+🔍 18:23:51.600 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.85, calculated=0.85
+🔍 18:23:51.600 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Other, 0.85)
+🔍 18:23:51.600 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'NETFLIX SUBSCRIPTION'
+🔍 18:23:51.627 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Transportation, confidence: 0.71, source: merchantDatabase
+🔍 18:23:51.627 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.71, source: merchantDatabase
+🔍 18:23:51.627 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.627 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.627 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Netflix' -> Entertainment, confidence: 0.95
+🔍 18:23:51.627 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.95, calculated=0.95
+🔍 18:23:51.627 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Entertainment, 0.95)
+🔍 18:23:51.627 DEBUG [CategoryService:535] suggestCategory(for:) - 🔍 CategoryService.suggestCategory for: 'GAS STATION SHELL'
+🔍 18:23:51.650 DEBUG [CategoryService:539] suggestCategory(for:) -    🏪 MerchantCategorizer result: Transportation, confidence: 0.90, source: fallbackRules
+🔍 18:23:51.650 DEBUG [CategoryService:547] suggestCategory(for:) -    Merchant result not used - confidence: 0.90, source: fallbackRules
+🔍 18:23:51.650 DEBUG [CategoryService:552] suggestCategory(for:) -    📏 Testing against 27 rules (24 system + 3 custom)
+🔍 18:23:51.650 DEBUG [CategoryService:564] suggestCategory(for:) -    ✅ Found 1 matching rules
+🔍 18:23:51.650 DEBUG [CategoryService:569] suggestCategory(for:) -    🎯 Best rule: 'Gas Stations' -> Transportation, confidence: 0.85
+🔍 18:23:51.650 DEBUG [CategoryService:570] suggestCategory(for:) -    📊 Rule confidence calculation: base=0.85, calculated=0.85
+🔍 18:23:51.650 DEBUG [CategoryService:571] suggestCategory(for:) -    ✅ Returning from rule match: (Transportation, 0.85)
+ℹ️ 18:23:51.650 INFO [ImportCategorizationService:76] categorizeTransactions(_:) - ✅ Categorization complete: 8/8 categorized (100%)
+ℹ️ 18:23:51.651 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:23:51.651 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:23:51.651 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:23:51.651 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:23:51.651 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:23:51.652 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:23:51.654 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:51.654 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_0_ACEAE400-AADC-4A36-B696-17F06F31DA67.csv
+🔍 18:23:51.654 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:51.654 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:51.654 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_1_C848FF2A-E369-4EE0-B227-FEE131874E0E.csv
+🔍 18:23:51.654 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:51.654 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:51.654 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_2_52E7FC3B-B32A-48F3-84F7-762B2DF3863C.csv
+🔍 18:23:51.654 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:51.654 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:51.654 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_3_D261E8B7-44EF-43FD-8235-B15DE631EBB1.csv
+🔍 18:23:51.654 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:51.654 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:51.654 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_4_10E408DB-0340-4DFF-A61B-05CE3E889D8C.csv
+🔍 18:23:51.654 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:51.654 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:51.654 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_0_ACEAE400-AADC-4A36-B696-17F06F31DA67.csv
+🔍 18:23:51.654 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_0_ACEAE400-AADC-4A36-B696-17F06F31DA67.csv
+🔍 18:23:51.654 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:51.654 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:51.654 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988715, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSize): 701, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff"]
+🔍 18:23:51.655 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 701 bytes
+🔍 18:23:51.655 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 701 bytes
+🔍 18:23:51.655 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_0_ACEAE400-AADC-4A36-B696-17F06F31DA67.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 701 bytes
+ℹ️ 18:23:51.655 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_0_ACEAE400-AADC-4A36-B696-17F06F31DA67.csv (701 bytes)
+🔍 18:23:51.655 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-93F328AB-D431-4FFC-91F8-1B6104866758"]
+🔍 18:23:51.655 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:51.655 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_1_C848FF2A-E369-4EE0-B227-FEE131874E0E.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_1_C848FF2A-E369-4EE0-B227-FEE131874E0E.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:51.655 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:51.655 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988716, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSize): 705, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0]
+🔍 18:23:51.655 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 705 bytes
+🔍 18:23:51.655 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 705 bytes
+🔍 18:23:51.655 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_1_C848FF2A-E369-4EE0-B227-FEE131874E0E.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 705 bytes
+ℹ️ 18:23:51.655 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_1_C848FF2A-E369-4EE0-B227-FEE131874E0E.csv (705 bytes)
+🔍 18:23:51.655 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-11EBDF8B-9195-4C6F-9909-FBBE381F2506"]
+🔍 18:23:51.655 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:51.655 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_2_52E7FC3B-B32A-48F3-84F7-762B2DF3863C.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_2_52E7FC3B-B32A-48F3-84F7-762B2DF3863C.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:51.655 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:51.655 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSize): 703, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988717, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular]
+🔍 18:23:51.655 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 703 bytes
+🔍 18:23:51.655 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 703 bytes
+🔍 18:23:51.655 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_2_52E7FC3B-B32A-48F3-84F7-762B2DF3863C.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 703 bytes
+ℹ️ 18:23:51.655 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_2_52E7FC3B-B32A-48F3-84F7-762B2DF3863C.csv (703 bytes)
+🔍 18:23:51.655 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-D3DA28CF-8149-4CEB-B96E-01529AF9AD86"]
+🔍 18:23:51.655 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:51.655 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_3_D261E8B7-44EF-43FD-8235-B15DE631EBB1.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_3_D261E8B7-44EF-43FD-8235-B15DE631EBB1.csv
+🔍 18:23:51.655 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:51.655 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:51.656 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988718, __C.NSFileAttributeKey(_rawValue: NSFileSize): 704, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication]
+🔍 18:23:51.656 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 704 bytes
+🔍 18:23:51.656 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 704 bytes
+🔍 18:23:51.656 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_3_D261E8B7-44EF-43FD-8235-B15DE631EBB1.csv
+🔍 18:23:51.656 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 704 bytes
+ℹ️ 18:23:51.656 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_3_D261E8B7-44EF-43FD-8235-B15DE631EBB1.csv (704 bytes)
+🔍 18:23:51.656 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-F2242B09-F0B9-4730-8562-8CACD15C981E"]
+🔍 18:23:51.656 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:51.656 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_4_10E408DB-0340-4DFF-A61B-05CE3E889D8C.csv
+🔍 18:23:51.656 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_4_10E408DB-0340-4DFF-A61B-05CE3E889D8C.csv
+🔍 18:23:51.656 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:51.656 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:51.656 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:51 +0000, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileSize): 702, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988719]
+🔍 18:23:51.656 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 702 bytes
+🔍 18:23:51.656 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 702 bytes
+🔍 18:23:51.656 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_4_10E408DB-0340-4DFF-A61B-05CE3E889D8C.csv
+🔍 18:23:51.656 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 702 bytes
+ℹ️ 18:23:51.656 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_4_10E408DB-0340-4DFF-A61B-05CE3E889D8C.csv (702 bytes)
+🔍 18:23:51.656 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-FE06BF49-E221-4296-B724-D6ED03D0243D"]
+🔍 18:23:51.656 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:51.656 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Server"): uvicorn, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:51 GMT, AnyHashable("Content-Type"): application/json, AnyHashable("Content-Length"): 154]
+🔍 18:23:51.656 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"09010f01-f6ef-42db-9cbe-b91faa49b6b6","status":"processing","message":"Processing started for test_0_ACEAE400-AADC-4A36-B696-17F06F31DA67.csv"}
+ℹ️ 18:23:51.656 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 09010f01-f6ef-42db-9cbe-b91faa49b6b6
+🔍 18:23:51.656 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:51.656 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Date"): Tue, 22 Jul 2025 01:23:51 GMT, AnyHashable("Content-Type"): application/json, AnyHashable("Server"): uvicorn, AnyHashable("Content-Length"): 154]
+🔍 18:23:51.656 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"371c3267-be17-4b90-a782-eae6b99ea5e5","status":"processing","message":"Processing started for test_1_C848FF2A-E369-4EE0-B227-FEE131874E0E.csv"}
+🔍 18:23:51.656 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/09010f01-f6ef-42db-9cbe-b91faa49b6b6
+ℹ️ 18:23:51.657 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 371c3267-be17-4b90-a782-eae6b99ea5e5
+🔍 18:23:51.657 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/371c3267-be17-4b90-a782-eae6b99ea5e5
+🔍 18:23:51.657 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:51.657 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Content-Length"): 154, AnyHashable("Content-Type"): application/json, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:51 GMT, AnyHashable("Server"): uvicorn]
+🔍 18:23:51.657 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"4117b7a4-c9f0-4ec9-bef5-d18229a05351","status":"processing","message":"Processing started for test_2_52E7FC3B-B32A-48F3-84F7-762B2DF3863C.csv"}
+ℹ️ 18:23:51.657 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 4117b7a4-c9f0-4ec9-bef5-d18229a05351
+🔍 18:23:51.657 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:51.657 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Content-Length"): 154, AnyHashable("Content-Type"): application/json, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:51 GMT, AnyHashable("Server"): uvicorn]
+🔍 18:23:51.657 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"c04b6cb5-83a8-4c20-a654-0f1ec56f6cae","status":"processing","message":"Processing started for test_3_D261E8B7-44EF-43FD-8235-B15DE631EBB1.csv"}
+🔍 18:23:51.657 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/4117b7a4-c9f0-4ec9-bef5-d18229a05351
+ℹ️ 18:23:51.657 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+🔍 18:23:51.658 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+🔍 18:23:51.658 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:51.658 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Date"): Tue, 22 Jul 2025 01:23:51 GMT, AnyHashable("Content-Length"): 154, AnyHashable("Content-Type"): application/json, AnyHashable("Server"): uvicorn]
+🔍 18:23:51.658 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"91c79d46-bcaf-49d3-b161-13daa8257a7e","status":"processing","message":"Processing started for test_4_10E408DB-0340-4DFF-A61B-05CE3E889D8C.csv"}
+ℹ️ 18:23:51.658 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 91c79d46-bcaf-49d3-b161-13daa8257a7e
+🔍 18:23:51.658 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/91c79d46-bcaf-49d3-b161-13daa8257a7e
+ℹ️ 18:23:51.659 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/4117b7a4-c9f0-4ec9-bef5-d18229a05351
+ℹ️ 18:23:51.659 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+ℹ️ 18:23:51.659 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/09010f01-f6ef-42db-9cbe-b91faa49b6b6
+ℹ️ 18:23:51.659 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/371c3267-be17-4b90-a782-eae6b99ea5e5
+ℹ️ 18:23:51.660 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/91c79d46-bcaf-49d3-b161-13daa8257a7e
+🔍 18:23:53.697 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/4117b7a4-c9f0-4ec9-bef5-d18229a05351
+🔍 18:23:53.697 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+🔍 18:23:53.697 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/371c3267-be17-4b90-a782-eae6b99ea5e5
+🔍 18:23:53.697 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/09010f01-f6ef-42db-9cbe-b91faa49b6b6
+🔍 18:23:53.697 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/91c79d46-bcaf-49d3-b161-13daa8257a7e
+ℹ️ 18:23:53.699 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+🔍 18:23:53.699 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+ℹ️ 18:23:53.700 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/371c3267-be17-4b90-a782-eae6b99ea5e5
+🔍 18:23:53.700 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/371c3267-be17-4b90-a782-eae6b99ea5e5
+ℹ️ 18:23:53.700 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successfulTest Case '-[LedgerProTests.APIIntegrationTests testConcurrentUploads]' passed (2.052 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testDuplicateFileHandling]' started.
+Test Case '-[LedgerProTests.APIIntegrationTests testDuplicateFileHandling]' passed (2.042 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testForexTransactionHandling]' started.
+ for /api/jobs/09010f01-f6ef-42db-9cbe-b91faa49b6b6
+🔍 18:23:53.700 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/09010f01-f6ef-42db-9cbe-b91faa49b6b6
+ℹ️ 18:23:53.700 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/4117b7a4-c9f0-4ec9-bef5-d18229a05351
+ℹ️ 18:23:53.700 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/91c79d46-bcaf-49d3-b161-13daa8257a7e
+🔍 18:23:53.700 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/4117b7a4-c9f0-4ec9-bef5-d18229a05351
+🔍 18:23:53.700 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/91c79d46-bcaf-49d3-b161-13daa8257a7e
+🔍 18:23:53.700 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:53.700 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"c04b6cb5-83a8-4c20-a654-0f1ec56f6cae","status":"completed","transactions":[{"date":"2024-01-02","description":"RESTAURANT 31 TRANSACTION","amount":188.99234947591543,"category":"Food & Dining","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"RESTAURANT 31 TRANSACTION","Amount":"188.99234947591543","Category":"Food & Dining"}},{"date":"2024-01-03","description":"TRANSPORT 32 TRANSACTION","amount":-190.6207416986381,"category":"Transportation","confidence":1.0,"raw_data":
+ℹ️ 18:23:53.701 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/c04b6cb5-83a8-4c20-a654-0f1ec56f6cae
+ℹ️ 18:23:53.701 INFO [APIService:274] getTransactions(_:) - API Response received with 10 transactions
+ℹ️ 18:23:53.701 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+🔍 18:23:53.701 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:53.701 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"371c3267-be17-4b90-a782-eae6b99ea5e5","status":"completed","transactions":[{"date":"2024-01-02","description":"RESTAURANT 11 TRANSACTION","amount":-5.804540098376606,"category":"Food & Dining","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"RESTAURANT 11 TRANSACTION","Amount":"-5.804540098376606","Category":"Food & Dining"}},{"date":"2024-01-03","description":"TRANSPORT 12 TRANSACTION","amount":35.97796434330314,"category":"Transportation","confidence":1.0,"raw_data":{
+ℹ️ 18:23:53.701 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/371c3267-be17-4b90-a782-eae6b99ea5e5
+ℹ️ 18:23:53.701 INFO [APIService:274] getTransactions(_:) - API Response received with 10 transactions
+ℹ️ 18:23:53.701 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+🔍 18:23:53.701 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:53.701 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"09010f01-f6ef-42db-9cbe-b91faa49b6b6","status":"completed","transactions":[{"date":"2024-01-02","description":"RESTAURANT 01 TRANSACTION","amount":-163.78988370399293,"category":"Food & Dining","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"RESTAURANT 01 TRANSACTION","Amount":"-163.78988370399293","Category":"Food & Dining"}},{"date":"2024-01-03","description":"TRANSPORT 02 TRANSACTION","amount":66.08210236267962,"category":"Transportation","confidence":1.0,"raw_data"
+ℹ️ 18:23:53.702 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/09010f01-f6ef-42db-9cbe-b91faa49b6b6
+ℹ️ 18:23:53.702 INFO [APIService:274] getTransactions(_:) - API Response received with 10 transactions
+ℹ️ 18:23:53.702 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+🔍 18:23:53.702 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:53.702 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"4117b7a4-c9f0-4ec9-bef5-d18229a05351","status":"completed","transactions":[{"date":"2024-01-02","description":"RESTAURANT 21 TRANSACTION","amount":-31.244379073841486,"category":"Food & Dining","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"RESTAURANT 21 TRANSACTION","Amount":"-31.244379073841486","Category":"Food & Dining"}},{"date":"2024-01-03","description":"TRANSPORT 22 TRANSACTION","amount":-11.89142278789177,"category":"Transportation","confidence":1.0,"raw_data
+ℹ️ 18:23:53.702 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/4117b7a4-c9f0-4ec9-bef5-d18229a05351
+ℹ️ 18:23:53.702 INFO [APIService:274] getTransactions(_:) - API Response received with 10 transactions
+ℹ️ 18:23:53.702 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+🔍 18:23:53.702 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:53.702 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"91c79d46-bcaf-49d3-b161-13daa8257a7e","status":"completed","transactions":[{"date":"2024-01-02","description":"RESTAURANT 41 TRANSACTION","amount":132.17085404997619,"category":"Food & Dining","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"RESTAURANT 41 TRANSACTION","Amount":"132.17085404997619","Category":"Food & Dining"}},{"date":"2024-01-03","description":"TRANSPORT 42 TRANSACTION","amount":127.48447206394246,"category":"Transportation","confidence":1.0,"raw_data":
+ℹ️ 18:23:53.702 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/91c79d46-bcaf-49d3-b161-13daa8257a7e
+ℹ️ 18:23:53.702 INFO [APIService:274] getTransactions(_:) - API Response received with 10 transactions
+ℹ️ 18:23:53.702 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+ℹ️ 18:23:53.703 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:23:53.703 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:23:53.703 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:23:53.703 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:23:53.703 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:23:53.704 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:23:53.704 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:53.704 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:53.704 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:53.704 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:53.704 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:53.704 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:53.705 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:53.705 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:53.705 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileSize): 65, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:53 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:53 +0000, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988737, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.TextEncoding": 15 bytes, "com.apple.provenance": 11 bytes], __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular]
+🔍 18:23:53.705 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 65 bytes
+🔍 18:23:53.705 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 65 bytes
+🔍 18:23:53.705 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:53.705 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 65 bytes
+ℹ️ 18:23:53.705 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv (65 bytes)
+🔍 18:23:53.705 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-E6333EAD-0F2C-43BB-A6F6-65CA2460E3CE"]
+🔍 18:23:53.706 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:53.706 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Content-Type"): application/json, AnyHashable("Content-Length"): 162, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:53 GMT, AnyHashable("Server"): uvicorn]
+🔍 18:23:53.706 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"c3e3b949-d1b0-475f-aa2c-7165a8aebfad","status":"processing","message":"Processing started for duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv"}
+ℹ️ 18:23:53.706 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: c3e3b949-d1b0-475f-aa2c-7165a8aebfad
+🔍 18:23:53.706 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/c3e3b949-d1b0-475f-aa2c-7165a8aebfad
+ℹ️ 18:23:53.707 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/c3e3b949-d1b0-475f-aa2c-7165a8aebfad
+🔍 18:23:55.738 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/c3e3b949-d1b0-475f-aa2c-7165a8aebfad
+ℹ️ 18:23:55.741 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/c3e3b949-d1b0-475f-aa2c-7165a8aebfad
+🔍 18:23:55.741 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:55.741 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:55.741 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:55.742 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:55.742 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:55.742 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:55.742 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:55.742 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:55.742 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.TextEncoding": 15 bytes, "com.apple.provenance": 11 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988737, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:53 +0000, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileSize): 65, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:53 +0000, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0]
+🔍 18:23:55.742 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 65 bytes
+🔍 18:23:55.742 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 65 bytes
+🔍 18:23:55.742 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv
+🔍 18:23:55.742 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 65 bytes
+ℹ️ 18:23:55.742 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv (65 bytes)
+🔍 18:23:55.743 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-7D3CFFFE-3271-4494-89A6-82E5478871F9"]
+🔍 18:23:55.745 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:55.745 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Content-Type"): application/json, AnyHashable("Server"): uvicorn, AnyHashable("Content-Length"): 224, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:55 GMT]
+🔍 18:23:55.745 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"c3e3b949-d1b0-475f-aa2c-7165a8aebfad","status":"completed","message":"Duplicate file detected. Returning existing job for duplicate_test_C74D669F-3F4C-4409-9CD9-4AF9C62F6286.csv. Original processed on 2025-07-21"}
+ℹ️ 18:23:55.745 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: c3e3b949-d1b0-475f-aa2c-7165a8aebfad
+ℹ️ 18:23:55.746 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:23:55.746 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:23:55.746 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:23:55.746 INFO [FinancialDataMTest Case '-[LedgerProTests.APIIntegrationTests testForexTransactionHandling]' passed (2.041 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testJobPollingWithSlowProcessing]' started.
+Test Case '-[LedgerProTests.APIIntegrationTests testJobPollingWithSlowProcessing]' passed (1.028 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testPDFUploadFlow]' started.
+anager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:23:55.746 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:23:55.747 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:23:55.748 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:55.748 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/forex_test_282A8B1A-4BCC-44D7-8A28-645CD41330DA.csv
+🔍 18:23:55.748 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:55.748 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:55.748 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/forex_test_282A8B1A-4BCC-44D7-8A28-645CD41330DA.csv
+🔍 18:23:55.748 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/forex_test_282A8B1A-4BCC-44D7-8A28-645CD41330DA.csv
+🔍 18:23:55.748 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:55.748 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:55.748 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileSize): 236, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:55 +0000, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:55 +0000, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988749, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular]
+🔍 18:23:55.748 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 236 bytes
+🔍 18:23:55.748 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 236 bytes
+🔍 18:23:55.748 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: forex_test_282A8B1A-4BCC-44D7-8A28-645CD41330DA.csv
+🔍 18:23:55.748 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 236 bytes
+ℹ️ 18:23:55.748 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: forex_test_282A8B1A-4BCC-44D7-8A28-645CD41330DA.csv (236 bytes)
+🔍 18:23:55.749 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-C5544E51-4FF5-4370-9B13-0935ACA27B16"]
+🔍 18:23:55.750 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:55.750 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Content-Type"): application/json, AnyHashable("Server"): uvicorn, AnyHashable("Content-Length"): 158, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:55 GMT]
+🔍 18:23:55.750 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"8f82d0e9-10df-4a1e-9434-6ff84d695b8b","status":"processing","message":"Processing started for forex_test_282A8B1A-4BCC-44D7-8A28-645CD41330DA.csv"}
+ℹ️ 18:23:55.750 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+🔍 18:23:55.750 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+ℹ️ 18:23:55.752 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+🔍 18:23:57.784 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+ℹ️ 18:23:57.785 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+🔍 18:23:57.785 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+🔍 18:23:57.786 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:57.786 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"8f82d0e9-10df-4a1e-9434-6ff84d695b8b","status":"completed","transactions":[{"date":"2024-01-01","description":"FOREIGN PURCHASE EUR","amount":-55.5,"category":"Other","confidence":1.0,"raw_data":{"Date":"2024-01-01","Description":"FOREIGN PURCHASE EUR","Amount":"-55.50","Original Amount":"-50.00","Original Currency":"EUR"},"original_amount":-50.0,"original_currency":"EUR","exchange_rate":1.11,"has_forex":true},{"date":"2024-01-02","description":"INTL TRANSFER GBP","amount":110.0,"cate
+ℹ️ 18:23:57.786 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/8f82d0e9-10df-4a1e-9434-6ff84d695b8b
+ℹ️ 18:23:57.786 INFO [APIService:274] getTransactions(_:) - API Response received with 4 transactions
+ℹ️ 18:23:57.786 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 3
+🔍 18:23:57.786 DEBUG [APIService:279] getTransactions(_:) - API Forex Transaction: FOREIGN PURCHASE EUR
+🔍 18:23:57.786 DEBUG [APIService:280] getTransactions(_:) -    - originalCurrency: EUR
+🔍 18:23:57.786 DEBUG [APIService:281] getTransactions(_:) -    - originalAmount: -50.0
+🔍 18:23:57.786 DEBUG [APIService:282] getTransactions(_:) -    - exchangeRate: 1.11
+🔍 18:23:57.786 DEBUG [APIService:283] getTransactions(_:) -    - hasForex: true
+🔍 18:23:57.786 DEBUG [APIService:279] getTransactions(_:) - API Forex Transaction: INTL TRANSFER GBP
+🔍 18:23:57.786 DEBUG [APIService:280] getTransactions(_:) -    - originalCurrency: GBP
+🔍 18:23:57.786 DEBUG [APIService:281] getTransactions(_:) -    - originalAmount: 88.0
+🔍 18:23:57.786 DEBUG [APIService:282] getTransactions(_:) -    - exchangeRate: 1.25
+🔍 18:23:57.786 DEBUG [APIService:283] getTransactions(_:) -    - hasForex: true
+🔍 18:23:57.786 DEBUG [APIService:279] getTransactions(_:) - API Forex Transaction: TOKYO STORE JPY
+🔍 18:23:57.786 DEBUG [APIService:280] getTransactions(_:) -    - originalCurrency: JPY
+🔍 18:23:57.786 DEBUG [APIService:281] getTransactions(_:) -    - originalAmount: -2000.0
+🔍 18:23:57.786 DEBUG [APIService:282] getTransactions(_:) -    - exchangeRate: 0.0075
+🔍 18:23:57.786 DEBUG [APIService:283] getTransactions(_:) -    - hasForex: true
+ℹ️ 18:23:57.787 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:23:57.787 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:23:57.787 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:23:57.787 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:23:57.787 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:23:57.788 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:23:57.789 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:57.789 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test__ECAB26AF-8497-41B6-A260-36AA709F7DA7.csv
+🔍 18:23:57.790 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:57.790 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:57.790 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test__ECAB26AF-8497-41B6-A260-36AA709F7DA7.csv
+🔍 18:23:57.790 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test__ECAB26AF-8497-41B6-A260-36AA709F7DA7.csv
+🔍 18:23:57.790 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:57.790 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:57.790 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:57 +0000, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:57 +0000, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileSize): 33911, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988768, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20]
+🔍 18:23:57.790 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 33911 bytes
+🔍 18:23:57.790 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 33911 bytes
+🔍 18:23:57.790 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test__ECAB26AF-8497-41B6-A260-36AA709F7DA7.csv
+🔍 18:23:57.790 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 33911 bytes
+ℹ️ 18:23:57.790 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test__ECAB26AF-8497-41B6-A260-36AA709F7DA7.csv (33911 bytes)
+🔍 18:23:57.790 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-F56A195F-9F37-46A7-821D-B47B301651C0"]
+🔍 18:23:57.791 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:57.791 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Content-Length"): 153, AnyHashable("Server"): uvicorn, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:57 GMT, AnyHashable("Content-Type"): application/json]
+🔍 18:23:57.791 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9","status":"processing","message":"Processing started for test__ECAB26AF-8497-41B6-A260-36AA709F7DA7.csv"}
+ℹ️ 18:23:57.791 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+🔍 18:23:57.791 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+ℹ️ 18:23:57.792 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+🔍 18:23:58.804 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+ℹ️ 18:23:58.805 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+🔍 18:23:58.805 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+🔍 18:23:58.811 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:23:58.811 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9","status":"completed","transactions":[{"date":"2024-01-02","description":"RESTAURANT 1 TRANSACTION","amount":162.99178304750893,"category":"Food & Dining","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"RESTAURANT 1 TRANSACTION","Amount":"162.99178304750893","Category":"Food & Dining"}},{"date":"2024-01-03","description":"TRANSPORT 2 TRANSACTION","amount":-92.48089276525029,"category":"Transportation","confidence":1.0,"raw_data":{"D
+ℹ️ 18:23:58.815 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/abe4a7b4-29a2-4235-a5b4-84dd5e8c63e9
+ℹ️ 18:23:58.815 INFO [APIService:274] getTransactions(_:) - API Response received with 500 transactions
+ℹ️ 18:23:58.815 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+ℹ️ 18:23:58.815 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:23:58.815 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:23:58.816 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:23:58.816 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:23:58.816 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:23:58.816 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:23:58.816 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:23:58.816 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_statement_5ADF6F97-C9C8-444B-B4BA-778A31CA9B9F.pdf
+🔍 18:23:58.817 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:23:58.817 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:23:58.817 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_statement_5ADF6F97-C9C8-444B-B4BA-778A31CA9B9F.pdf
+🔍 18:23:58.817 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test_statement_5ADF6F97-C9C8-444B-B4BA-778A31CA9B9F.pdf
+🔍 18:23:58.817 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:23:58.817 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:23:58.817 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtendeTest Case '-[LedgerProTests.APIIntegrationTests testPDFUploadFlow]' passed (2.040 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testRapidStatusPolling]' started.
+Test Case '-[LedgerProTests.APIIntegrationTests testRapidStatusPolling]' passed (0.006 seconds).
+Test Case '-[LedgerProTests.APIIntegrationTests testTransactionDataIntegrity]' started.
+dAttributes): ["com.apple.provenance": 11 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988778, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileSize): 588, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:23:58 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:23:58 +0000, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0]
+🔍 18:23:58.817 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 588 bytes
+🔍 18:23:58.817 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 588 bytes
+🔍 18:23:58.817 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test_statement_5ADF6F97-C9C8-444B-B4BA-778A31CA9B9F.pdf
+🔍 18:23:58.817 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 588 bytes
+ℹ️ 18:23:58.817 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test_statement_5ADF6F97-C9C8-444B-B4BA-778A31CA9B9F.pdf (588 bytes)
+🔍 18:23:58.817 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-EC600517-0BDD-4CFB-A2C5-CA9358C56970"]
+🔍 18:23:58.818 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:23:58.818 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Server"): uvicorn, AnyHashable("Content-Length"): 162, AnyHashable("Content-Type"): application/json, AnyHashable("Date"): Tue, 22 Jul 2025 01:23:58 GMT]
+🔍 18:23:58.818 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"37d66590-7ded-43c4-8d75-1576341ebb2e","status":"processing","message":"Processing started for test_statement_5ADF6F97-C9C8-444B-B4BA-778A31CA9B9F.pdf"}
+ℹ️ 18:23:58.818 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: 37d66590-7ded-43c4-8d75-1576341ebb2e
+🔍 18:23:58.818 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/37d66590-7ded-43c4-8d75-1576341ebb2e
+ℹ️ 18:23:58.819 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/37d66590-7ded-43c4-8d75-1576341ebb2e
+🔍 18:24:00.854 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/37d66590-7ded-43c4-8d75-1576341ebb2e
+ℹ️ 18:24:00.855 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/37d66590-7ded-43c4-8d75-1576341ebb2e
+ℹ️ 18:24:00.856 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:24:00.856 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:24:00.856 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:24:00.856 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:24:00.856 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:24:00.856 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:24:00.857 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:24:00.857 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test__1F1F4421-A9F4-4CDB-958E-00FD933A4525.csv
+🔍 18:24:00.857 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:24:00.857 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:24:00.857 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test__1F1F4421-A9F4-4CDB-958E-00FD933A4525.csv
+🔍 18:24:00.857 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/test__1F1F4421-A9F4-4CDB-958E-00FD933A4525.csv
+🔍 18:24:00.857 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:24:00.857 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:24:00.857 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:24:00 +0000, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.provenance": 11 bytes, "com.apple.TextEncoding": 15 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSize): 363, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:24:00 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988799, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0]
+🔍 18:24:00.857 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 363 bytes
+🔍 18:24:00.857 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 363 bytes
+🔍 18:24:00.857 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: test__1F1F4421-A9F4-4CDB-958E-00FD933A4525.csv
+🔍 18:24:00.857 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 363 bytes
+ℹ️ 18:24:00.857 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: test__1F1F4421-A9F4-4CDB-958E-00FD933A4525.csv (363 bytes)
+🔍 18:24:00.857 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-F2067233-B3E2-4C78-A71E-1DFEC23269BB"]
+🔍 18:24:00.858 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:24:00.858 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Date"): Tue, 22 Jul 2025 01:24:00 GMT, AnyHashable("Server"): uvicorn, AnyHashable("Content-Type"): application/json, AnyHashable("Content-Length"): 153]
+🔍 18:24:00.858 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"fe93acd8-520c-4cde-83a5-599f6bd75abf","status":"processing","message":"Processing started for test__1F1F4421-A9F4-4CDB-958E-00FD933A4525.csv"}
+ℹ️ 18:24:00.858 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.858 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+🔍 18:24:00.859 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.860 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.860 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.861 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/fe93acd8-520c-4cde-83a5-599f6bd75abf
+ℹ️ 18:24:00.862 INFO [FinancialDataManager:35] loadStoredData() - 💾 FinancialDataManager: Starting to load stored data...
+🔍 18:24:00.862 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/health
+ℹ️ 18:24:00.862 INFO [FinancialDataManager:96] loadStoredData() - 💾 Loaded 3 transactions from storage
+ℹ️ 18:24:00.862 INFO [FinancialDataManager:97] loadStoredData() - 💾 Loaded 1 accounts from storage
+ℹ️ 18:24:00.862 INFO [FinancialDataManager:98] loadStoredData() - 💾 Loaded 1 statements from storage
+ℹ️ 18:24:00.862 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/health
+🔍 18:24:00.863 DEBUG [APIService:132] uploadFile(_:) - Upload URL: http://127.0.0.1:8000/api/upload
+🔍 18:24:00.863 DEBUG [APIService:133] uploadFile(_:) - File URL: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/integrity_test_ED436CD6-90CE-4083-B902-08A869FD8FD0.csv
+🔍 18:24:00.863 DEBUG [APIService:134] uploadFile(_:) - Auth token present: false
+🔍 18:24:00.863 DEBUG [Network] [APIService:150] uploadFile(_:) - Testing file accessibility...
+🔍 18:24:00.863 DEBUG [Network] [APIService:151] uploadFile(_:) - 🔍 File URL path: /var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/integrity_test_ED436CD6-90CE-4083-B902-08A869FD8FD0.csv
+🔍 18:24:00.863 DEBUG [Network] [APIService:152] uploadFile(_:) - 🔍 File URL absolute string: file:///var/folders/cd/w56n39qj36lfn_641_wy_m_h0000gn/T/integrity_test_ED436CD6-90CE-4083-B902-08A869FD8FD0.csv
+🔍 18:24:00.863 DEBUG [Network] [APIService:153] uploadFile(_:) - 🔍 File exists at path: true
+🔍 18:24:00.863 DEBUG [Network] [APIService:154] uploadFile(_:) - 🔍 File is readable: true
+🔍 18:24:00.863 DEBUG [Network] [APIService:159] uploadFile(_:) - 🔍 File attributes: [__C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountName): "staff", __C.NSFileAttributeKey(_rawValue: NSFileImmutable): 0, __C.NSFileAttributeKey(_rawValue: NSFilePosixPermissions): 420, __C.NSFileAttributeKey(_rawValue: NSFileSystemNumber): 16777232, __C.NSFileAttributeKey(_rawValue: NSFileExtensionHidden): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountName): "jonathanhernandez", __C.NSFileAttributeKey(_rawValue: NSFileGroupOwnerAccountID): 20, __C.NSFileAttributeKey(_rawValue: NSFileHFSCreatorCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileModificationDate): 2025-07-22 01:24:00 +0000, __C.NSFileAttributeKey(_rawValue: NSFileHFSTypeCode): 0, __C.NSFileAttributeKey(_rawValue: NSFileCreationDate): 2025-07-22 01:24:00 +0000, __C.NSFileAttributeKey(_rawValue: NSFileSize): 269, __C.NSFileAttributeKey(_rawValue: NSFileReferenceCount): 1, __C.NSFileAttributeKey(_rawValue: NSFileType): NSFileTypeRegular, __C.NSFileAttributeKey(_rawValue: NSFileAppendOnly): 0, __C.NSFileAttributeKey(_rawValue: NSFileOwnerAccountID): 501, __C.NSFileAttributeKey(_rawValue: NSFileProtectionKey): NSFileProtectionCompleteUntilFirstUserAuthentication, __C.NSFileAttributeKey(_rawValue: NSFileExtendedAttributes): ["com.apple.TextEncoding": 15 bytes, "com.apple.provenance": 11 bytes], __C.NSFileAttributeKey(_rawValue: NSFileSystemFileNumber): 32988801]
+🔍 18:24:00.863 DEBUG [Network] [APIService:161] uploadFile(_:) - 🔍 File size from attributes: 269 bytes
+🔍 18:24:00.863 DEBUG [Network] [APIService:171] uploadFile(_:) - ✅ Successfully read file data: 269 bytes
+🔍 18:24:00.863 DEBUG [Network] [APIService:180] uploadFile(_:) - 📄 File name: integrity_test_ED436CD6-90CE-4083-B902-08A869FD8FD0.csv
+🔍 18:24:00.863 DEBUG [Network] [APIService:181] uploadFile(_:) - 📏 File size: 269 bytes
+ℹ️ 18:24:00.863 INFO [Network] [APIService:203] uploadFile(_:) - 📤 Uploading file: integrity_test_ED436CD6-90CE-4083-B902-08A869FD8FD0.csv (269 bytes)
+🔍 18:24:00.863 DEBUG [Network] [APIService:204] uploadFile(_:) - 🔍 Request headers: ["Content-Type": "multipart/form-data; boundary=Boundary-E5A45BFF-0A4B-4E31-930F-0571D015D006"]
+🔍 18:24:00.864 DEBUG [Network] [APIService:223] uploadFile(_:) - 📊 Response status: 200
+🔍 18:24:00.864 DEBUG [Network] [APIService:224] uploadFile(_:) - 📊 Response headers: [AnyHashable("Date"): Tue, 22 Jul 2025 01:24:00 GMT, AnyHashable("Server"): uvicorn, AnyHashable("Content-Type"): application/json, AnyHashable("Content-Length"): 162]
+🔍 18:24:00.864 DEBUG [Network] [APIService:227] uploadFile(_:) - 📄 Response body: {"job_id":"c2a8e831-e90e-4f41-b099-38ccfb33719b","status":"processing","message":"Processing started for integrity_test_ED436CD6-90CE-4083-B902-08A869FD8FD0.csv"}
+ℹ️ 18:24:00.864 INFO [Network] [APIService:243] uploadFile(_:) - ✅ Upload successful: c2a8e831-e90e-4f41-b099-38ccfb33719b
+🔍 18:24:00.864 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/c2a8e831-e90e-4f41-Test Case '-[LedgerProTests.APIIntegrationTests testTransactionDataIntegrity]' passed (2.039 seconds).
+Test Suite 'APIIntegrationTests' passed at 2025-07-21 18:24:02.901.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 13.422 (13.423) seconds
+Test Suite 'LedgerProPackageTests.xctest' passed at 2025-07-21 18:24:02.901.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 13.422 (13.423) seconds
+Test Suite 'Selected tests' passed at 2025-07-21 18:24:02.901.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 13.422 (13.424) seconds
+b099-38ccfb33719b
+ℹ️ 18:24:00.865 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/c2a8e831-e90e-4f41-b099-38ccfb33719b
+🔍 18:24:02.897 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/jobs/c2a8e831-e90e-4f41-b099-38ccfb33719b
+ℹ️ 18:24:02.899 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/jobs/c2a8e831-e90e-4f41-b099-38ccfb33719b
+🔍 18:24:02.899 DEBUG [APIService:63] makeRequest(endpoint:method:body:responseType:) - Making request: GET http://127.0.0.1:8000/api/transactions/c2a8e831-e90e-4f41-b099-38ccfb33719b
+🔍 18:24:02.900 DEBUG [APIService:88] makeRequest(endpoint:method:body:responseType:) - Raw JSON response preview (first 500 chars):
+🔍 18:24:02.900 DEBUG [APIService:89] makeRequest(endpoint:method:body:responseType:) - {"job_id":"c2a8e831-e90e-4f41-b099-38ccfb33719b","status":"completed","transactions":[{"date":"2024-01-01","description":"Test Transaction 1","amount":-123.45,"category":"Other","confidence":1.0,"raw_data":{"Date":"2024-01-01","Description":"Test Transaction 1","Amount":"-123.45"}},{"date":"2024-01-02","description":"Test Transaction 2","amount":567.89,"category":"Other","confidence":1.0,"raw_data":{"Date":"2024-01-02","Description":"Test Transaction 2","Amount":"567.89"}},{"date":"2024-01-03","
+ℹ️ 18:24:02.900 INFO [APIService:95] makeRequest(endpoint:method:body:responseType:) - Request successful for /api/transactions/c2a8e831-e90e-4f41-b099-38ccfb33719b
+ℹ️ 18:24:02.900 INFO [APIService:274] getTransactions(_:) - API Response received with 6 transactions
+ℹ️ 18:24:02.900 INFO [APIService:276] getTransactions(_:) - Transactions with forex data: 0
+◇ Test run started.
+↳ Testing Library Version: 102 (arm64e-apple-macos13.0)
+✔ Test run with 0 tests passed after 0.001 seconds.

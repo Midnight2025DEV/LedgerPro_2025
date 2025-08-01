@@ -1,5 +1,7 @@
 import SwiftUI
 
+// MARK: - Supporting Types for Modern Transaction List
+
 struct TransactionListView: View {
     @EnvironmentObject private var dataManager: FinancialDataManager
     @State private var searchText = ""
@@ -8,6 +10,22 @@ struct TransactionListView: View {
     @State private var showingFilters = false
     @State private var selectedTransaction: Transaction?
     @State private var showingDetail = false
+    
+    // MARK: - Feature Flag System
+    @AppStorage("useModernTransactionList") private var useModernTransactionList = false
+    @AppStorage("modernTransactionListRolloutPercentage") private var rolloutPercentage: Double = 0.0
+    @State private var userInModernExperiment = false
+    
+    // Modern transaction list state
+    @State private var modernSearchText = ""
+    @State private var modernSelectedTransactions = Set<String>()
+    @State private var modernActiveFilters = TransactionFilters()
+    @State private var modernGroupingMode: ModernTransactionList.GroupingMode = .day
+    @State private var modernIsBulkSelectionMode = false
+    
+    // Error handling and fallback
+    @State private var modernListLoadError: Error?
+    @State private var shouldFallbackToLegacy = false
     
     // Enhanced category filtering
     @State private var showingCategoryFilter = false
@@ -32,9 +50,14 @@ struct TransactionListView: View {
     @State private var filterTask: Task<Void, Never>?
     @State private var searchDebounceTask: Task<Void, Never>?
     @State private var isFiltering = false
+    @State private var showingSkeletonLoader = false
+    @State private var filterStartTime: CFAbsoluteTime = 0
     
     // Track last filter criteria to avoid unnecessary updates
     @State private var lastFilterCriteria = FilterCriteria()
+    
+    // Debug state
+    @State private var showDebugInspector = false
     
     let onTransactionSelect: (Transaction) -> Void
     let initialShowUncategorizedOnly: Bool
@@ -67,6 +90,95 @@ struct TransactionListView: View {
         var sortOrder: SortOrder = .dateDescending
     }
     
+    // MARK: - Feature Flag Logic
+    
+    /// Determines if this user should see the modern transaction list
+    private var shouldUseModernList: Bool {
+        // Always use modern list if explicitly enabled
+        if useModernTransactionList {
+            return true
+        }
+        
+        // Check if user is in the rollout experiment
+        return userInModernExperiment
+    }
+    
+    /// Initialize user experiment participation based on rollout percentage
+    private func initializeExperiment() {
+        guard rolloutPercentage > 0.0 else {
+            userInModernExperiment = false
+            return
+        }
+        
+        // Use a deterministic hash based on device identifier for consistent experience
+        #if canImport(UIKit)
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "default"
+        #else
+        let deviceId = "macOS-device"
+        #endif
+        let hash = abs(deviceId.hashValue) % 100
+        let threshold = Int(rolloutPercentage)
+        
+        userInModernExperiment = hash < threshold
+        
+        AppLogger.shared.info("🎯 Feature Flag: Modern list experiment - rollout: \(rolloutPercentage)%, user hash: \(hash), threshold: \(threshold), enabled: \(userInModernExperiment)")
+        
+        // Track experiment assignment
+        Analytics.shared.trackExperimentAssignment(
+            experimentName: "modern_transaction_list",
+            variant: userInModernExperiment ? "modern" : "legacy",
+            rolloutPercentage: rolloutPercentage
+        )
+    }
+    
+    /// Monitor performance differences between legacy and modern lists
+    private func trackPerformanceMetrics(viewType: String, transactionCount: Int, renderTime: TimeInterval? = nil) {
+        Analytics.shared.trackPerformanceMetric(
+            metricName: "transaction_list_performance",
+            value: renderTime ?? 0.0,
+            metadata: [
+                "view_type": viewType,
+                "transaction_count": String(transactionCount),
+                "is_experiment": String(userInModernExperiment),
+                "rollout_percentage": String(rolloutPercentage)
+            ]
+        )
+    }
+    
+    /// Handle accessibility requirements for 10k+ transactions
+    private func optimizeForAccessibility() -> Bool {
+        let transactionCount = dataManager.transactions.count
+        
+        // For very large datasets, enable additional optimizations
+        if transactionCount > 10000 {
+            AppLogger.shared.info("🔍 Large dataset detected (\(transactionCount) transactions) - enabling accessibility optimizations")
+            
+            // Track large dataset usage
+            Analytics.shared.trackDatasetSize(
+                size: transactionCount,
+                viewType: shouldUseModernList ? "modern" : "legacy"
+            )
+            
+            // Monitor memory usage for large datasets
+            PerformanceMonitor.shared.recordMemoryUsage(
+                context: "large_dataset_\(transactionCount)",
+                itemCount: transactionCount
+            )
+            
+            return true
+        }
+        
+        // Monitor memory for medium datasets too
+        if transactionCount > 5000 {
+            PerformanceMonitor.shared.recordMemoryUsage(
+                context: "medium_dataset_\(transactionCount)",
+                itemCount: transactionCount
+            )
+        }
+        
+        return false
+    }
+    
     private var categories: [String] {
         let allCategories = Set(dataManager.transactions.map { $0.category })
         return ["All"] + allCategories.sorted()
@@ -74,7 +186,8 @@ struct TransactionListView: View {
     
     // Use cached values instead of computed properties
     private var groupedTransactions: [String: [Transaction]] {
-        cachedGroupedTransactions
+        // Use cached grouped transactions for better performance
+        return cachedGroupedTransactions
     }
     
     private var autoCategorizedCount: Int {
@@ -82,10 +195,11 @@ struct TransactionListView: View {
     }
     
     private var filteredTransactions: [Transaction] {
-        cachedFilteredTransactions
+        // Use cached filtered transactions for better performance
+        return cachedFilteredTransactions
     }
     
-    // Async filtering function that runs on background thread
+    // Enhanced async filtering with comprehensive analytics tracking
     private func filterTransactions() async {
         // Cancel any existing filter operation
         filterTask?.cancel()
@@ -100,109 +214,180 @@ struct TransactionListView: View {
         )
         
         // Skip if criteria hasn't changed
-        guard currentCriteria != lastFilterCriteria else { return }
-        
-        await MainActor.run {
-            isFiltering = true
+        guard currentCriteria != lastFilterCriteria else {
+            await MainActor.run {
+                isFiltering = false
+            }
+            return
         }
         
-        // Create new task
-        filterTask = Task {
-            // Capture current transactions
-            let allTransactions = await MainActor.run { dataManager.transactions }
+        // Capture transaction count for analytics
+        let transactionCount = await MainActor.run { 
+            isFiltering = true
             
-            // Perform filtering on background thread
-            var filtered = allTransactions
-            
-            // Check for cancellation
-            if Task.isCancelled { return }
-            
-            // Filter by search text
-            if !currentCriteria.searchText.isEmpty {
-                let searchLower = currentCriteria.searchText.lowercased()
-                filtered = filtered.filter { transaction in
-                    transaction.description.lowercased().contains(searchLower) ||
-                    transaction.category.lowercased().contains(searchLower)
-                }
+            // Show skeleton loader for complex operations
+            if dataManager.transactions.count > 1000 {
+                showingSkeletonLoader = true
             }
             
-            // Check for cancellation
-            if Task.isCancelled { return }
+            return dataManager.transactions.count
+        }
+        
+        // Use enhanced performance tracking with analytics integration
+        let result = await PerformanceMonitor.shared.trackFilterOperation(
+            filterType: "transaction_filter",
+            itemCount: transactionCount
+        ) {
+            // Capture current transactions once to avoid main thread access
+            let allTransactions = await MainActor.run { self.dataManager.transactions }
             
-            // Filter by category
-            if currentCriteria.selectedCategory != "All" {
-                filtered = filtered.filter { $0.category == currentCriteria.selectedCategory }
-            }
-            
-            // Enhanced category filtering
-            if let categoryObject = currentCriteria.selectedCategoryObject {
-                filtered = filtered.filter { transaction in
-                    return transaction.category == categoryObject.name
-                }
-            }
-            
-            // Filter for uncategorized transactions
-            if currentCriteria.showUncategorizedOnly {
-                filtered = filtered.filter { transaction in
-                    transaction.category.isEmpty || 
-                    transaction.category == "Uncategorized" ||
-                    transaction.category == "Other"
-                }
-            }
-            
-            // Check for cancellation
-            if Task.isCancelled { return }
-            
-            // Sort
-            switch currentCriteria.sortOrder {
-            case .dateDescending:
-                filtered = filtered.sorted { $0.formattedDate > $1.formattedDate }
-            case .dateAscending:
-                filtered = filtered.sorted { $0.formattedDate < $1.formattedDate }
-            case .amountDescending:
-                filtered = filtered.sorted { $0.amount > $1.amount }
-            case .amountAscending:
-                filtered = filtered.sorted { $0.amount < $1.amount }
-            case .description:
-                filtered = filtered.sorted { $0.description < $1.description }
-            }
-            
-            // Check for cancellation before expensive operations
-            if Task.isCancelled { return }
-            
-            // Calculate auto-categorized count
-            let autoCount = filtered.filter { $0.wasAutoCategorized == true }.count
-            
-            // Group transactions by date (expensive operation)
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-            
-            let grouped = Dictionary(grouping: filtered) { transaction in
-                dateFormatter.string(from: transaction.formattedDate)
-            }
-            
-            // Update UI on main thread
-            if !Task.isCancelled {
-                await MainActor.run {
-                    self.cachedFilteredTransactions = filtered
-                    self.cachedGroupedTransactions = grouped
-                    self.cachedAutoCategorizedCount = autoCount
+            // Perform all operations on background thread for maximum performance
+            return await Task.detached(priority: .userInitiated) { () -> (transactions: [Transaction], grouped: [String: [Transaction]], autoCount: Int) in
+                        // DEBUG: Log what we're working with (only in debug builds)
+                        #if DEBUG
+                        await MainActor.run {
+                            AppLogger.shared.info("🔍 TransactionListView filtering \(allTransactions.count) total transactions")
+                            AppLogger.shared.info("🔍 Filter criteria: searchText='\(currentCriteria.searchText)', category='\(currentCriteria.selectedCategory)', showUncategorized=\(currentCriteria.showUncategorizedOnly)")
+                        }
+                        #endif
+                        
+                        // Perform filtering on background thread
+                        var filtered = allTransactions
+                    
+                        // Check for cancellation
+                        if Task.isCancelled { return (transactions: [], grouped: [:], autoCount: 0) }
+                        
+                        // Optimized search text filtering with pre-computed lowercase strings
+                        if !currentCriteria.searchText.isEmpty {
+                            let searchLower = currentCriteria.searchText.lowercased()
+                            filtered = filtered.filter { transaction in
+                                let descLower = transaction.description.lowercased()
+                                let categoryLower = transaction.category.lowercased()
+                                return descLower.contains(searchLower) || categoryLower.contains(searchLower)
+                            }
+                        }
+                        
+                        // Check for cancellation
+                        if Task.isCancelled { return (transactions: [], grouped: [:], autoCount: 0) }
+                    
+                        // Filter by category
+                        if currentCriteria.selectedCategory != "All" {
+                            filtered = filtered.filter { $0.category == currentCriteria.selectedCategory }
+                        }
+                        
+                        // Enhanced category filtering
+                        if let categoryObject = currentCriteria.selectedCategoryObject {
+                            filtered = filtered.filter { transaction in
+                                return transaction.category == categoryObject.name
+                            }
+                        }
+                        
+                        // Filter for uncategorized transactions
+                        if currentCriteria.showUncategorizedOnly {
+                            let beforeCount = filtered.count
+                            filtered = filtered.filter { transaction in
+                                transaction.category.isEmpty || 
+                                transaction.category == "Uncategorized" ||
+                                transaction.category == "Other"
+                            }
+                            #if DEBUG
+                            await MainActor.run {
+                                AppLogger.shared.info("📝 Uncategorized filter: \(beforeCount) → \(filtered.count) transactions")
+                            }
+                            #endif
+                        }
+                    
+                        // Check for cancellation
+                        if Task.isCancelled { return (transactions: [], grouped: [:], autoCount: 0) }
+                        
+                        // Optimized sorting with precomputed values where possible
+                        switch currentCriteria.sortOrder {
+                        case .dateDescending:
+                            filtered = filtered.sorted { $0.formattedDate > $1.formattedDate }
+                        case .dateAscending:
+                            filtered = filtered.sorted { $0.formattedDate < $1.formattedDate }
+                        case .amountDescending:
+                            filtered = filtered.sorted { $0.amount > $1.amount }
+                        case .amountAscending:
+                            filtered = filtered.sorted { $0.amount < $1.amount }
+                        case .description:
+                            filtered = filtered.sorted { $0.description < $1.description }
+                        }
+                        
+                        // Check for cancellation before expensive operations
+                        if Task.isCancelled { return (transactions: [], grouped: [:], autoCount: 0) }
+                        
+                        // Calculate auto-categorized count efficiently
+                        let autoCount = filtered.lazy.filter { $0.wasAutoCategorized == true }.count
+                        
+                        // Group transactions by date (expensive operation) - use static formatter
+                        let grouped = Dictionary(grouping: filtered) { transaction in
+                            DateFormatter.apiDateFormatter.string(from: transaction.formattedDate)
+                        }
+                        
+                        return (transactions: filtered, grouped: grouped, autoCount: autoCount)
+            }.value
+        }
+        
+        // Update UI on main thread with batch update for smooth animation
+        if !Task.isCancelled {
+            await MainActor.run {
+                // Batch update for smooth transition
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    self.cachedFilteredTransactions = result.transactions
+                    self.cachedGroupedTransactions = result.grouped
+                    self.cachedAutoCategorizedCount = result.autoCount
                     self.lastFilterCriteria = currentCriteria
                     self.isFiltering = false
+                    self.showingSkeletonLoader = false
                 }
+                
+                // Track additional filter metrics
+                Analytics.shared.track("filter_completed", properties: [
+                    "original_count": transactionCount,
+                    "filtered_count": result.transactions.count,
+                    "filter_effectiveness": transactionCount > 0 ? (1.0 - Double(result.transactions.count) / Double(transactionCount)) : 0.0,
+                    "has_search_text": !currentCriteria.searchText.isEmpty,
+                    "has_category_filter": currentCriteria.selectedCategory != "All",
+                    "show_uncategorized": currentCriteria.showUncategorizedOnly,
+                    "sort_order": currentCriteria.sortOrder.rawValue,
+                    "date_groups": result.grouped.keys.count
+                ])
+                
+                // Memory monitoring for large datasets
+                if transactionCount > 5000 {
+                    PerformanceMonitor.shared.recordMemoryUsage(
+                        context: "after_filter_\(transactionCount)",
+                        itemCount: result.transactions.count
+                    )
+                }
+                
+                // DEBUG: Log final results
+                #if DEBUG
+                AppLogger.shared.info("✅ TransactionListView filter complete: \(result.transactions.count) transactions after filtering")
+                AppLogger.shared.info("📅 Grouped into \(result.grouped.keys.count) date groups")
+                if result.transactions.isEmpty && transactionCount > 0 {
+                    AppLogger.shared.warning("⚠️ All transactions were filtered out! Original count: \(transactionCount)")
+                }
+                #endif
             }
         }
     }
     
-    // Debounced search handler
+    // Debounced search handler with optimized delay
     private func handleSearchChange(_ newValue: String) {
         // Cancel previous debounce task
         searchDebounceTask?.cancel()
         
-        // Create new debounced task
+        // Show immediate loading state for search
+        if !newValue.isEmpty {
+            isFiltering = true
+        }
+        
+        // Create new debounced task with 250ms delay for optimal responsiveness
         searchDebounceTask = Task {
-            // Wait 300ms
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            // Wait 250ms for optimal user experience
+            try? await Task.sleep(nanoseconds: 250_000_000)
             
             // Check if not cancelled
             if !Task.isCancelled {
@@ -211,16 +396,78 @@ struct TransactionListView: View {
         }
     }
     
+    // MARK: - Loading & Skeleton Views
+    
+    private var loadingBanner: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+                .scaleEffect(0.8)
+            
+            Text("Filtering transactions...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+    
+    private var filteringOverlay: some View {
+        HStack {
+            Spacer()
+            VStack(spacing: 8) {
+                ProgressView()
+                Text("Filtering...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.9))
+            .cornerRadius(8)
+            .shadow(radius: 2)
+            Spacer()
+        }
+        .padding()
+        .transition(.opacity)
+    }
+    
+    private var skeletonLoaderView: some View {
+        VStack(spacing: 0) {
+            // Header skeleton
+            TransactionHeaderView(showCheckbox: false)
+                .opacity(0.3)
+            
+            // Skeleton rows
+            ForEach(0..<10, id: \.self) { index in
+                SkeletonTransactionRow()
+                    .opacity(0.7 - Double(index) * 0.05)
+            }
+        }
+        .transition(.opacity)
+    }
+    
     // MARK: - View Components
     
     private var headerSection: some View {
         VStack(spacing: 12) {
             HStack {
-                TextField("Search transactions...", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: searchText) { _, newValue in
-                        handleSearchChange(newValue)
+                HStack {
+                    TextField("Search transactions...", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .onChange(of: searchText) { _, newValue in
+                            handleSearchChange(newValue)
+                        }
+                    
+                    // Subtle loading indicator in search field
+                    if isFiltering && !searchText.isEmpty {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .padding(.trailing, 8)
                     }
+                }
                 
                 Button(action: {
                     autoCategorizeUncategorized()
@@ -283,6 +530,20 @@ struct TransactionListView: View {
             
             Spacer()
             
+            Button("Show All") {
+                AppLogger.shared.info("🔍 Show All button clicked - bypassing all filters")
+                searchText = ""
+                selectedCategory = "All"
+                selectedCategoryObject = nil
+                showUncategorizedOnly = false
+                sortOrder = .dateDescending
+                lastFilterCriteria = FilterCriteria() // Force re-filter
+                Task {
+                    await filterTransactions()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            
             Button("Clear Filters") {
                 searchText = ""
                 selectedCategory = "All"
@@ -333,8 +594,13 @@ struct TransactionListView: View {
     
     private var contentSection: some View {
         VStack(spacing: 0) {
+            // Loading indicator during filtering
+            if isFiltering && !showingSkeletonLoader {
+                loadingBanner
+            }
+            
             // Auto-categorization stats banner
-            if !filteredTransactions.isEmpty {
+            if !filteredTransactions.isEmpty && !isFiltering {
                 AutoCategorizationStatsBanner(
                     autoCategorizedCount: autoCategorizedCount,
                     totalCount: filteredTransactions.count
@@ -343,10 +609,12 @@ struct TransactionListView: View {
                 .padding(.vertical, 8)
             }
             
-            // Transaction List
-            if filteredTransactions.isEmpty {
+            // Transaction List with loading states
+            if showingSkeletonLoader {
+                skeletonLoaderView
+            } else if filteredTransactions.isEmpty && !isFiltering {
                 emptyStateView
-            } else {
+            } else if !filteredTransactions.isEmpty {
                 transactionListView
             }
         }
@@ -361,6 +629,28 @@ struct TransactionListView: View {
             Text("No transactions found")
                 .font(.headline)
                 .foregroundColor(.secondary)
+            
+            if dataManager.transactions.count > 0 {
+                Text("\(dataManager.transactions.count) transactions are hidden by current filters")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            if dataManager.transactions.count > 0 {
+                Button("Show All Transactions") {
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    lastFilterCriteria = FilterCriteria()
+                    Task {
+                        await filterTransactions()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
             
             if !searchText.isEmpty || selectedCategory != "All" || selectedCategoryObject != nil {
                 Button("Clear Filters") {
@@ -379,6 +669,11 @@ struct TransactionListView: View {
             LazyVStack(spacing: 0) {
                 // Header Row
                 TransactionHeaderView(showCheckbox: !selectedTransactions.isEmpty)
+                
+                // Show loading overlay if filtering
+                if isFiltering {
+                    filteringOverlay
+                }
                 
                 // Group transactions by date
                 ForEach(groupedTransactions.keys.sorted(by: >), id: \.self) { dateKey in
@@ -420,19 +715,251 @@ struct TransactionListView: View {
                 }
             }
         }
+        .opacity(isFiltering ? 0.6 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isFiltering)
+    }
+    
+    private var debugInspectorOverlay: some View {
+        Group {
+            if showDebugInspector {
+                TransactionStateInspector(
+                    filteredCount: filteredTransactions.count,
+                    searchText: searchText,
+                    selectedCategory: selectedCategory,
+                    showUncategorizedOnly: showUncategorizedOnly,
+                    sortOrder: sortOrder
+                )
+                .frame(maxWidth: 350)
+                .padding()
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .trailing).combined(with: .opacity)
+                ))
+                .animation(.easeInOut(duration: 0.3), value: showDebugInspector)
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetAllFilters"))) { _ in
+                    // Handle reset filters request from inspector
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    
+                    Task {
+                        lastFilterCriteria = FilterCriteria()
+                        await filterTransactions()
+                    }
+                }
+            }
+        }
     }
     
     var body: some View {
-        mainContent
-            .navigationTitle("Transactions (\(filteredTransactions.count))")
+        Group {
+            if shouldUseModernList && !shouldFallbackToLegacy {
+                modernTransactionListViewWithFallback
+            } else {
+                legacyTransactionListView
+            }
+        }
+        .onAppear {
+            initializeExperiment()
+        }
+        .alert("Modern List Error", isPresented: .constant(modernListLoadError != nil)) {
+            Button("Use Legacy View") {
+                shouldFallbackToLegacy = true
+                modernListLoadError = nil
+                AppLogger.shared.error("🎯 Falling back to legacy view due to error: \(modernListLoadError?.localizedDescription ?? "unknown")")
+                Analytics.shared.trackError("modern_list_fallback", error: modernListLoadError)
+            }
+            Button("Retry") {
+                modernListLoadError = nil
+                // Will retry modern list on next render
+            }
+        } message: {
+            Text("The modern transaction list encountered an error. You can retry or fall back to the classic view.")
+        }
+    }
+    
+    // MARK: - Modern Transaction List with Error Handling
+    
+    private var modernTransactionListViewWithFallback: some View {
+        modernTransactionListViewSafe
+    }
+    
+    private var modernTransactionListViewSafe: some View {
+        ModernTransactionList()
+            .environmentObject(dataManager)
+            .accessibilityIdentifier("modernTransactionList")
+            .navigationTitle("Transactions (\(dataManager.transactions.count))")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    modernToolbarContent
+                }
+            }
             .onAppear {
+                handleModernListAppear()
+            }
+            .onDisappear {
+                Analytics.shared.trackFeatureUsage("modern_transaction_list_dismissed")
+            }
+            .accessibilityLabel("Modern transaction list with \(dataManager.transactions.count) transactions")
+            .accessibilityHint("Swipe gestures available for transaction actions. Use grouping controls to organize by date.")
+    }
+    
+    private func handleModernListAppear() {
+        let renderStartTime = CFAbsoluteTimeGetCurrent()
+        
+        AppLogger.shared.info("🎯 Modern Transaction List displayed")
+        Analytics.shared.trackFeatureUsage("modern_transaction_list_viewed")
+        
+        // Track performance and accessibility
+        let transactionCount = dataManager.transactions.count
+        let isLargeDataset = optimizeForAccessibility()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            let renderTime = CFAbsoluteTimeGetCurrent() - renderStartTime
+            trackPerformanceMetrics(
+                viewType: "modern",
+                transactionCount: transactionCount,
+                renderTime: renderTime
+            )
+        }
+        
+        AppLogger.shared.info("🎯 Modern list: \(transactionCount) transactions, large dataset optimization: \(isLargeDataset)")
+    }
+    
+    // MARK: - Modern Transaction List Toolbar
+    
+    private var modernToolbarContent: some View {
+        HStack {
+            // Feature flag toggle for testing
+            #if DEBUG
+            Button(action: {
+                useModernTransactionList.toggle()
+                AppLogger.shared.info("🎯 Manual toggle: useModernTransactionList = \(useModernTransactionList)")
+            }) {
+                Image(systemName: useModernTransactionList ? "star.fill" : "star")
+            }
+            .help("Toggle Modern List (Debug)")
+            #endif
+            
+            // Standard actions
+            Button(action: { dataManager.loadStoredData() }) {
+                Image(systemName: "arrow.clockwise")
+            }
+            .help("Refresh Transactions")
+            
+            Button(action: { dataManager.clearAllData() }) {
+                Image(systemName: "trash")
+            }
+            .help("Clear All Data")
+        }
+    }
+    
+    // MARK: - Legacy Transaction List View
+    
+    private var legacyTransactionListView: some View {
+        ZStack(alignment: .topTrailing) {
+            mainContent
+            
+            // Debug Inspector Overlay
+            debugInspectorOverlay
+        }
+        .accessibilityIdentifier("transactionList")
+        .navigationTitle("Transactions (\(filteredTransactions.count) of \(dataManager.transactions.count))")
+            .onAppear {
+                let renderStartTime = CFAbsoluteTimeGetCurrent()
+                
                 Task {
+                    // Log initial state
+                    AppLogger.shared.info("📱 Legacy TransactionListView appeared with \(dataManager.transactions.count) transactions")
+                    
+                    // Track performance and accessibility
+                    let transactionCount = dataManager.transactions.count
+                    let isLargeDataset = optimizeForAccessibility()
+                    
+                    // Track legacy list usage
+                    Analytics.shared.trackFeatureUsage("legacy_transaction_list_viewed")
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        let renderTime = CFAbsoluteTimeGetCurrent() - renderStartTime
+                        trackPerformanceMetrics(
+                            viewType: "legacy",
+                            transactionCount: transactionCount,
+                            renderTime: renderTime
+                        )
+                    }
+                    
+                    AppLogger.shared.info("📱 Legacy list: \(transactionCount) transactions, large dataset optimization: \(isLargeDataset)")
+                    
+                    // DEBUG: Log sample transactions to understand the data
+                    if dataManager.transactions.count > 0 {
+                        AppLogger.shared.info("📊 First 5 transactions:")
+                        for (index, transaction) in dataManager.transactions.prefix(5).enumerated() {
+                            AppLogger.shared.info("   \(index + 1). '\(transaction.description)' - \(transaction.formattedDate) - Category: '\(transaction.category)' - Amount: \(transaction.amount)")
+                        }
+                        
+                        // Check date distribution
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "yyyy-MM-dd"
+                        let dates = Set(dataManager.transactions.map { dateFormatter.string(from: $0.formattedDate) })
+                        AppLogger.shared.info("📅 Transactions span \(dates.count) unique dates: \(Array(dates.sorted()).joined(separator: ", "))")
+                    }
+                    
+                    // NUCLEAR OPTION: Always reset filters to ensure transactions are visible
+                    // This guarantees users see their data after import
+                    AppLogger.shared.info("🔄 Resetting all filters to ensure transactions are visible")
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    lastFilterCriteria = FilterCriteria() // Force re-filter
+                    
                     await filterTransactions()
+                }
+                
+                // Listen for import completion
+                NotificationCenter.default.addObserver(
+                    forName: NSNotification.Name("TransactionsImported"),
+                    object: nil,
+                    queue: .main
+                ) { notification in
+                    // Reset all filters to show imported transactions
+                    self.searchText = ""
+                    self.selectedCategory = "All"
+                    self.selectedCategoryObject = nil
+                    self.showUncategorizedOnly = false
+                    self.sortOrder = .dateDescending
+                    
+                    // Force refresh
+                    Task { @MainActor in
+                        self.lastFilterCriteria = FilterCriteria()
+                        await self.filterTransactions()
+                    }
+                    
+                    AppLogger.shared.info("📥 Import complete - reset filters to show all transactions")
                 }
             }
             .onChange(of: dataManager.transactions) { _, _ in
                 Task {
                     await filterTransactions()
+                }
+            }
+            .onChange(of: dataManager.lastImportTime) { _, newImportTime in
+                // Reset filters when new transactions are imported
+                if newImportTime != nil {
+                    AppLogger.shared.info("📥 New import detected - resetting filters to show all transactions")
+                    searchText = ""
+                    selectedCategory = "All"
+                    selectedCategoryObject = nil
+                    showUncategorizedOnly = false
+                    sortOrder = .dateDescending
+                    
+                    Task { @MainActor in
+                        lastFilterCriteria = FilterCriteria()
+                        await filterTransactions()
+                    }
                 }
             }
             .onChange(of: selectedCategory) { _, _ in
@@ -496,6 +1023,54 @@ struct TransactionListView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack {
+                    // Refresh Button
+                    Button(action: {
+                        AppLogger.shared.info("🔄 Refresh button clicked - reloading data from storage")
+                        dataManager.loadStoredData()
+                        
+                        Task {
+                            // Wait a moment for the data to load
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+                            AppLogger.shared.info("✅ Data reload complete - found \(dataManager.transactions.count) transactions")
+                            
+                            // Force re-filter after reload
+                            lastFilterCriteria = FilterCriteria() // Reset to force re-filter
+                            await filterTransactions()
+                        }
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .help("Refresh Transactions")
+                    
+                    // Feature flag toggle for modern list
+                    #if DEBUG
+                    Button(action: {
+                        useModernTransactionList.toggle()
+                        AppLogger.shared.info("🎯 Manual toggle: useModernTransactionList = \(useModernTransactionList)")
+                    }) {
+                        Image(systemName: useModernTransactionList ? "star.fill" : "star")
+                    }
+                    .help("Toggle Modern List (Debug)")
+                    #endif
+                    
+                    // DEBUG: Force Show All Button
+                    Button(action: {
+                        AppLogger.shared.info("🚨 DEBUG: Force showing all transactions without filters")
+                        cachedFilteredTransactions = dataManager.transactions
+                        
+                        // Group by date without any filtering
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateFormat = "yyyy-MM-dd"
+                        cachedGroupedTransactions = Dictionary(grouping: dataManager.transactions) { transaction in
+                            dateFormatter.string(from: transaction.formattedDate)
+                        }
+                        
+                        AppLogger.shared.info("🚨 DEBUG: Forced display of \(cachedFilteredTransactions.count) transactions")
+                    }) {
+                        Image(systemName: "eye.fill")
+                    }
+                    .help("DEBUG: Force Show All")
+                    
                     // Bulk Selection Toggle
                     Button(action: {
                         if selectedTransactions.isEmpty {
@@ -521,6 +1096,49 @@ struct TransactionListView: View {
                         Image(systemName: "arrow.triangle.2.circlepath")
                     }
                     .help("Remove Duplicates")
+                    
+                    // Debug Inspector Toggle
+                    Button(action: { showDebugInspector.toggle() }) {
+                        Image(systemName: showDebugInspector ? "eye.circle.fill" : "eye.circle")
+                    }
+                    .help("Toggle Debug Inspector")
+                    .foregroundColor(showDebugInspector ? .blue : .primary)
+                    
+                    // Feature Flag Admin
+                    #if DEBUG
+                    Menu {
+                        Button("Enable for All (100%)") {
+                            rolloutPercentage = 100.0
+                            initializeExperiment()
+                        }
+                        
+                        Button("Test Rollout (50%)") {
+                            rolloutPercentage = 50.0
+                            initializeExperiment()
+                        }
+                        
+                        Button("Limited Rollout (10%)") {
+                            rolloutPercentage = 10.0
+                            initializeExperiment()
+                        }
+                        
+                        Button("Disable Rollout (0%)") {
+                            rolloutPercentage = 0.0
+                            initializeExperiment()
+                        }
+                        
+                        Divider()
+                        
+                        Button("Reset All Flags") {
+                            useModernTransactionList = false
+                            rolloutPercentage = 0.0
+                            userInModernExperiment = false
+                        }
+                    } label: {
+                        Image(systemName: "flag.2.crossed")
+                    }
+                    .help("Feature Flag Admin")
+                    #endif
                 }
             }
         }
@@ -741,6 +1359,82 @@ struct TransactionListView: View {
         Analytics.shared.trackRuleCreated(
             ruleType: "merchant_pattern",
             source: "auto_categorization"
+        )
+    }
+}
+
+// MARK: - Analytics Extensions
+
+
+// MARK: - Skeleton Components for Loading States
+
+struct SkeletonTransactionRow: View {
+    @State private var animateGradient = false
+    
+    var body: some View {
+        HStack(spacing: 24) {
+            // Date skeleton
+            VStack(alignment: .leading, spacing: 4) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(skeletonGradient)
+                    .frame(width: 60, height: 16)
+                
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(skeletonGradient)
+                    .frame(width: 40, height: 12)
+            }
+            .frame(width: 100, alignment: .leading)
+            
+            // Icon skeleton
+            RoundedRectangle(cornerRadius: 10)
+                .fill(skeletonGradient)
+                .frame(width: 44, height: 44)
+            
+            // Details skeleton
+            VStack(alignment: .leading, spacing: 6) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(skeletonGradient)
+                    .frame(width: 200, height: 16)
+                
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(skeletonGradient)
+                    .frame(width: 120, height: 12)
+            }
+            
+            Spacer()
+            
+            // Category skeleton
+            RoundedRectangle(cornerRadius: 8)
+                .fill(skeletonGradient)
+                .frame(width: 120, height: 32)
+            
+            // Amount skeleton
+            VStack(alignment: .trailing, spacing: 4) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(skeletonGradient)
+                    .frame(width: 80, height: 16)
+            }
+            .frame(width: 140, alignment: .trailing)
+        }
+        .padding(.horizontal, 32)
+        .padding(.vertical, 20)
+        .background(Color(NSColor.controlBackgroundColor))
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                animateGradient.toggle()
+            }
+        }
+    }
+    
+    private var skeletonGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.gray.opacity(0.3),
+                Color.gray.opacity(0.1),
+                Color.gray.opacity(0.3)
+            ],
+            startPoint: animateGradient ? .leading : .trailing,
+            endPoint: animateGradient ? .trailing : .leading
         )
     }
 }

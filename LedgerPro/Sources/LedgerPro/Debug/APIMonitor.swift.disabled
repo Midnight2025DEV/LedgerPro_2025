@@ -1,0 +1,569 @@
+import Foundation
+import OSLog
+
+/// Comprehensive API monitoring and debugging tool
+@MainActor
+class APIMonitor: ObservableObject {
+    static let shared = APIMonitor()
+    
+    private let logger = OSLog.Logger(subsystem: "com.ledgerpro.api", category: "APIMonitor")
+    private var requestHistory: [APIRequestRecord] = []
+    private let historyLimit = 100
+    private let queue = DispatchQueue(label: "com.ledgerpro.apimonitor", attributes: .concurrent)
+    
+    @Published var isMonitoring = true
+    @Published var currentStats: APIStatistics?
+    
+    struct APIRequestRecord: Identifiable {
+        let id = UUID()
+        let timestamp: Date
+        let method: String
+        let url: String
+        let headers: [String: String]
+        let bodySize: Int?
+        var responseStatus: Int?
+        var responseTime: TimeInterval?
+        var responseSize: Int?
+        var error: String?
+        var responseHeaders: [String: String]?
+        
+        var summary: String {
+            let status = responseStatus ?? 0
+            let time = responseTime.map { String(format: "%.3fs", $0) } ?? "N/A"
+            let emoji = status >= 200 && status < 300 ? "✅" : "❌"
+            let size = responseSize.map { formatBytes($0) } ?? "N/A"
+            return "\(emoji) \(method) \(url) - \(status) in \(time) (\(size))"
+        }
+        
+        var isSuccess: Bool {
+            guard let status = responseStatus else { return false }
+            return status >= 200 && status < 300
+        }
+        
+        private func formatBytes(_ bytes: Int) -> String {
+            let formatter = ByteCountFormatter()
+            formatter.countStyle = .binary
+            return formatter.string(fromByteCount: Int64(bytes))
+        }
+    }
+    
+    struct APIStatistics {
+        let totalRequests: Int
+        let successCount: Int
+        let failureCount: Int
+        let averageResponseTime: TimeInterval
+        let totalDataTransferred: Int
+        let slowestRequest: APIRequestRecord?
+        let fastestRequest: APIRequestRecord?
+        let errorRate: Double
+        
+        var successRate: Double {
+            guard totalRequests > 0 else { return 0 }
+            return Double(successCount) / Double(totalRequests)
+        }
+        
+        var formattedAverageTime: String {
+            return String(format: "%.3fs", averageResponseTime)
+        }
+        
+        var formattedDataTransferred: String {
+            let formatter = ByteCountFormatter()
+            formatter.countStyle = .binary
+            return formatter.string(fromByteCount: Int64(totalDataTransferred))
+        }
+    }
+    
+    // MARK: - Request Tracking
+    
+    func logRequest(_ request: URLRequest) -> UUID {
+        guard isMonitoring else { return UUID() }
+        
+        let requestId = UUID()
+        
+        let record = APIRequestRecord(
+            timestamp: Date(),
+            method: request.httpMethod ?? "GET",
+            url: request.url?.absoluteString ?? "Unknown",
+            headers: request.allHTTPHeaderFields ?? [:],
+            bodySize: request.httpBody?.count
+        )
+        
+        queue.async(flags: .barrier) {
+            self.requestHistory.append(record)
+            self.trimHistory()
+        }
+        
+        #if DEBUG
+        logger.debug("🌐 API Request [\(requestId)]:")
+        logger.debug("   Method: \(record.method)")
+        logger.debug("   URL: \(record.url)")
+        logger.debug("   Headers: \(record.headers.count) headers")
+        if let bodySize = record.bodySize {
+            logger.debug("   Body Size: \(bodySize) bytes")
+        }
+        #endif
+        
+        Task { @MainActor in
+            self.updateStatistics()
+        }
+        
+        return requestId
+    }
+    
+    func logResponse(_ response: URLResponse?, data: Data?, error: Error?, requestId: UUID, startTime: Date) {
+        guard isMonitoring else { return }
+        
+        let responseTime = Date().timeIntervalSince(startTime)
+        let httpResponse = response as? HTTPURLResponse
+        
+        queue.async(flags: .barrier) {
+            if let index = self.requestHistory.firstIndex(where: { $0.id == requestId }) {
+                self.requestHistory[index].responseStatus = httpResponse?.statusCode
+                self.requestHistory[index].responseTime = responseTime
+                self.requestHistory[index].responseSize = data?.count
+                self.requestHistory[index].error = error?.localizedDescription
+                self.requestHistory[index].responseHeaders = httpResponse?.allHeaderFields as? [String: String]
+            }
+        }
+        
+        #if DEBUG
+        logger.debug("📥 API Response [\(requestId)]:")
+        logger.debug("   Status: \(httpResponse?.statusCode ?? -1)")
+        logger.debug("   Time: \(String(format: "%.3f", responseTime))s")
+        logger.debug("   Data Size: \(data?.count ?? 0) bytes")
+        if let error = error {
+            logger.error("   Error: \(error.localizedDescription)")
+        }
+        #endif
+        
+        Task { @MainActor in
+            self.updateStatistics()
+        }
+    }
+    
+    // MARK: - Analysis
+    
+    func getRequestHistory() -> [APIRequestRecord] {
+        queue.sync {
+            return requestHistory
+        }
+    }
+    
+    func getRecentRequests(count: Int = 20) -> [APIRequestRecord] {
+        queue.sync {
+            return Array(requestHistory.suffix(count).reversed())
+        }
+    }
+    
+    func getFailedRequests() -> [APIRequestRecord] {
+        queue.sync {
+            return requestHistory.filter { !$0.isSuccess && $0.responseStatus != nil }
+        }
+    }
+    
+    private func updateStatistics() {
+        let stats = calculateStatistics()
+        self.currentStats = stats
+    }
+    
+    private func calculateStatistics() -> APIStatistics {
+        let history = queue.sync { requestHistory }
+        
+        let completedRequests = history.filter { $0.responseStatus != nil }
+        let successCount = completedRequests.filter { $0.isSuccess }.count
+        let failureCount = completedRequests.filter { !$0.isSuccess }.count
+        
+        let responseTimes = completedRequests.compactMap { $0.responseTime }
+        let avgResponseTime = responseTimes.isEmpty ? 0 : responseTimes.reduce(0, +) / Double(responseTimes.count)
+        
+        let totalData = completedRequests.compactMap { $0.responseSize }.reduce(0, +)
+        
+        let slowestRequest = completedRequests.max { 
+            ($0.responseTime ?? 0) < ($1.responseTime ?? 0) 
+        }
+        
+        let fastestRequest = completedRequests.filter { $0.responseTime ?? 0 > 0 }.min { 
+            ($0.responseTime ?? Double.infinity) < ($1.responseTime ?? Double.infinity) 
+        }
+        
+        let errorRate = completedRequests.isEmpty ? 0 : Double(failureCount) / Double(completedRequests.count)
+        
+        return APIStatistics(
+            totalRequests: history.count,
+            successCount: successCount,
+            failureCount: failureCount,
+            averageResponseTime: avgResponseTime,
+            totalDataTransferred: totalData,
+            slowestRequest: slowestRequest,
+            fastestRequest: fastestRequest,
+            errorRate: errorRate
+        )
+    }
+    
+    // MARK: - Export
+    
+    func exportDebugReport() -> String {
+        let stats = calculateStatistics()
+        let history = getRequestHistory()
+        
+        var report = """
+        # API Debug Report
+        Generated: \(Date())
+        
+        ## Overall Statistics
+        - Total Requests: \(stats.totalRequests)
+        - Success Rate: \(String(format: "%.1f%%", stats.successRate * 100))
+        - Error Rate: \(String(format: "%.1f%%", stats.errorRate * 100))
+        - Average Response Time: \(stats.formattedAverageTime)
+        - Total Data Transferred: \(stats.formattedDataTransferred)
+        - Successful Requests: \(stats.successCount)
+        - Failed Requests: \(stats.failureCount)
+        
+        ## Performance Analysis
+        """
+        
+        if let slowest = stats.slowestRequest {
+            report += "\n### Slowest Request\n\(slowest.summary)"
+        }
+        
+        if let fastest = stats.fastestRequest {
+            report += "\n\n### Fastest Request\n\(fastest.summary)"
+        }
+        
+        // Group by endpoint
+        let endpointGroups = Dictionary(grouping: history) { record in
+            URL(string: record.url)?.path ?? "Unknown"
+        }
+        
+        report += "\n\n## Endpoint Summary"
+        for (endpoint, requests) in endpointGroups.sorted(by: { $0.key < $1.key }) {
+            let successCount = requests.filter { $0.isSuccess }.count
+            let avgTime = requests.compactMap { $0.responseTime }.reduce(0, +) / Double(max(requests.count, 1))
+            
+            report += "\n\n### \(endpoint)"
+            report += "\n- Requests: \(requests.count)"
+            report += "\n- Success Rate: \(String(format: "%.1f%%", Double(successCount) / Double(requests.count) * 100))"
+            report += "\n- Avg Response Time: \(String(format: "%.3fs", avgTime))"
+        }
+        
+        // Recent failures
+        let recentFailures = history.suffix(50).filter { !$0.isSuccess && $0.responseStatus != nil }
+        if !recentFailures.isEmpty {
+            report += "\n\n## Recent Failures"
+            for failure in recentFailures.prefix(10) {
+                report += "\n- \(failure.summary)"
+                if let error = failure.error {
+                    report += "\n  Error: \(error)"
+                }
+            }
+        }
+        
+        // Recent requests
+        report += "\n\n## Recent Requests (Last 20)"
+        for record in history.suffix(20).reversed() {
+            report += "\n\(record.summary)"
+        }
+        
+        return report
+    }
+    
+    func exportCSV() -> String {
+        let history = getRequestHistory()
+        
+        var csv = "Timestamp,Method,URL,Status,Response Time (s),Response Size (bytes),Error\n"
+        
+        for record in history {
+            let timestamp = ISO8601DateFormatter().string(from: record.timestamp)
+            let status = record.responseStatus.map(String.init) ?? "N/A"
+            let responseTime = record.responseTime.map { String(format: "%.3f", $0) } ?? "N/A"
+            let responseSize = record.responseSize.map(String.init) ?? "N/A"
+            let error = record.error?.replacingOccurrences(of: ",", with: ";") ?? ""
+            
+            csv += "\(timestamp),\(record.method),\"\(record.url)\",\(status),\(responseTime),\(responseSize),\"\(error)\"\n"
+        }
+        
+        return csv
+    }
+    
+    // MARK: - Management
+    
+    func clearHistory() {
+        queue.async(flags: .barrier) {
+            self.requestHistory.removeAll()
+        }
+        
+        Task { @MainActor in
+            self.updateStatistics()
+        }
+    }
+    
+    func toggleMonitoring() {
+        isMonitoring.toggle()
+        
+        #if DEBUG
+        logger.info("API Monitoring \(self.isMonitoring ? "enabled" : "disabled")")
+        #endif
+    }
+    
+    private func trimHistory() {
+        if requestHistory.count > historyLimit {
+            requestHistory.removeFirst(requestHistory.count - historyLimit)
+        }
+    }
+}
+
+// MARK: - URLSession Extension for Monitoring
+
+extension URLSession {
+    func monitoredDataTask(with request: URLRequest) async throws -> (Data, URLResponse) {
+        let monitor = await APIMonitor.shared
+        let requestId = await monitor.logRequest(request)
+        let startTime = Date()
+        
+        do {
+            let (data, response) = try await self.data(for: request)
+            await monitor.logResponse(response, data: data, error: nil, 
+                              requestId: requestId, startTime: startTime)
+            return (data, response)
+        } catch {
+            await monitor.logResponse(nil, data: nil, error: error, 
+                              requestId: requestId, startTime: startTime)
+            throw error
+        }
+    }
+    
+    func monitoredData(for request: URLRequest, delegate: URLSessionTaskDelegate? = nil) async throws -> (Data, URLResponse) {
+        let monitor = await APIMonitor.shared
+        let requestId = await monitor.logRequest(request)
+        let startTime = Date()
+        
+        do {
+            let (data, response) = try await self.data(for: request, delegate: delegate)
+            await monitor.logResponse(response, data: data, error: nil, 
+                              requestId: requestId, startTime: startTime)
+            return (data, response)
+        } catch {
+            await monitor.logResponse(nil, data: nil, error: error, 
+                              requestId: requestId, startTime: startTime)
+            throw error
+        }
+    }
+}
+
+// MARK: - Debug View Helper
+
+#if DEBUG
+import SwiftUI
+
+struct APIMonitorView: View {
+    @StateObject private var monitor = APIMonitor.shared
+    @State private var selectedRequest: APIMonitor.APIRequestRecord?
+    
+    var body: some View {
+        VStack {
+            // Statistics
+            if let stats = monitor.currentStats {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("API Statistics")
+                        .font(.headline)
+                    
+                    HStack {
+                        APIStatCard(title: "Total", value: "\(stats.totalRequests)")
+                        APIStatCard(title: "Success", value: String(format: "%.1f%%", stats.successRate * 100))
+                        APIStatCard(title: "Avg Time", value: stats.formattedAverageTime)
+                        APIStatCard(title: "Data", value: stats.formattedDataTransferred)
+                    }
+                }
+                .padding()
+            }
+            
+            // Request List
+            List {
+                ForEach(monitor.getRecentRequests()) { request in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Image(systemName: request.isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundColor(request.isSuccess ? .green : .red)
+                            Text(request.method)
+                                .font(.caption)
+                                .bold()
+                            Spacer()
+                            if let time = request.responseTime {
+                                Text(String(format: "%.3fs", time))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Text(request.url)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        
+                        if let error = request.error {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .lineLimit(1)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    .onTapGesture {
+                        selectedRequest = request
+                    }
+                }
+            }
+            
+            // Controls
+            HStack {
+                Button(action: { monitor.clearHistory() }) {
+                    Label("Clear", systemImage: "trash")
+                }
+                
+                Spacer()
+                
+                Toggle("Monitoring", isOn: $monitor.isMonitoring)
+                    .toggleStyle(.switch)
+                
+                Button(action: { exportReport() }) {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+            }
+            .padding()
+        }
+        .sheet(item: $selectedRequest) { request in
+            RequestDetailView(request: request)
+        }
+    }
+    
+    private func exportReport() {
+        let report = monitor.exportDebugReport()
+        // Save to file or share
+        print(report)
+    }
+}
+
+struct APIStatCard: View {
+    let title: String
+    let value: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.system(.body, design: .monospaced))
+                .bold()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(8)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+}
+
+struct RequestDetailView: View {
+    let request: APIMonitor.APIRequestRecord
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Basic Info
+                    Section("Request Info") {
+                        APIDetailRow(label: "Method", value: request.method)
+                        APIDetailRow(label: "URL", value: request.url)
+                        APIDetailRow(label: "Timestamp", value: request.timestamp.formatted())
+                    }
+                    
+                    // Response Info
+                    if request.responseStatus != nil {
+                        Section("Response Info") {
+                            APIDetailRow(label: "Status", value: "\(request.responseStatus ?? 0)")
+                            if let time = request.responseTime {
+                                APIDetailRow(label: "Response Time", value: String(format: "%.3fs", time))
+                            }
+                            if let size = request.responseSize {
+                                APIDetailRow(label: "Response Size", value: "\(size) bytes")
+                            }
+                        }
+                    }
+                    
+                    // Headers
+                    if !request.headers.isEmpty {
+                        Section("Request Headers") {
+                            ForEach(request.headers.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
+                                APIDetailRow(label: key, value: value)
+                            }
+                        }
+                    }
+                    
+                    // Response Headers
+                    if let responseHeaders = request.responseHeaders, !responseHeaders.isEmpty {
+                        Section("Response Headers") {
+                            ForEach(responseHeaders.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
+                                DetailRow(label: key, value: value)
+                            }
+                        }
+                    }
+                    
+                    // Error
+                    if let error = request.error {
+                        Section("Error") {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Request Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func Section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+                .padding(.bottom, 4)
+            
+            content()
+        }
+    }
+}
+
+struct APIDetailRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack(alignment: .top) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 100, alignment: .leading)
+            
+            Text(value)
+                .font(.caption)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+#endif

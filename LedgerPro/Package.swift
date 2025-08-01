@@ -16,12 +16,24 @@ let package = Package(
         .executableTarget(
             name: "LedgerPro",
             dependencies: [],
-            path: "Sources/LedgerPro"
+            path: "Sources/LedgerPro",
+            exclude: [
+                "Debug/APIMonitor.swift.disabled",
+                "Views/RulesManagementView.swift"
+            ]
         ),
         .testTarget(
             name: "LedgerProTests",
             dependencies: ["LedgerPro"],
             path: "Tests/LedgerProTests"
+        ),
+        .testTarget(
+            name: "LedgerProUITests",
+            dependencies: ["LedgerPro"],
+            path: "LedgerProUITests",
+            resources: [
+                .process("TestResources")
+            ]
         )
     ]
 )

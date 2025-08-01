@@ -38,12 +38,26 @@ class MCPServer: MCPServerProtocol, ObservableObject, Identifiable {
     private let baseRetryDelay: TimeInterval = 1.0
     private var connectionStartTime: Date?
     
-    enum ConnectionState {
+    enum ConnectionState: Equatable {
         case disconnected
         case connecting
         case connected
         case reconnecting
         case error(MCPRPCError)
+        
+        static func == (lhs: ConnectionState, rhs: ConnectionState) -> Bool {
+            switch (lhs, rhs) {
+            case (.disconnected, .disconnected),
+                 (.connecting, .connecting),
+                 (.connected, .connected),
+                 (.reconnecting, .reconnecting):
+                return true
+            case (.error(let lhsError), .error(let rhsError)):
+                return lhsError.code == rhsError.code && lhsError.message == rhsError.message
+            default:
+                return false
+            }
+        }
     }
     
     struct ServerMetrics {
@@ -362,8 +376,22 @@ class HTTPConnection: MCPConnection {
     private let session: URLSession
     private let timeout: TimeInterval = 30.0
     
+    /// Safely constructs the base URL using URLComponents to avoid crashes from malformed input
     var baseURL: URL {
-        return URL(string: "http://\(host):\(port)")!
+        // Use URLComponents for safe URL construction
+        var components = URLComponents()
+        components.scheme = "http"
+        components.host = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        components.port = port
+        
+        guard let url = components.url else {
+            AppLogger.shared.error("❌ Failed to create MCP server URL from host: '\(host)', port: \(port)")
+            // Return a guaranteed-valid fallback URL
+            // Note: This force unwrap is safe because the string is hardcoded
+            return URL(string: "http://localhost:8080")!
+        }
+        
+        return url
     }
     
     init(host: String, port: Int) {

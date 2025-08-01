@@ -360,6 +360,150 @@ public final class Analytics: ObservableObject {
         ])
     }
     
+    /// Track performance metrics
+    public func trackPerformanceMetric(
+        metricName: String,
+        value: Double,
+        metadata: [String: String] = [:]
+    ) {
+        var properties: [String: Any] = [
+            "metric_name": metricName,
+            "value": value,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+        
+        // Add metadata
+        for (key, value) in metadata {
+            properties[key] = value
+        }
+        
+        track("performance_metric", properties: properties)
+    }
+    
+    /// Track experiment assignment for feature flags
+    public func trackExperimentAssignment(
+        experimentName: String,
+        variant: String,
+        rolloutPercentage: Double
+    ) {
+        track("experiment_assignment", properties: [
+            "experiment": experimentName,
+            "variant": variant,
+            "rollout_percentage": rolloutPercentage
+        ])
+    }
+    
+    /// Track dataset size for performance monitoring
+    public func trackDatasetSize(
+        size: Int,
+        viewType: String
+    ) {
+        track("dataset_size", properties: [
+            "size": size,
+            "view_type": viewType,
+            "timestamp": Date().timeIntervalSince1970
+        ])
+    }
+    
+    /// Track pipeline performance end-to-end
+    public func trackPipelinePerformance(
+        uploadTime: TimeInterval,
+        processingTime: TimeInterval,
+        uiUpdateTime: TimeInterval,
+        transactionCount: Int,
+        processingMethod: String = "unknown"
+    ) {
+        let totalTime = uploadTime + processingTime + uiUpdateTime
+        
+        track("pipeline_performance", properties: [
+            "upload_ms": Int(uploadTime * 1000),
+            "processing_ms": Int(processingTime * 1000),
+            "ui_update_ms": Int(uiUpdateTime * 1000),
+            "total_ms": Int(totalTime * 1000),
+            "transaction_count": transactionCount,
+            "processing_method": processingMethod,
+            "throughput_tps": transactionCount > 0 ? Double(transactionCount) / totalTime : 0.0
+        ])
+    }
+    
+    /// Track error events
+    public func trackError(_ errorType: String, error: Error? = nil) {
+        track("error_occurred", properties: [
+            "error_type": errorType,
+            "error_message": error?.localizedDescription ?? "unknown",
+            "timestamp": Date().timeIntervalSince1970
+        ])
+    }
+    
+    /// Track feature usage
+    public func trackFeatureUsage(_ feature: String) {
+        track("feature_used", properties: [
+            "feature": feature,
+            "timestamp": Date().timeIntervalSince1970
+        ])
+    }
+    
+    // MARK: - Batch Processing Analytics
+    
+    /// Track batch processing metrics
+    public func trackBatchOperation(
+        operation: String,
+        batchSize: Int,
+        itemsProcessed: Int,
+        duration: TimeInterval,
+        memoryUsageMB: Int
+    ) {
+        track("batch_operation", properties: [
+            "operation": operation,
+            "batch_size": batchSize,
+            "items_processed": itemsProcessed,
+            "duration_ms": Int(duration * 1000),
+            "memory_mb": memoryUsageMB,
+            "items_per_second": duration > 0 ? Int(Double(itemsProcessed) / duration) : 0,
+            "memory_per_item": itemsProcessed > 0 ? Double(memoryUsageMB) / Double(itemsProcessed) : 0.0
+        ])
+    }
+    
+    /// Track batch processing performance comparison
+    public func trackBatchPerformanceComparison(
+        regularProcessingTime: TimeInterval?,
+        batchProcessingTime: TimeInterval,
+        itemCount: Int,
+        memoryImprovement: Int? = nil
+    ) {
+        var properties: [String: Any] = [
+            "batch_processing_time": batchProcessingTime,
+            "item_count": itemCount,
+            "batch_throughput": Double(itemCount) / batchProcessingTime
+        ]
+        
+        if let regularTime = regularProcessingTime {
+            properties["regular_processing_time"] = regularTime
+            properties["time_improvement_percent"] = ((regularTime - batchProcessingTime) / regularTime) * 100
+            properties["speedup_factor"] = regularTime / batchProcessingTime
+        }
+        
+        if let memoryImprovement = memoryImprovement {
+            properties["memory_improvement_mb"] = memoryImprovement
+        }
+        
+        track("batch_performance_comparison", properties: properties)
+    }
+    
+    /// Track batch processing threshold decisions
+    public func trackBatchThresholdDecision(
+        itemCount: Int,
+        usedBatchProcessing: Bool,
+        threshold: Int = 1000
+    ) {
+        track("batch_threshold_decision", properties: [
+            "item_count": itemCount,
+            "used_batch_processing": usedBatchProcessing,
+            "threshold": threshold,
+            "exceeded_threshold": itemCount > threshold
+        ])
+    }
+    
     // MARK: - Analytics Data Access
     
     /// Get analytics data for dashboard (only in production provider)

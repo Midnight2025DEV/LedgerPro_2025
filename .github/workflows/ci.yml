@@ -8,26 +8,116 @@ on:
 
 jobs:
   swift-tests:
-    runs-on: macos-14
+    runs-on: macos-15
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Select Xcode version
+    - name: Select Xcode version  
       run: |
-        sudo xcode-select --switch /Applications/Xcode_15.2.app/Contents/Developer
+        sudo xcode-select --switch /Applications/Xcode_16.1.app/Contents/Developer || sudo xcode-select --switch /Applications/Xcode_15.4.app/Contents/Developer || sudo xcode-select --switch /Applications/Xcode_15.2.app/Contents/Developer
         xcodebuild -version
         swift --version
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install system dependencies
+      run: |
+        # Install ghostscript and other dependencies needed by camelot-py
+        brew install ghostscript
+        brew install poppler
+        brew install opencv
+        
+        # Verify installations
+        gs --version || echo "Ghostscript not installed"
+        pdftotext -v || echo "Poppler not installed"
+    
+    - name: Install backend dependencies
+      run: |
+        cd LedgerPro/backend
+        python -m pip install --upgrade pip
+        # Install specific versions to avoid compatibility issues
+        pip install numpy==1.26.0
+        pip install opencv-python==4.8.0.74
+        pip install requests  # For testing
+        pip install -r requirements.txt
+        
+        # Verify installations
+        echo "Verifying Python environment..."
+        python --version
+        pip list | grep -E "fastapi|uvicorn|pandas|camelot-py"
+        
+        # Test imports
+        echo "Testing Python imports..."
+        python -c "import fastapi; print('✅ FastAPI imported successfully')"
+        python -c "import pandas; print('✅ Pandas imported successfully')"
+        python -c "import cv2; print('✅ OpenCV imported successfully')"
+    
+    - name: Test backend startup
+      run: |
+        cd LedgerPro/backend
+        # First test if backend can start
+        python test_backend_startup.py || {
+          echo "Backend startup test failed!"
+          exit 1
+        }
+    
+    - name: Start backend server
+      run: |
+        cd LedgerPro/backend
+        # Start the backend server in the background
+        python api_server_ci.py > backend.log 2>&1 &
+        echo $! > backend.pid
+        
+        # Wait for backend to be ready (max 30 seconds)
+        echo "Waiting for backend to start..."
+        for i in {1..30}; do
+          if curl -s http://127.0.0.1:8000/api/health > /dev/null; then
+            echo "✅ Backend is running"
+            break
+          fi
+          if [ $i -eq 30 ]; then
+            echo "❌ Backend failed to start"
+            echo "Backend logs:"
+            cat backend.log
+            exit 1
+          fi
+          echo "Attempt $i/30: Backend not ready yet..."
+          sleep 1
+        done
     
     - name: Build Swift package
       run: |
         cd LedgerPro
-        swift build
+        echo "Current directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Checking Package.swift exists:"
+        ls -la Package.swift
+        swift build --verbose
     
     - name: Run Swift tests
       run: |
         cd LedgerPro
-        swift test
+        echo "Running tests from directory: $(pwd)"
+        swift test --verbose
+    
+    - name: Upload backend logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-logs
+        path: LedgerPro/backend/backend.log
+    
+    - name: Stop backend server
+      if: always()
+      run: |
+        if [ -f LedgerPro/backend/backend.pid ]; then
+          kill $(cat LedgerPro/backend/backend.pid) || true
+        fi
 
   python-tests:
     runs-on: ubuntu-latest
@@ -56,11 +146,9 @@ jobs:
     - name: Run Python tests
       run: |
         cd LedgerPro/backend
-        python -m pytest -p no:asyncio -p no:anyio tests/ -v --tb=short || echo "Tests failed but continuing"
-      continue-on-error: true
+        python -m pytest -p no:asyncio -p no:anyio tests/ -v --tb=short
     
     - name: Run linting
       run: |
         cd LedgerPro/backend
         flake8 . --config=.flake8 --statistics
-      continue-on-error: true

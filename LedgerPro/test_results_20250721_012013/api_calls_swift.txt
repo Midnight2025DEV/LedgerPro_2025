@@ -1,0 +1,13 @@
+Sources/LedgerPro/Services/APIService.swift:                endpoint: "/api/health",
+Sources/LedgerPro/Services/APIService.swift:            // Debug: Print raw JSON for transactions endpoint
+Sources/LedgerPro/Services/APIService.swift:            AppLogger.shared.info("Request successful for \(endpoint)")
+Sources/LedgerPro/Services/APIService.swift:            endpoint: "/api/jobs/\(jobId)",
+Sources/LedgerPro/Services/APIService.swift:            endpoint: "/api/transactions/\(jobId)",
+Sources/LedgerPro/Services/APIService.swift:            if endpoint.contains("/transactions/") {
+Sources/LedgerPro/Services/APIService.swift:            var request = URLRequest(url: url)
+Sources/LedgerPro/Services/APIService.swift:        endpoint: String,
+Sources/LedgerPro/Services/APIService.swift:        guard let url = URL(string: "\(baseURL)/api/upload") else {
+Sources/LedgerPro/Services/APIService.swift:        guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+Sources/LedgerPro/Services/APIService.swift:        var request = URLRequest(url: url)
+Sources/LedgerPro/Services/MCP/MCPServer.swift:        var urlRequest = URLRequest(url: url)
+Sources/LedgerPro/Services/MCPService.swift:        var request = URLRequest(url: url)

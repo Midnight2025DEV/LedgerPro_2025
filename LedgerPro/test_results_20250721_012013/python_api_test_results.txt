@@ -1,0 +1,164 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.0, pytest-8.0.0, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.13/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/jonathanhernandez/Documents/Cursor_AI/LedgerPro_Main/LedgerPro/backend
+configfile: pytest.ini
+plugins: anyio-4.9.0, cov-4.1.0
+collecting ... collected 43 items
+
+tests/test_api_endpoints.py::TestAPIEndpoints::test_health_check_success PASSED [  2%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_health_check_headers PASSED [  4%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_health_check_cors FAILED [  6%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_pdf_success FAILED [  9%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_csv_success PASSED [ 11%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_invalid_file_type PASSED [ 13%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_empty_file PASSED [ 16%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_large_file PASSED [ 18%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_malformed_pdf FAILED [ 20%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_duplicate_prevention PASSED [ 23%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_missing_file PASSED [ 25%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_multiple_files PASSED [ 27%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_job_status_not_found PASSED [ 30%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_job_status_processing PASSED [ 32%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_job_status_completed PASSED [ 34%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_job_status_error PASSED [ 37%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_job_status_duplicate_detection PASSED [ 39%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_get_transactions_success PASSED [ 41%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_get_transactions_with_forex PASSED [ 44%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_get_transactions_not_ready PASSED [ 46%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_get_transactions_failed_job PASSED [ 48%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_get_transactions_not_found PASSED [ 51%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_list_jobs_empty PASSED [ 53%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_list_jobs_with_data PASSED [ 55%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_duplicate_stats_no_duplicates PASSED [ 58%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_duplicate_stats_with_duplicates PASSED [ 60%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_malformed_json_request PASSED [ 62%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_missing_content_type PASSED [ 65%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_concurrent_uploads PASSED [ 67%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_special_characters_in_filename PASSED [ 69%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_unicode_in_csv_content PASSED [ 72%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_response_time_health_check PASSED [ 74%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_large_transaction_response PASSED [ 76%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_job_list_performance_with_many_jobs PASSED [ 79%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_login_success PASSED [ 81%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_login_invalid_credentials PASSED [ 83%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_login_case_insensitive_email PASSED [ 86%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_websocket_endpoint_exists PASSED [ 88%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_csv_processing_async SKIPPED [ 90%]
+tests/test_api_endpoints.py::TestAPIEndpoints::test_pdf_processing_async SKIPPED [ 93%]
+tests/test_api_endpoints.py::TestAPIErrorHandling::test_500_error_format FAILED [ 95%]
+tests/test_api_endpoints.py::TestAPIErrorHandling::test_timeout_handling PASSED [ 97%]
+tests/test_api_endpoints.py::TestAPIErrorHandling::test_memory_limit_handling PASSED [100%]
+
+=================================== FAILURES ===================================
+___________________ TestAPIEndpoints.test_health_check_cors ____________________
+tests/test_api_endpoints.py:57: in test_health_check_cors
+    assert response.status_code == 200
+E   assert 405 == 200
+E    +  where 405 = <Response [405 Method Not Allowed]>.status_code
+___________________ TestAPIEndpoints.test_upload_pdf_success ___________________
+tests/test_api_endpoints.py:78: in test_upload_pdf_success
+    assert processing_jobs[job_id]["status"] == "processing"
+E   AssertionError: assert 'extracting_tables' == 'processing'
+E     
+E     - processing
+E     + extracting_tables
+__________________ TestAPIEndpoints.test_upload_malformed_pdf __________________
+tests/test_api_endpoints.py:144: in test_upload_malformed_pdf
+    assert processing_jobs[job_id]["status"] == "processing"
+E   AssertionError: assert 'extracting_tables' == 'processing'
+E     
+E     - processing
+E     + extracting_tables
+__________________ TestAPIErrorHandling.test_500_error_format __________________
+tests/test_api_endpoints.py:762: in test_500_error_format
+    response = client.get(f"/api/transactions/{job_id}")
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/testclient.py:465: in get
+    return super().get(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/testclient.py:437: in request
+    return super().request(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/testclient.py:340: in handle_request
+    raise exc
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/testclient.py:337: in handle_request
+    portal.call(self.app, scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/anyio/from_thread.py:290: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/anyio/from_thread.py:221: in _call_func
+    retval = await retval_or_awaitable
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/applications.py:112: in __call__
+    await self.middleware_stack(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/middleware/errors.py:187: in __call__
+    raise exc
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/middleware/errors.py:165: in __call__
+    await self.app(scope, receive, _send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/middleware/exceptions.py:62: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/routing.py:714: in __call__
+    await self.middleware_stack(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/routing.py:734: in app
+    await route.handle(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/routing.py:288: in handle
+    await self.app(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/routing.py:76: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/starlette/routing.py:73: in app
+    response = await f(request)
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/fastapi/routing.py:301: in app
+    raw_response = await run_endpoint_function(
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/fastapi/routing.py:212: in run_endpoint_function
+    return await dependant.call(**values)
+api_server_real.py:595: in get_transactions
+    "transactions": results.get("transactions", []),
+E   AttributeError: 'NoneType' object has no attribute 'get'
+=============================== warnings summary ===============================
+tests/test_api_endpoints.py::TestAPIEndpoints::test_malformed_json_request
+tests/test_api_endpoints.py::TestAPIEndpoints::test_missing_content_type
+  /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_models.py:408: DeprecationWarning: Use 'content=<...>' to upload raw bytes/text content.
+    headers, stream = encode_request(
+
+tests/test_api_endpoints.py::TestAPIEndpoints::test_csv_processing_async
+tests/test_api_endpoints.py::TestAPIEndpoints::test_pdf_processing_async
+  /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/_pytest/python.py:182: PytestUnhandledCoroutineWarning: async def functions are not natively supported and have been skipped.
+  You need to install a suitable plugin for your async framework, for example:
+    - anyio
+    - pytest-asyncio
+    - pytest-tornasync
+    - pytest-trio
+    - pytest-twisted
+    warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_api_endpoints.py::TestAPIEndpoints::test_health_check_cors
+FAILED tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_pdf_success
+FAILED tests/test_api_endpoints.py::TestAPIEndpoints::test_upload_malformed_pdf
+FAILED tests/test_api_endpoints.py::TestAPIErrorHandling::test_500_error_format
+============= 4 failed, 37 passed, 2 skipped, 4 warnings in 0.99s ==============

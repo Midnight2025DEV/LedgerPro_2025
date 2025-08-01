@@ -50,7 +50,7 @@ final class CriticalWorkflowTests: XCTestCase {
         ]
         
         // Step 1: Categorize transactions
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         XCTAssertEqual(categorized.totalTransactions, 3)
         
         // Step 2: Import to FinancialDataManager (should work without range errors)
@@ -125,7 +125,7 @@ final class CriticalWorkflowTests: XCTestCase {
         )
         
         // Step 5: Verify pattern learning helps with categorization
-        let categorizedResult = importService.categorizeTransactions([newTransaction])
+        let categorizedResult = await importService.categorizeTransactions([newTransaction])
         
         // Should either be categorized correctly or at least processed
         XCTAssertEqual(categorizedResult.totalTransactions, 1)
@@ -145,8 +145,7 @@ final class CriticalWorkflowTests: XCTestCase {
                 category: "Uncategorized",
                 originalAmount: -27.83,
                 originalCurrency: "EUR",
-                exchangeRate: 0.916933333,
-                hasForex: true
+                exchangeRate: 0.916933333
             ),
             Transaction(
                 id: "starbucks_test",
@@ -169,7 +168,7 @@ final class CriticalWorkflowTests: XCTestCase {
         XCTAssertEqual(forexTransactions[0].originalCurrency, "EUR")
         
         // Step 2: Import and categorize
-        let categorized = importService.categorizeTransactions(capitalOneTransactions)
+        let categorized = await importService.categorizeTransactions(capitalOneTransactions)
         financialManager.addTransactions(
             categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions,
             jobId: "capital-one-import",
@@ -209,7 +208,7 @@ final class CriticalWorkflowTests: XCTestCase {
         }
         
         // Step 1: Categorize all transactions
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         
         // Step 2: Save to database (now works with range error fixes)
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
@@ -302,7 +301,7 @@ final class CriticalWorkflowTests: XCTestCase {
         let testTransaction = Transaction(id: "integration1", date: "2024-01-01", description: "UBER", amount: -25.50, category: "Uncategorized")
         
         // Step 1: Categorization service
-        let categorized = importService.categorizeTransactions([testTransaction])
+        let categorized = await importService.categorizeTransactions([testTransaction])
         XCTAssertEqual(categorized.totalTransactions, 1)
         
         // Step 2: Financial data management
@@ -348,7 +347,7 @@ final class CriticalWorkflowTests: XCTestCase {
             }
             
             // Process each batch
-            let categorized = importService.categorizeTransactions(batchTransactions)
+            let categorized = await importService.categorizeTransactions(batchTransactions)
             
             // Import all transactions (now works with range error fixes)
             let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
