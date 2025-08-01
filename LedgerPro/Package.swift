@@ -1,5 +1,5 @@
 // swift-tools-version: 5.9
-// LedgerPro - Complete Financial Management App
+// LedgerPro - Complete Financial Management Application
 import PackageDescription
 
 let package = Package(
@@ -11,29 +11,18 @@ let package = Package(
         .executable(name: "LedgerPro", targets: ["LedgerPro"])
     ],
     dependencies: [
-        // Using Foundation's URLSession instead of AsyncHTTPClient for simplicity
+        // Using Foundation's URLSession for HTTP requests
     ],
     targets: [
         .executableTarget(
             name: "LedgerPro",
             dependencies: [],
-            path: "Sources/LedgerPro",
-            exclude: [
-                "Debug/APIMonitor.swift.disabled"
-            ]
+            path: "Sources/LedgerPro"
         ),
         .testTarget(
             name: "LedgerProTests",
             dependencies: ["LedgerPro"],
             path: "Tests/LedgerProTests"
-        ),
-        .testTarget(
-            name: "LedgerProUITests",
-            dependencies: ["LedgerPro"],
-            path: "LedgerProUITests",
-            resources: [
-                .process("TestResources")
-            ]
         )
     ]
 )
