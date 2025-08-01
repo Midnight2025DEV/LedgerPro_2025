@@ -1,5 +1,6 @@
 // swift-tools-version: 5.9
-// LedgerPro - Complete Financial Management Application
+// LedgerPro - Complete Financial Management Application 
+// FIXED: Full Package.swift configuration to resolve build errors
 import PackageDescription
 
 let package = Package(
@@ -11,7 +12,7 @@ let package = Package(
         .executable(name: "LedgerPro", targets: ["LedgerPro"])
     ],
     dependencies: [
-        // Using Foundation's URLSession for HTTP requests
+        // Using Foundation's URLSession for HTTP requests - no external deps needed
     ],
     targets: [
         .executableTarget(
