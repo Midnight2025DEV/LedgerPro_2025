@@ -25,8 +25,8 @@ struct CreateBudgetView: View {
     
     private var availableCategories: [String] {
         // Get unique categories from transactions, plus some common ones
-        let transactionCategories = Set(budgetManager.budgets.isEmpty ? [] : 
-            budgetManager.budgets.compactMap { _ in nil as String? }) // This would come from dataManager
+        // Note: This should ideally come from dataManager.transactions but for now use static list
+        let transactionCategories: Set<String> = []
         
         let commonCategories = [
             "All Categories",
@@ -336,6 +336,7 @@ struct CreateBudgetView: View {
         }
     }
     
+    @MainActor
     private func createBudget() {
         guard let amount = formattedAmount else {
             showError = true

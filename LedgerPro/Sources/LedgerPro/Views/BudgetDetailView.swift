@@ -263,8 +263,10 @@ struct BudgetDetailView: View {
             Spacer()
             
             Button("Toggle Active") {
-                budgetManager.toggleBudgetActive(budget.id)
-                dismiss()
+                Task { @MainActor in
+                    budgetManager.toggleBudgetActive(budget.id)
+                    dismiss()
+                }
             }
             
             Button("Close") {
@@ -276,8 +278,10 @@ struct BudgetDetailView: View {
         .alert("Delete Budget", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
-                budgetManager.deleteBudget(budget.id)
-                dismiss()
+                Task { @MainActor in
+                    budgetManager.deleteBudget(budget.id)
+                    dismiss()
+                }
             }
         } message: {
             Text("Are you sure you want to delete this budget? This action cannot be undone.")
