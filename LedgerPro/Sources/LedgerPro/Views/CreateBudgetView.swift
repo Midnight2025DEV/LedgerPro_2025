@@ -321,7 +321,9 @@ struct CreateBudgetView: View {
             .keyboardShortcut(.escape, modifiers: [])
             
             Button("Create Budget") {
-                createBudget()
+                Task {
+                    await createBudget()
+                }
             }
             .keyboardShortcut(.return, modifiers: [])
             .buttonStyle(.borderedProminent)
