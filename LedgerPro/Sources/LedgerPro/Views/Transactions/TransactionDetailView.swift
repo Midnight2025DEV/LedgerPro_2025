@@ -267,10 +267,9 @@ struct TransactionDetailView: View {
         .overlay(
             Group {
                 if showingCategoryPicker {
-                    CategoryPickerPopup(
+                    CategoryFilterPickerPopup(
                         selectedCategory: $selectedCategory,
-                        isPresented: $showingCategoryPicker,
-                        transaction: transaction
+                        isPresented: $showingCategoryPicker
                     )
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     .zIndex(1000)

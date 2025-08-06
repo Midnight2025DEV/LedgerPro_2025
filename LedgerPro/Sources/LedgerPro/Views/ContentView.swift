@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var selectedTransactionFilter: TransactionFilter = .all
     @State private var shouldNavigateToTransactions = false
     @State private var triggerUncategorizedFilter = false
+    @State private var showingManualEntry = false
     
     enum TransactionFilter: Equatable {
         case all
@@ -27,6 +28,7 @@ struct ContentView: View {
     enum DashboardTab: String, CaseIterable {
         case overview = "Overview"
         case transactions = "Transactions"
+        case budgets = "Budgets"
         case accounts = "Accounts"
         case insights = "Insights"
         case settings = "Settings"
@@ -35,6 +37,7 @@ struct ContentView: View {
             switch self {
             case .overview: return "chart.bar.fill"
             case .transactions: return "list.bullet"
+            case .budgets: return "target"
             case .accounts: return "building.columns"
             case .insights: return "brain"
             case .settings: return "gear"
@@ -78,18 +81,33 @@ struct ContentView: View {
                 // MCP Status Indicator
                 MCPStatusIndicator(mcpBridge: mcpBridge)
                 
-                Button(action: { 
-                    AppLogger.shared.debug("Upload button clicked in ContentView")
-                    showingUploadSheet = true 
-                }) {
+                Menu {
+                    Button(action: {
+                        showingManualEntry = true
+                    }) {
+                        Label("Add Transaction", systemImage: "plus.circle")
+                    }
+                    
+                    Button(action: { 
+                        AppLogger.shared.debug("Upload button clicked in ContentView")
+                        showingUploadSheet = true 
+                    }) {
+                        Label("Upload Statement", systemImage: "doc.badge.plus")
+                    }
+                } label: {
                     Image(systemName: "plus")
                 }
-                .help("Upload Statement")
+                .help("Add Transaction or Upload Statement")
             }
         }
         .sheet(isPresented: $showingUploadSheet) {
             NavigationStack {
                 FileUploadView()
+            }
+        }
+        .sheet(isPresented: $showingManualEntry) {
+            NavigationStack {
+                ManualTransactionView()
             }
         }
         .sheet(isPresented: $showingRulesWindow) {
@@ -165,6 +183,8 @@ struct ContentView: View {
                 initialShowUncategorizedOnly: selectedTransactionFilter == .uncategorized,
                 triggerUncategorizedFilter: triggerUncategorizedFilter
             )
+        case .budgets:
+            BudgetView(dataManager: dataManager)
         case .accounts:
             AccountsView()
         case .insights:

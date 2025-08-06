@@ -8,6 +8,7 @@ struct LedgerProApp: App {
     @StateObject private var categoryService = CategoryService.shared
     @StateObject private var mcpBridge: MCPBridge
     @StateObject private var mcpLauncher: MCPServerLauncher
+    @StateObject private var backendManager = BackendManager()
     
     init() {
         // Create a single MCPBridge instance and share it
@@ -33,20 +34,27 @@ struct LedgerProApp: App {
                     // Load stored data
                     dataManager.loadStoredData()
                     
+                    // Start backend automatically
+                    Task {
+                        await backendManager.start()
+                    }
+                    
                     // Start MCP servers
                     Task {
                         try await mcpLauncher.launchCoreServers()
                     }
                 }
                 .onDisappear {
-                    // Cleanup MCP servers when app closes
+                    // Cleanup servers when app closes
                     mcpLauncher.stopAllServers()
+                    backendManager.stop()
                 }
                 .environmentObject(dataManager)
                 .environmentObject(apiService)
                 .environmentObject(categoryService)
                 .environmentObject(mcpBridge)
                 .environmentObject(mcpLauncher)
+                .environmentObject(backendManager)
         }
         .defaultSize(width: 1200, height: 800)
     }
