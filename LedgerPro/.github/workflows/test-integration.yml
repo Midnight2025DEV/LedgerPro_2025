@@ -1,0 +1,49 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration-tests:
+    runs-on: macos-latest
+    
+    services:
+      # This would be for a dockerized backend, but for now we'll start it directly
+      backend:
+        image: python:3.9
+        options: --health-cmd "curl -f http://localhost:8000/api/health || exit 1" --health-interval 10s --health-timeout 5s --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode.app
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install backend dependencies
+      run: |
+        cd LedgerPro/backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Start Backend Server
+      run: |
+        cd LedgerPro/backend
+        python api_server_real.py &
+        sleep 5  # Wait for server to start
+        
+    - name: Check Backend Health
+      run: |
+        curl -f http://127.0.0.1:8000/api/health || exit 1
+        
+    - name: Run Integration Tests
+      run: |
+        cd LedgerPro
+        swift test --filter "Integration"
