@@ -270,7 +270,7 @@ struct APIKeysSettingsView: View {
         let url = URL(string: "https://api.openai.com/v1/models")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue("Bearer \\(openAIKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
         
         let (_, response) = try await URLSession.shared.data(for: request)
         
@@ -285,8 +285,8 @@ struct APIKeysSettingsView: View {
         // Save to environment file for MCP servers
         let envContent = """
         # OpenAI API Configuration
-        OPENAI_API_KEY=\\(openAIKey)
-        OPENAI_MODEL=\\(openAIModel)
+        OPENAI_API_KEY=\(openAIKey)
+        OPENAI_MODEL=\(openAIModel)
         OPENAI_TEMPERATURE=0.7
         OPENAI_MAX_TOKENS=2000
         
@@ -342,7 +342,7 @@ struct APIKeysSettingsView: View {
 // MARK: - Help View
 
 struct APIKeyHelpView: View {
-    @Environment(\\.dismiss) var dismiss
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationView {
@@ -409,9 +409,8 @@ struct APIKeyHelpView: View {
                 .padding()
             }
             .navigationTitle("API Key Help")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .primaryAction) {
                     Button("Done") {
                         dismiss()
                     }
@@ -422,7 +421,7 @@ struct APIKeyHelpView: View {
     
     private func stepView(number: Int, title: String, description: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Text("\\(number)")
+            Text("\(number)")
                 .font(.headline)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
