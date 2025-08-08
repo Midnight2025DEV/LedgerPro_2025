@@ -113,6 +113,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
 }
 
 struct APIKeysSettingsView: View {
+    @Environment(\.dismiss) var dismiss
     @State private var selectedProvider: AIProvider = .openai
     @State private var apiKeys: [AIProvider: String] = [:]
     @State private var selectedModels: [AIProvider: String] = [:]
@@ -144,7 +145,8 @@ struct APIKeysSettingsView: View {
     }
     
     var body: some View {
-        Form {
+        NavigationView {
+            Form {
             Section {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Choose your preferred AI provider for enhanced financial analysis, transaction categorization, and PDF processing.")
@@ -311,12 +313,29 @@ struct APIKeysSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("API Keys")
+        .navigationTitle("API Keys Configuration")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
         .onAppear {
             loadConfiguration()
         }
+        .onExitCommand {
+            dismiss()
+        }
         .sheet(isPresented: $showingKeyHelp) {
             APIKeyHelpView()
+        }
         }
     }
     

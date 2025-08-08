@@ -340,10 +340,8 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showingAPIKeys) {
-            NavigationView {
-                APIKeysSettingsView()
-            }
-            .frame(width: 600, height: 700)
+            APIKeysSettingsView()
+                .frame(width: 600, height: 700)
         }
         .onAppear {
             loadSettings()
