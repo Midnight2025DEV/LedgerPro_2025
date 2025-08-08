@@ -1,11 +1,123 @@
 import SwiftUI
 import Foundation
 
+enum AIProvider: String, CaseIterable, Identifiable {
+    case openai = "OpenAI"
+    case anthropic = "Anthropic (Claude)"
+    case groq = "Groq"
+    case cohere = "Cohere"
+    case mistral = "Mistral AI"
+    case huggingface = "Hugging Face"
+    case ollama = "Ollama (Local)"
+    case azure = "Azure OpenAI"
+    case google = "Google AI"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .openai: return "brain.head.profile"
+        case .anthropic: return "bubble.left.and.bubble.right"
+        case .groq: return "bolt.fill"
+        case .cohere: return "waveform"
+        case .mistral: return "wind"
+        case .huggingface: return "face.smiling"
+        case .ollama: return "desktopcomputer"
+        case .azure: return "cloud.fill"
+        case .google: return "magnifyingglass"
+        }
+    }
+    
+    var placeholder: String {
+        switch self {
+        case .openai: return "sk-..."
+        case .anthropic: return "sk-ant-..."
+        case .groq: return "gsk_..."
+        case .cohere: return "co-..."
+        case .mistral: return "..."
+        case .huggingface: return "hf_..."
+        case .ollama: return "http://localhost:11434"
+        case .azure: return "your-azure-key"
+        case .google: return "AI..."
+        }
+    }
+    
+    var models: [String] {
+        switch self {
+        case .openai:
+            return ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+        case .anthropic:
+            return ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307", "claude-3-opus-20240229"]
+        case .groq:
+            return ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
+        case .cohere:
+            return ["command-r", "command-r-plus", "command"]
+        case .mistral:
+            return ["mistral-large-latest", "mistral-small-latest", "codestral-latest"]
+        case .huggingface:
+            return ["meta-llama/Llama-2-7b-chat-hf", "microsoft/DialoGPT-medium", "google/flan-t5-large"]
+        case .ollama:
+            return ["llama3", "llama2", "codellama", "mistral", "phi3"]
+        case .azure:
+            return ["gpt-4", "gpt-35-turbo", "text-davinci-003"]
+        case .google:
+            return ["gemini-pro", "gemini-pro-vision", "palm-2"]
+        }
+    }
+    
+    var costInfo: String {
+        switch self {
+        case .openai:
+            return "💰💰 Premium - GPT-4: ~$30/1M tokens, GPT-3.5: ~$1/1M"
+        case .anthropic:
+            return "💰💰💰 Premium - Claude-3: ~$15-75/1M tokens"
+        case .groq:
+            return "💰 Very Fast & Affordable - ~$0.27-2.80/1M tokens"
+        case .cohere:
+            return "💰 Competitive - ~$1-15/1M tokens"
+        case .mistral:
+            return "💰💰 Mid-range - ~$2-8/1M tokens"
+        case .huggingface:
+            return "💰 Variable - Free tier available, paid from $0.60/hour"
+        case .ollama:
+            return "🆓 FREE - Runs locally on your machine"
+        case .azure:
+            return "💰💰 Enterprise - Similar to OpenAI pricing"
+        case .google:
+            return "💰 Competitive - Gemini Pro: ~$0.50-7/1M tokens"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .openai:
+            return "Industry leader in conversational AI and GPT models"
+        case .anthropic:
+            return "High-quality, helpful, harmless, and honest AI"
+        case .groq:
+            return "Ultra-fast inference with competitive quality"
+        case .cohere:
+            return "Enterprise-focused language models"
+        case .mistral:
+            return "Open-source European AI with strong performance"
+        case .huggingface:
+            return "Open-source model hub with thousands of options"
+        case .ollama:
+            return "Run LLMs locally - completely private and free"
+        case .azure:
+            return "Microsoft's enterprise AI platform"
+        case .google:
+            return "Google's advanced multimodal AI models"
+        }
+    }
+}
+
 struct APIKeysSettingsView: View {
-    @State private var openAIKey: String = ""
-    @State private var openAIModel: String = "gpt-4-turbo"
+    @State private var selectedProvider: AIProvider = .openai
+    @State private var apiKeys: [AIProvider: String] = [:]
+    @State private var selectedModels: [AIProvider: String] = [:]
     @State private var isKeyVisible: Bool = false
-    @State private var testResult: TestResult = .none
+    @State private var testResults: [AIProvider: TestResult] = [:]
     @State private var isTesting: Bool = false
     @State private var showingKeyHelp: Bool = false
     
@@ -31,29 +143,22 @@ struct APIKeysSettingsView: View {
         }
     }
     
-    let availableModels = [
-        "gpt-3.5-turbo",
-        "gpt-4",
-        "gpt-4-turbo",
-        "gpt-4o"
-    ]
-    
     var body: some View {
         Form {
             Section {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Enable AI-powered transaction categorization, financial analysis, and enhanced PDF processing.")
+                    Text("Choose your preferred AI provider for enhanced financial analysis, transaction categorization, and PDF processing.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
                     HStack {
-                        Button("Get OpenAI API Key") {
-                            NSWorkspace.shared.open(URL(string: "https://platform.openai.com/api-keys")!)
+                        Button("Get API Keys") {
+                            showingKeyHelp = true
                         }
                         .buttonStyle(.bordered)
                         
-                        Button("Help") {
-                            showingKeyHelp = true
+                        Button("Compare Providers") {
+                            NSWorkspace.shared.open(URL(string: "https://artificialanalysis.ai/leaderboards/models")!)
                         }
                         .buttonStyle(.borderless)
                         .foregroundColor(.blue)
@@ -64,17 +169,48 @@ struct APIKeysSettingsView: View {
             }
             
             Section {
+                Picker("AI Provider", selection: $selectedProvider) {
+                    ForEach(AIProvider.allCases) { provider in
+                        HStack {
+                            Image(systemName: provider.icon)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(provider.rawValue)
+                                    .fontWeight(.medium)
+                                Text(provider.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .tag(provider)
+                    }
+                }
+                .pickerStyle(.menu)
+                
+                Text(selectedProvider.costInfo)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } header: {
+                Text("Choose Provider")
+            }
+            
+            Section {
                 // API Key Input
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("OpenAI API Key")
+                    Text("\(selectedProvider.rawValue) API Key")
                         .fontWeight(.medium)
                     
                     HStack {
                         Group {
                             if isKeyVisible {
-                                TextField("sk-...", text: $openAIKey)
+                                TextField(selectedProvider.placeholder, text: Binding(
+                                    get: { apiKeys[selectedProvider] ?? "" },
+                                    set: { apiKeys[selectedProvider] = $0 }
+                                ))
                             } else {
-                                SecureField("sk-...", text: $openAIKey)
+                                SecureField(selectedProvider.placeholder, text: Binding(
+                                    get: { apiKeys[selectedProvider] ?? "" },
+                                    set: { apiKeys[selectedProvider] = $0 }
+                                ))
                             }
                         }
                         .textFieldStyle(.roundedBorder)
@@ -88,9 +224,9 @@ struct APIKeysSettingsView: View {
                         .buttonStyle(.borderless)
                     }
                     
-                    Text(testResult.message)
+                    Text(testResults[selectedProvider]?.message ?? "Not tested")
                         .font(.caption)
-                        .foregroundColor(testResult.color)
+                        .foregroundColor(testResults[selectedProvider]?.color ?? .secondary)
                 }
                 
                 // Model Selection
@@ -98,22 +234,22 @@ struct APIKeysSettingsView: View {
                     Text("AI Model")
                         .fontWeight(.medium)
                     
-                    Picker("Model", selection: $openAIModel) {
-                        ForEach(availableModels, id: \.self) { model in
-                            VStack(alignment: .leading) {
-                                Text(model)
-                                Text(modelDescription(model))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            .tag(model)
+                    Picker("Model", selection: Binding(
+                        get: { selectedModels[selectedProvider] ?? selectedProvider.models.first ?? "" },
+                        set: { selectedModels[selectedProvider] = $0 }
+                    )) {
+                        ForEach(selectedProvider.models, id: \.self) { model in
+                            Text(model)
+                                .tag(model)
                         }
                     }
                     .pickerStyle(.menu)
                     
-                    Text(modelCostInfo(openAIModel))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    if selectedProvider == .ollama {
+                        Text("💡 Make sure Ollama is running locally with: ollama serve")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
                 }
                 
                 // Test & Save Buttons
@@ -121,7 +257,7 @@ struct APIKeysSettingsView: View {
                     Button("Test Connection") {
                         testAPIKey()
                     }
-                    .disabled(openAIKey.isEmpty || isTesting)
+                    .disabled((apiKeys[selectedProvider]?.isEmpty ?? true) || isTesting)
                     .buttonStyle(.bordered)
                     
                     Spacer()
@@ -129,11 +265,11 @@ struct APIKeysSettingsView: View {
                     Button("Save Configuration") {
                         saveConfiguration()
                     }
-                    .disabled(openAIKey.isEmpty)
+                    .disabled(apiKeys[selectedProvider]?.isEmpty ?? true)
                     .buttonStyle(.borderedProminent)
                 }
             } header: {
-                Text("OpenAI Configuration")
+                Text("\(selectedProvider.rawValue) Configuration")
             }
             
             Section {
@@ -210,121 +346,180 @@ struct APIKeysSettingsView: View {
     // MARK: - Functions
     
     private func hasValidKey() -> Bool {
-        return !openAIKey.isEmpty && openAIKey.hasPrefix("sk-")
-    }
-    
-    private func modelDescription(_ model: String) -> String {
-        switch model {
-        case "gpt-3.5-turbo":
-            return "Fast, cost-effective"
-        case "gpt-4":
-            return "High quality, slower"
-        case "gpt-4-turbo":
-            return "Best balance of speed/quality"
-        case "gpt-4o":
-            return "Fastest GPT-4 model"
-        default:
-            return ""
-        }
-    }
-    
-    private func modelCostInfo(_ model: String) -> String {
-        switch model {
-        case "gpt-3.5-turbo":
-            return "💰 Most cost-effective (~$0.001 per 1K tokens)"
-        case "gpt-4":
-            return "💰💰💰 Premium pricing (~$0.03 per 1K tokens)"
-        case "gpt-4-turbo":
-            return "💰💰 Balanced pricing (~$0.01 per 1K tokens)"
-        case "gpt-4o":
-            return "💰💰 Similar to GPT-4 Turbo pricing"
-        default:
-            return ""
+        guard let key = apiKeys[selectedProvider], !key.isEmpty else { return false }
+        
+        switch selectedProvider {
+        case .openai: return key.hasPrefix("sk-")
+        case .anthropic: return key.hasPrefix("sk-ant-")
+        case .groq: return key.hasPrefix("gsk_")
+        case .cohere: return key.hasPrefix("co-")
+        case .huggingface: return key.hasPrefix("hf_")
+        case .ollama: return true // Local service, no key validation needed
+        case .mistral, .azure, .google: return !key.isEmpty
         }
     }
     
     private func testAPIKey() {
-        guard !openAIKey.isEmpty else { return }
+        guard let apiKey = apiKeys[selectedProvider], !apiKey.isEmpty else { return }
         
         isTesting = true
-        testResult = .testing
+        testResults[selectedProvider] = .testing
         
         Task {
             do {
-                let success = try await testOpenAIConnection()
+                let success = try await testProviderConnection(provider: selectedProvider, apiKey: apiKey)
                 await MainActor.run {
-                    testResult = success ? .success : .failure("Invalid API key")
+                    testResults[selectedProvider] = success ? .success : .failure("Invalid API key")
                     isTesting = false
                 }
             } catch {
                 await MainActor.run {
-                    testResult = .failure(error.localizedDescription)
+                    testResults[selectedProvider] = .failure(error.localizedDescription)
                     isTesting = false
                 }
             }
         }
     }
     
-    private func testOpenAIConnection() async throws -> Bool {
-        // Simple test API call to validate the key
-        let url = URL(string: "https://api.openai.com/v1/models")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
-        
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        if let httpResponse = response as? HTTPURLResponse {
-            return httpResponse.statusCode == 200
+    private func testProviderConnection(provider: AIProvider, apiKey: String) async throws -> Bool {
+        switch provider {
+        case .openai:
+            let url = URL(string: "https://api.openai.com/v1/models")!
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+            
+        case .anthropic:
+            let url = URL(string: "https://api.anthropic.com/v1/messages")!
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode != 401
+            
+        case .groq:
+            let url = URL(string: "https://api.groq.com/openai/v1/models")!
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+            
+        case .ollama:
+            let url = URL(string: "\(apiKey)/api/tags")! // apiKey is the base URL for Ollama
+            let (_, response) = try await URLSession.shared.data(from: url)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+            
+        case .cohere:
+            let url = URL(string: "https://api.cohere.ai/v1/models")!
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+            
+        case .huggingface:
+            let url = URL(string: "https://api-inference.huggingface.co/models")!
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+            
+        default:
+            // For other providers, just check if key exists
+            return !apiKey.isEmpty
         }
-        
-        return false
     }
     
     private func saveConfiguration() {
-        // Save to environment file for MCP servers
-        let envContent = """
-        # OpenAI API Configuration
-        OPENAI_API_KEY=\(openAIKey)
-        OPENAI_MODEL=\(openAIModel)
-        OPENAI_TEMPERATURE=0.7
-        OPENAI_MAX_TOKENS=2000
+        guard let apiKey = apiKeys[selectedProvider], !apiKey.isEmpty else { return }
         
-        # MCP Server Configuration
-        MCP_SERVER_NAME=openai-service
-        MCP_SERVER_VERSION=0.1.0
-        """
+        // Generate environment content for all providers
+        var envContent = "# AI Provider Configuration\n"
+        envContent += "AI_PROVIDER=\(selectedProvider.rawValue.lowercased().replacingOccurrences(of: " ", with: "_"))\n"
+        
+        // Add provider-specific configuration
+        switch selectedProvider {
+        case .openai:
+            envContent += "OPENAI_API_KEY=\(apiKey)\n"
+            envContent += "OPENAI_MODEL=\(selectedModels[selectedProvider] ?? "gpt-4-turbo")\n"
+        case .anthropic:
+            envContent += "ANTHROPIC_API_KEY=\(apiKey)\n"
+            envContent += "ANTHROPIC_MODEL=\(selectedModels[selectedProvider] ?? "claude-3-5-sonnet-20241022")\n"
+        case .groq:
+            envContent += "GROQ_API_KEY=\(apiKey)\n"
+            envContent += "GROQ_MODEL=\(selectedModels[selectedProvider] ?? "llama-3.1-8b-instant")\n"
+        case .ollama:
+            envContent += "OLLAMA_BASE_URL=\(apiKey)\n"
+            envContent += "OLLAMA_MODEL=\(selectedModels[selectedProvider] ?? "llama3")\n"
+        case .cohere:
+            envContent += "COHERE_API_KEY=\(apiKey)\n"
+            envContent += "COHERE_MODEL=\(selectedModels[selectedProvider] ?? "command-r")\n"
+        case .huggingface:
+            envContent += "HUGGINGFACE_API_KEY=\(apiKey)\n"
+            envContent += "HUGGINGFACE_MODEL=\(selectedModels[selectedProvider] ?? "meta-llama/Llama-2-7b-chat-hf")\n"
+        case .mistral:
+            envContent += "MISTRAL_API_KEY=\(apiKey)\n"
+            envContent += "MISTRAL_MODEL=\(selectedModels[selectedProvider] ?? "mistral-large-latest")\n"
+        case .azure:
+            envContent += "AZURE_OPENAI_KEY=\(apiKey)\n"
+            envContent += "AZURE_OPENAI_MODEL=\(selectedModels[selectedProvider] ?? "gpt-4")\n"
+        case .google:
+            envContent += "GOOGLE_API_KEY=\(apiKey)\n"
+            envContent += "GOOGLE_MODEL=\(selectedModels[selectedProvider] ?? "gemini-pro")\n"
+        }
+        
+        envContent += "\n# General AI Configuration\n"
+        envContent += "AI_TEMPERATURE=0.7\n"
+        envContent += "AI_MAX_TOKENS=2000\n"
         
         let envPath = getMCPServicePath().appendingPathComponent(".env")
         
         do {
             try envContent.write(to: envPath, atomically: true, encoding: .utf8)
             
-            // Also save to UserDefaults for app use
-            UserDefaults.standard.set(openAIKey, forKey: "openai_api_key")
-            UserDefaults.standard.set(openAIModel, forKey: "openai_model")
+            // Save to UserDefaults for app use
+            UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selected_ai_provider")
+            UserDefaults.standard.set(apiKey, forKey: "\(selectedProvider.rawValue.lowercased())_api_key")
+            UserDefaults.standard.set(selectedModels[selectedProvider], forKey: "\(selectedProvider.rawValue.lowercased())_model")
             
             // Show success feedback
-            testResult = .success
+            testResults[selectedProvider] = .success
             
         } catch {
-            testResult = .failure("Failed to save configuration")
+            testResults[selectedProvider] = .failure("Failed to save configuration")
         }
     }
     
     private func loadConfiguration() {
-        // Load from UserDefaults
-        openAIKey = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-        openAIModel = UserDefaults.standard.string(forKey: "openai_model") ?? "gpt-4-turbo"
+        // Load selected provider
+        if let providerString = UserDefaults.standard.string(forKey: "selected_ai_provider"),
+           let provider = AIProvider.allCases.first(where: { $0.rawValue == providerString }) {
+            selectedProvider = provider
+        }
         
-        // Try to load from .env file
+        // Load all API keys and models from UserDefaults
+        for provider in AIProvider.allCases {
+            let providerKey = "\(provider.rawValue.lowercased())_api_key"
+            let modelKey = "\(provider.rawValue.lowercased())_model"
+            
+            apiKeys[provider] = UserDefaults.standard.string(forKey: providerKey) ?? ""
+            selectedModels[provider] = UserDefaults.standard.string(forKey: modelKey) ?? provider.models.first ?? ""
+        }
+        
+        // Try to load from .env file as fallback
         let envPath = getMCPServicePath().appendingPathComponent(".env")
         if let envContent = try? String(contentsOf: envPath) {
-            if let keyLine = envContent.components(separatedBy: .newlines).first(where: { $0.hasPrefix("OPENAI_API_KEY=") }) {
-                let key = String(keyLine.dropFirst("OPENAI_API_KEY=".count))
-                if !key.isEmpty && openAIKey.isEmpty {
-                    openAIKey = key
+            let lines = envContent.components(separatedBy: .newlines)
+            
+            for line in lines {
+                if line.hasPrefix("OPENAI_API_KEY=") && (apiKeys[.openai]?.isEmpty ?? true) {
+                    apiKeys[.openai] = String(line.dropFirst("OPENAI_API_KEY=".count))
+                } else if line.hasPrefix("ANTHROPIC_API_KEY=") && (apiKeys[.anthropic]?.isEmpty ?? true) {
+                    apiKeys[.anthropic] = String(line.dropFirst("ANTHROPIC_API_KEY=".count))
+                } else if line.hasPrefix("GROQ_API_KEY=") && (apiKeys[.groq]?.isEmpty ?? true) {
+                    apiKeys[.groq] = String(line.dropFirst("GROQ_API_KEY=".count))
                 }
+                // Add more providers as needed
             }
         }
     }
@@ -348,34 +543,13 @@ struct APIKeyHelpView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("How to Get Your OpenAI API Key")
+                    Text("How to Get API Keys")
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Group {
-                        stepView(
-                            number: 1,
-                            title: "Visit OpenAI Platform",
-                            description: "Go to platform.openai.com and sign in or create an account"
-                        )
-                        
-                        stepView(
-                            number: 2,
-                            title: "Navigate to API Keys",
-                            description: "Click on 'API Keys' in the left sidebar"
-                        )
-                        
-                        stepView(
-                            number: 3,
-                            title: "Create New Key",
-                            description: "Click 'Create new secret key' and give it a name"
-                        )
-                        
-                        stepView(
-                            number: 4,
-                            title: "Copy & Save",
-                            description: "Copy the key (starts with 'sk-') and paste it above. Store it securely!"
-                        )
+                    // Provider-specific instructions
+                    ForEach(AIProvider.allCases) { provider in
+                        providerInstructions(for: provider)
                     }
                     
                     Divider()
@@ -395,20 +569,20 @@ struct APIKeyHelpView: View {
                     Divider()
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Cost Estimates")
+                        Text("Cost Comparison")
                             .font(.headline)
                         
-                        Text("• Processing 100 transactions: ~$0.10 with GPT-3.5")
-                        Text("• Processing 100 transactions: ~$1.00 with GPT-4")
-                        Text("• PDF analysis: ~$0.05-0.20 per document")
-                        Text("• Monthly usage for active user: ~$2-10")
+                        Text("🆓 **FREE**: Ollama (local)")
+                        Text("💰 **Budget**: Groq (~$0.27/1M tokens)")
+                        Text("💰💰 **Balanced**: OpenAI GPT-3.5 (~$1/1M tokens)")
+                        Text("💰💰💰 **Premium**: OpenAI GPT-4, Claude (~$15-30/1M)")
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
                 }
                 .padding()
             }
-            .navigationTitle("API Key Help")
+            .navigationTitle("API Key Setup")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Done") {
@@ -419,24 +593,76 @@ struct APIKeyHelpView: View {
         }
     }
     
-    private func stepView(number: Int, title: String, description: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text("\(number)")
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .frame(width: 24, height: 24)
-                .background(Circle().fill(.blue))
+    private func providerInstructions(for provider: AIProvider) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: provider.icon)
+                Text(provider.rawValue)
+                    .fontWeight(.bold)
+            }
+            .font(.headline)
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
+            Text(getInstructionsText(for: provider))
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            if let url = getProviderURL(for: provider) {
+                Button("Get \(provider.rawValue) API Key") {
+                    NSWorkspace.shared.open(url)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
         }
+        .padding(.bottom, 8)
     }
+    
+    private func getInstructionsText(for provider: AIProvider) -> String {
+        switch provider {
+        case .openai:
+            return "Go to platform.openai.com → API Keys → Create new secret key"
+        case .anthropic:
+            return "Go to console.anthropic.com → API Keys → Create Key"
+        case .groq:
+            return "Go to console.groq.com → API Keys → Create API Key"
+        case .cohere:
+            return "Go to dashboard.cohere.ai → API Keys → Create New Key"
+        case .mistral:
+            return "Go to console.mistral.ai → API Keys → Create new key"
+        case .huggingface:
+            return "Go to huggingface.co → Settings → Access Tokens → Create new token"
+        case .ollama:
+            return "Install Ollama locally, then run 'ollama serve'. No API key needed!"
+        case .azure:
+            return "Go to Azure Portal → AI Services → Create OpenAI resource → Keys and Endpoint"
+        case .google:
+            return "Go to console.cloud.google.com → AI Platform → Create API Key"
+        }
+    }
+    
+    private func getProviderURL(for provider: AIProvider) -> URL? {
+        switch provider {
+        case .openai:
+            return URL(string: "https://platform.openai.com/api-keys")
+        case .anthropic:
+            return URL(string: "https://console.anthropic.com/")
+        case .groq:
+            return URL(string: "https://console.groq.com/keys")
+        case .cohere:
+            return URL(string: "https://dashboard.cohere.ai/api-keys")
+        case .mistral:
+            return URL(string: "https://console.mistral.ai/")
+        case .huggingface:
+            return URL(string: "https://huggingface.co/settings/tokens")
+        case .ollama:
+            return URL(string: "https://ollama.ai/download")
+        case .azure:
+            return URL(string: "https://portal.azure.com/")
+        case .google:
+            return URL(string: "https://console.cloud.google.com/")
+        }
+    }
+    
 }
 
 #Preview {

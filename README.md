@@ -50,28 +50,29 @@ cd backend && python api_server_real.py
 
 ### 2. Optional: Configure AI Features 🤖
 
-LedgerPro works great out of the box, but you can unlock advanced AI features:
+LedgerPro works great out of the box, but you can unlock advanced AI features with **multiple AI providers**:
 
-```bash
-# Set up your OpenAI API key for enhanced features
-cd mcp-servers/openai-service
-cp .env.example .env
-# Edit .env and add your OpenAI API key
-```
+**🤖 Supported AI Providers:**
+- 🆓 **Ollama** (Local, FREE) - Privacy-first
+- ⚡ **Groq** (Ultra-fast, Budget) - Best value
+- 🧠 **OpenAI** (GPT-4) - Industry standard  
+- 💬 **Anthropic** (Claude) - High quality
+- 🏢 **Cohere, Mistral, HuggingFace** - More options
 
-**Or configure through the app:**
+**Configure through the app:**
 1. Open LedgerPro
 2. Go to Settings → AI Services 
 3. Click "Configure API Keys"
-4. Add your OpenAI API key
+4. **Choose your preferred AI provider**
+5. Enter API key and test connection
 
-**💡 AI Features with API Key:**
-- Smart transaction categorization
-- Enhanced PDF processing
-- Financial insights and analysis
-- Natural language queries
+**💡 AI Features Unlocked:**
+- Smart transaction categorization with your chosen AI
+- Enhanced PDF processing and bank detection  
+- Advanced financial insights and analysis
+- Support for local models (Ollama) for complete privacy
 
-See [API Keys Setup Guide](API_KEYS_SETUP.md) for detailed instructions.
+See [Multi-Provider AI Setup Guide](API_KEYS_SETUP.md) for all providers.
 
 ### 3. Build and Run the Mac App
 ```bash

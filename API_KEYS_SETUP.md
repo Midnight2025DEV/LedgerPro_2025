@@ -1,72 +1,127 @@
-# 🔑 API Keys Setup Guide
+# 🔑 Multi-Provider AI Setup Guide
 
-LedgerPro supports **Bring Your Own AI (BYOAI)** - you can plug in your own API keys for enhanced AI features like transaction categorization, financial analysis, and PDF processing.
+LedgerPro supports **Bring Your Own AI (BYOAI)** with multiple popular AI providers! Choose from OpenAI, Claude, Groq, local models, and more for enhanced financial analysis.
+
+## 🤖 Supported AI Providers
+
+| Provider | Cost | Speed | Models | Best For |
+|----------|------|-------|--------|----------|
+| 🆓 **Ollama** | FREE | Fast | Llama3, Mistral | Privacy-focused, local |
+| ⚡ **Groq** | $ | Ultra-fast | Llama, Mixtral | Budget + speed |
+| 🧠 **OpenAI** | $$$ | Medium | GPT-4, GPT-3.5 | Highest quality |
+| 💬 **Anthropic** | $$$ | Medium | Claude 3.5 | Helpful & harmless |
+| 🏢 **Cohere** | $$ | Fast | Command-R | Enterprise features |
+| 🇪🇺 **Mistral** | $$ | Fast | Mistral Large | European alternative |
+| 🤗 **Hugging Face** | $ | Variable | 1000+ models | Open source variety |
+| ☁️ **Azure OpenAI** | $$$ | Medium | GPT-4 | Enterprise + compliance |
+| 🔍 **Google AI** | $$ | Fast | Gemini Pro | Multimodal capabilities |
 
 ## 🚀 Quick Setup
 
-### 1. Backend API Configuration
+### Method 1: Through LedgerPro App (Recommended)
+1. Open LedgerPro → Settings → AI Services
+2. Click **"Configure API Keys"**
+3. **Choose your AI provider** from the dropdown
+4. **Enter your API key** and select model
+5. **Test connection** and save
 
-The backend server doesn't require API keys for basic functionality, but you can configure secure authentication:
+### Method 2: Manual Configuration
 
+First, set up your backend:
 ```bash
 cd LedgerPro/backend
 cp .env.example .env
+# Edit .env with secure settings
 ```
 
-Edit `.env` and update:
+Then configure your chosen AI provider:
 ```bash
-# Generate a secure secret key (required for production)
-LEDGER_SECRET_KEY=your-secure-256-bit-key-here
-
-# Optional: Set up demo user
-DEMO_USER_EMAIL=admin@yourdomain.com
-DEMO_USER_PASSWORD=your-secure-password
-```
-
-**Generate a secure key:**
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-### 2. AI Services (Optional - For Enhanced Features)
-
-To enable AI-powered categorization, analysis, and PDF processing:
-
-```bash
-cd LedgerPro/mcp-servers/openai-service
+cd LedgerPro/mcp-servers/openai-service  # We use this folder for all providers
 cp .env.example .env
 ```
 
-Edit `.env` with your OpenAI credentials:
+## 🔧 Provider-Specific Setup
+
+### 🆓 Ollama (Local, FREE)
 ```bash
-OPENAI_API_KEY=sk-your-openai-api-key-here
-OPENAI_MODEL=gpt-4  # or gpt-3.5-turbo for lower cost
-OPENAI_TEMPERATURE=0.7
-OPENAI_MAX_TOKENS=2000
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Start Ollama server
+ollama serve
+
+# Pull a model
+ollama pull llama3
+
+# Configure LedgerPro
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3
 ```
 
-## 🔧 Detailed Configuration
+### ⚡ Groq (Ultra-fast, Budget-friendly)
+```bash
+# Get key from: https://console.groq.com/keys
+AI_PROVIDER=groq
+GROQ_API_KEY=gsk_your-groq-key-here
+GROQ_MODEL=llama-3.1-8b-instant
+```
 
-### OpenAI API Key Setup
+### 🧠 OpenAI (Industry standard)
+```bash
+# Get key from: https://platform.openai.com/api-keys
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your-openai-key-here
+OPENAI_MODEL=gpt-4-turbo
+```
 
-1. **Get an OpenAI API Key:**
-   - Visit [OpenAI API Platform](https://platform.openai.com/api-keys)
-   - Create an account or sign in
-   - Go to "API Keys" section
-   - Click "Create new secret key"
-   - Copy the key (starts with `sk-`)
+### 💬 Anthropic Claude (High quality)
+```bash
+# Get key from: https://console.anthropic.com/
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-your-claude-key-here
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+```
 
-2. **Add to Environment:**
-   ```bash
-   # In mcp-servers/openai-service/.env
-   OPENAI_API_KEY=sk-proj-your-actual-key-here
-   ```
+### 🏢 Cohere (Enterprise-focused)
+```bash
+# Get key from: https://dashboard.cohere.ai/api-keys
+AI_PROVIDER=cohere
+COHERE_API_KEY=co-your-cohere-key-here
+COHERE_MODEL=command-r
+```
 
-3. **Test the Setup:**
-   ```bash
-   cd LedgerPro/mcp-servers/openai-service
-   python -c "from openai import OpenAI; import os; from dotenv import load_dotenv; load_dotenv(); print('✅ API Key loaded!' if os.getenv('OPENAI_API_KEY') else '❌ No API key found')"
-   ```
+### 🇪🇺 Mistral AI (European alternative)
+```bash
+# Get key from: https://console.mistral.ai/
+AI_PROVIDER=mistral
+MISTRAL_API_KEY=your-mistral-key-here
+MISTRAL_MODEL=mistral-large-latest
+```
+
+### 🤗 Hugging Face (Open source models)
+```bash
+# Get token from: https://huggingface.co/settings/tokens
+AI_PROVIDER=huggingface
+HUGGINGFACE_API_KEY=hf_your-hf-token-here
+HUGGINGFACE_MODEL=meta-llama/Llama-2-7b-chat-hf
+```
+
+### ☁️ Azure OpenAI (Enterprise compliance)
+```bash
+# Get from Azure Portal: AI Services → OpenAI
+AI_PROVIDER=azure
+AZURE_OPENAI_KEY=your-azure-key-here
+AZURE_OPENAI_MODEL=gpt-4
+```
+
+### 🔍 Google AI (Multimodal capabilities)
+```bash
+# Get from: https://console.cloud.google.com/
+AI_PROVIDER=google
+GOOGLE_API_KEY=AI-your-google-key-here
+GOOGLE_MODEL=gemini-pro
+```
 
 ### Model Selection & Cost Optimization
 
