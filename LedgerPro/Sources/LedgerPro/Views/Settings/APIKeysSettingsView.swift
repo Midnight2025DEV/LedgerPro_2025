@@ -1,117 +1,6 @@
 import SwiftUI
 import Foundation
 
-enum AIProvider: String, CaseIterable, Identifiable {
-    case openai = "OpenAI"
-    case anthropic = "Anthropic (Claude)"
-    case groq = "Groq"
-    case cohere = "Cohere"
-    case mistral = "Mistral AI"
-    case huggingface = "Hugging Face"
-    case ollama = "Ollama (Local)"
-    case azure = "Azure OpenAI"
-    case google = "Google AI"
-    
-    var id: String { rawValue }
-    
-    var icon: String {
-        switch self {
-        case .openai: return "brain.head.profile"
-        case .anthropic: return "bubble.left.and.bubble.right"
-        case .groq: return "bolt.fill"
-        case .cohere: return "waveform"
-        case .mistral: return "wind"
-        case .huggingface: return "face.smiling"
-        case .ollama: return "desktopcomputer"
-        case .azure: return "cloud.fill"
-        case .google: return "magnifyingglass"
-        }
-    }
-    
-    var placeholder: String {
-        switch self {
-        case .openai: return "sk-..."
-        case .anthropic: return "sk-ant-..."
-        case .groq: return "gsk_..."
-        case .cohere: return "co-..."
-        case .mistral: return "..."
-        case .huggingface: return "hf_..."
-        case .ollama: return "http://localhost:11434"
-        case .azure: return "your-azure-key"
-        case .google: return "AI..."
-        }
-    }
-    
-    var models: [String] {
-        switch self {
-        case .openai:
-            return ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-        case .anthropic:
-            return ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307", "claude-3-opus-20240229"]
-        case .groq:
-            return ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
-        case .cohere:
-            return ["command-r", "command-r-plus", "command"]
-        case .mistral:
-            return ["mistral-large-latest", "mistral-small-latest", "codestral-latest"]
-        case .huggingface:
-            return ["meta-llama/Llama-2-7b-chat-hf", "microsoft/DialoGPT-medium", "google/flan-t5-large"]
-        case .ollama:
-            return ["llama3", "llama2", "codellama", "mistral", "phi3"]
-        case .azure:
-            return ["gpt-4", "gpt-35-turbo", "text-davinci-003"]
-        case .google:
-            return ["gemini-pro", "gemini-pro-vision", "palm-2"]
-        }
-    }
-    
-    var costInfo: String {
-        switch self {
-        case .openai:
-            return "💰💰 Premium - GPT-4: ~$30/1M tokens, GPT-3.5: ~$1/1M"
-        case .anthropic:
-            return "💰💰💰 Premium - Claude-3: ~$15-75/1M tokens"
-        case .groq:
-            return "💰 Very Fast & Affordable - ~$0.27-2.80/1M tokens"
-        case .cohere:
-            return "💰 Competitive - ~$1-15/1M tokens"
-        case .mistral:
-            return "💰💰 Mid-range - ~$2-8/1M tokens"
-        case .huggingface:
-            return "💰 Variable - Free tier available, paid from $0.60/hour"
-        case .ollama:
-            return "🆓 FREE - Runs locally on your machine"
-        case .azure:
-            return "💰💰 Enterprise - Similar to OpenAI pricing"
-        case .google:
-            return "💰 Competitive - Gemini Pro: ~$0.50-7/1M tokens"
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .openai:
-            return "Industry leader in conversational AI and GPT models"
-        case .anthropic:
-            return "High-quality, helpful, harmless, and honest AI"
-        case .groq:
-            return "Ultra-fast inference with competitive quality"
-        case .cohere:
-            return "Enterprise-focused language models"
-        case .mistral:
-            return "Open-source European AI with strong performance"
-        case .huggingface:
-            return "Open-source model hub with thousands of options"
-        case .ollama:
-            return "Run LLMs locally - completely private and free"
-        case .azure:
-            return "Microsoft's enterprise AI platform"
-        case .google:
-            return "Google's advanced multimodal AI models"
-        }
-    }
-}
-
 struct APIKeysSettingsView: View {
     @Environment(\.dismiss) var dismiss
     @State private var selectedProvider: AIProvider = .openai
@@ -121,6 +10,12 @@ struct APIKeysSettingsView: View {
     @State private var testResults: [AIProvider: TestResult] = [:]
     @State private var isTesting: Bool = false
     @State private var showingKeyHelp: Bool = false
+    @State private var configurationSaved: Bool = false
+    
+    // Computed property to check if any AI provider is configured
+    private var isAnyProviderConfigured: Bool {
+        hasValidKey()
+    }
     
     enum TestResult {
         case none, testing, success, failure(String)
@@ -206,12 +101,20 @@ struct APIKeysSettingsView: View {
                             if isKeyVisible {
                                 TextField(selectedProvider.placeholder, text: Binding(
                                     get: { apiKeys[selectedProvider] ?? "" },
-                                    set: { apiKeys[selectedProvider] = $0 }
+                                    set: { newValue in
+                                        // Clean the input to prevent corruption
+                                        let cleanedValue = cleanAPIKey(newValue)
+                                        apiKeys[selectedProvider] = cleanedValue
+                                    }
                                 ))
                             } else {
                                 SecureField(selectedProvider.placeholder, text: Binding(
                                     get: { apiKeys[selectedProvider] ?? "" },
-                                    set: { apiKeys[selectedProvider] = $0 }
+                                    set: { newValue in
+                                        // Clean the input to prevent corruption
+                                        let cleanedValue = cleanAPIKey(newValue)
+                                        apiKeys[selectedProvider] = cleanedValue
+                                    }
                                 ))
                             }
                         }
@@ -284,10 +187,10 @@ struct APIKeysSettingsView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        featureRow("Smart Categorization", enabled: hasValidKey())
-                        featureRow("Financial Analysis", enabled: hasValidKey())
-                        featureRow("Enhanced PDF Processing", enabled: hasValidKey())
-                        featureRow("Bank Detection", enabled: hasValidKey())
+                        featureRow("Smart Categorization", enabled: isAnyProviderConfigured)
+                        featureRow("Financial Analysis", enabled: isAnyProviderConfigured)
+                        featureRow("Enhanced PDF Processing", enabled: isAnyProviderConfigured)
+                        featureRow("Bank Detection", enabled: isAnyProviderConfigured)
                     }
                 }
             } header: {
@@ -322,6 +225,7 @@ struct APIKeysSettingsView: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 Button("Done") {
+                    saveConfiguration()
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
@@ -344,11 +248,11 @@ struct APIKeysSettingsView: View {
     private var statusIndicator: some View {
         HStack {
             Circle()
-                .fill(hasValidKey() ? .green : .red)
+                .fill(isAnyProviderConfigured ? .green : .red)
                 .frame(width: 8, height: 8)
-            Text(hasValidKey() ? "Active" : "Not Configured")
+            Text(isAnyProviderConfigured ? "Active" : "Not Configured")
                 .font(.caption)
-                .foregroundColor(hasValidKey() ? .green : .red)
+                .foregroundColor(isAnyProviderConfigured ? .green : .red)
         }
     }
     
@@ -362,24 +266,93 @@ struct APIKeysSettingsView: View {
         }
     }
     
+    private func isProviderConfigured(_ provider: AIProvider) -> Bool {
+        // Check in-memory state first
+        if let key = apiKeys[provider], !key.isEmpty {
+            switch provider {
+            case .openai: return key.hasPrefix("sk-")
+            case .anthropic: return key.hasPrefix("sk-ant-")
+            case .groq: return key.hasPrefix("gsk_")
+            case .cohere: return key.hasPrefix("co-")
+            case .huggingface: return key.hasPrefix("hf_")
+            case .ollama: return true
+            case .mistral, .azure, .google: return !key.isEmpty
+            }
+        }
+        
+        // Check UserDefaults
+        let providerKey = "\(provider.userDefaultsKey)_api_key"
+        if let savedKey = UserDefaults.standard.string(forKey: providerKey), !savedKey.isEmpty {
+            switch provider {
+            case .openai: return savedKey.hasPrefix("sk-")
+            case .anthropic: return savedKey.hasPrefix("sk-ant-")
+            case .groq: return savedKey.hasPrefix("gsk_")
+            case .cohere: return savedKey.hasPrefix("co-")
+            case .huggingface: return savedKey.hasPrefix("hf_")
+            case .ollama: return true
+            case .mistral, .azure, .google: return !savedKey.isEmpty
+            }
+        }
+        
+        return false
+    }
+    
     // MARK: - Functions
     
     private func hasValidKey() -> Bool {
-        guard let key = apiKeys[selectedProvider], !key.isEmpty else { return false }
-        
-        switch selectedProvider {
-        case .openai: return key.hasPrefix("sk-")
-        case .anthropic: return key.hasPrefix("sk-ant-")
-        case .groq: return key.hasPrefix("gsk_")
-        case .cohere: return key.hasPrefix("co-")
-        case .huggingface: return key.hasPrefix("hf_")
-        case .ollama: return true // Local service, no key validation needed
-        case .mistral, .azure, .google: return !key.isEmpty
+        // Check if ANY provider has been configured
+        for provider in AIProvider.allCases {
+            if let key = apiKeys[provider], !key.isEmpty {
+                switch provider {
+                case .openai: 
+                    if key.hasPrefix("sk-") { return true }
+                case .anthropic: 
+                    if key.hasPrefix("sk-ant-") { return true }
+                case .groq: 
+                    if key.hasPrefix("gsk_") { return true }
+                case .cohere: 
+                    if key.hasPrefix("co-") { return true }
+                case .huggingface: 
+                    if key.hasPrefix("hf_") { return true }
+                case .ollama: 
+                    return true // Local service, no key validation needed
+                case .mistral, .azure, .google: 
+                    if !key.isEmpty { return true }
+                }
+            }
         }
+        
+        // Also check UserDefaults for saved configuration
+        if let savedProvider = UserDefaults.standard.string(forKey: "selected_ai_provider"),
+           let provider = AIProvider.allCases.first(where: { $0.rawValue == savedProvider }) {
+            let providerKey = "\(provider.userDefaultsKey)_api_key"
+            if let savedKey = UserDefaults.standard.string(forKey: providerKey), !savedKey.isEmpty {
+                switch provider {
+                case .openai: return savedKey.hasPrefix("sk-")
+                case .anthropic: return savedKey.hasPrefix("sk-ant-")
+                case .groq: return savedKey.hasPrefix("gsk_")
+                case .cohere: return savedKey.hasPrefix("co-")
+                case .huggingface: return savedKey.hasPrefix("hf_")
+                case .ollama: return true
+                case .mistral, .azure, .google: return !savedKey.isEmpty
+                }
+            }
+        }
+        
+        return false
     }
     
     private func testAPIKey() {
-        guard let apiKey = apiKeys[selectedProvider], !apiKey.isEmpty else { return }
+        guard let rawApiKey = apiKeys[selectedProvider], !rawApiKey.isEmpty else { return }
+        
+        // Clean and validate the API key
+        let apiKey = cleanAPIKey(rawApiKey)
+        
+        // Validate key format
+        if !isValidAPIKeyFormat(apiKey, for: selectedProvider) {
+            testResults[selectedProvider] = .failure("Invalid API key format for \(selectedProvider.rawValue)")
+            return
+        }
         
         isTesting = true
         testResults[selectedProvider] = .testing
@@ -412,7 +385,8 @@ struct APIKeysSettingsView: View {
         case .anthropic:
             let url = URL(string: "https://api.anthropic.com/v1/messages")!
             var request = URLRequest(url: url)
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
             let (_, response) = try await URLSession.shared.data(for: request)
             return (response as? HTTPURLResponse)?.statusCode != 401
@@ -450,7 +424,17 @@ struct APIKeysSettingsView: View {
     }
     
     private func saveConfiguration() {
-        guard let apiKey = apiKeys[selectedProvider], !apiKey.isEmpty else { return }
+        guard let rawApiKey = apiKeys[selectedProvider], !rawApiKey.isEmpty else { return }
+        
+        // Clean and validate the API key
+        let apiKey = cleanAPIKey(rawApiKey)
+        
+        // Validate key format before saving
+        if !isValidAPIKeyFormat(apiKey, for: selectedProvider) {
+            testResults[selectedProvider] = .failure("Invalid API key format for \(selectedProvider.rawValue)")
+            print("❌ API key validation failed for \(selectedProvider.rawValue): Invalid format")
+            return
+        }
         
         // Generate environment content for all providers
         var envContent = "# AI Provider Configuration\n"
@@ -494,18 +478,41 @@ struct APIKeysSettingsView: View {
         let envPath = getMCPServicePath().appendingPathComponent(".env")
         
         do {
+            // Ensure directory exists
+            let directory = envPath.deletingLastPathComponent()
+            try FileManager.default.createDirectory(at: directory,
+                                                  withIntermediateDirectories: true,
+                                                  attributes: nil)
+            
+            // Write .env file
             try envContent.write(to: envPath, atomically: true, encoding: .utf8)
             
             // Save to UserDefaults for app use
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selected_ai_provider")
-            UserDefaults.standard.set(apiKey, forKey: "\(selectedProvider.rawValue.lowercased())_api_key")
-            UserDefaults.standard.set(selectedModels[selectedProvider], forKey: "\(selectedProvider.rawValue.lowercased())_model")
+            UserDefaults.standard.set(apiKey, forKey: "\(selectedProvider.userDefaultsKey)_api_key")
+            UserDefaults.standard.set(selectedModels[selectedProvider], forKey: "\(selectedProvider.userDefaultsKey)_model")
+            
+            // Force synchronize UserDefaults
+            UserDefaults.standard.synchronize()
+            
+            // Update the in-memory state to ensure UI reflects the saved state
+            apiKeys[selectedProvider] = apiKey
             
             // Show success feedback
             testResults[selectedProvider] = .success
             
+            // Force UI update
+            configurationSaved = true
+            
+            // Log success
+            print("✅ API configuration saved successfully")
+            print("   Provider: \(selectedProvider.rawValue)")
+            print("   .env path: \(envPath.path)")
+            print("   UserDefaults keys saved")
+            
         } catch {
-            testResults[selectedProvider] = .failure("Failed to save configuration")
+            testResults[selectedProvider] = .failure("Failed to save: \(error.localizedDescription)")
+            print("❌ Failed to save API configuration: \(error)")
         }
     }
     
@@ -518,11 +525,28 @@ struct APIKeysSettingsView: View {
         
         // Load all API keys and models from UserDefaults
         for provider in AIProvider.allCases {
-            let providerKey = "\(provider.rawValue.lowercased())_api_key"
-            let modelKey = "\(provider.rawValue.lowercased())_model"
+            let providerKey = "\(provider.userDefaultsKey)_api_key"
+            let modelKey = "\(provider.userDefaultsKey)_model"
             
-            apiKeys[provider] = UserDefaults.standard.string(forKey: providerKey) ?? ""
-            selectedModels[provider] = UserDefaults.standard.string(forKey: modelKey) ?? provider.models.first ?? ""
+            if let savedKey = UserDefaults.standard.string(forKey: providerKey), !savedKey.isEmpty {
+                let cleanedKey = cleanAPIKey(savedKey)
+                apiKeys[provider] = cleanedKey
+                print("📥 Loaded API key for \(provider.rawValue): \(cleanedKey.prefix(10))...")
+                
+                // Warn if we had to clean the key
+                if cleanedKey != savedKey {
+                    print("⚠️  API key was cleaned for \(provider.rawValue) - original had corrupted content")
+                    // Re-save the cleaned key
+                    UserDefaults.standard.set(cleanedKey, forKey: providerKey)
+                    UserDefaults.standard.synchronize()
+                }
+            }
+            
+            if let savedModel = UserDefaults.standard.string(forKey: modelKey), !savedModel.isEmpty {
+                selectedModels[provider] = savedModel
+            } else {
+                selectedModels[provider] = provider.models.first ?? ""
+            }
         }
         
         // Try to load from .env file as fallback
@@ -544,12 +568,91 @@ struct APIKeysSettingsView: View {
     }
     
     private func getMCPServicePath() -> URL {
-        let bundle = Bundle.main.bundleURL
-        return bundle
-            .appendingPathComponent("Contents")
-            .appendingPathComponent("Resources")
+        // Check if we're in development or production
+        if Bundle.main.bundlePath.contains(".app") {
+            // Production: Use Application Support directory
+            if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                        in: .userDomainMask).first {
+                let ledgerProDir = appSupport
+                    .appendingPathComponent("LedgerPro")
+                    .appendingPathComponent("mcp-servers")
+                    .appendingPathComponent("openai-service")
+                
+                // Create directory if it doesn't exist
+                try? FileManager.default.createDirectory(at: ledgerProDir,
+                                                       withIntermediateDirectories: true)
+                return ledgerProDir
+            }
+        }
+        
+        // Development: Use project directory
+        let projectRoot = FileManager.default.currentDirectoryPath
+        let devPaths = [
+            URL(fileURLWithPath: projectRoot).appendingPathComponent("mcp-servers/openai-service"),
+            URL(fileURLWithPath: projectRoot).appendingPathComponent("LedgerPro/mcp-servers/openai-service"),
+            URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents/Cursor_AI/LedgerPro_Main/LedgerPro/mcp-servers/openai-service")
+        ]
+        
+        for path in devPaths {
+            if FileManager.default.fileExists(atPath: path.path) {
+                return path
+            }
+        }
+        
+        // Fallback to temp directory
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("LedgerPro")
             .appendingPathComponent("mcp-servers")
             .appendingPathComponent("openai-service")
+        
+        try? FileManager.default.createDirectory(at: tempDir,
+                                               withIntermediateDirectories: true)
+        return tempDir
+    }
+    
+    // MARK: - API Key Cleaning and Validation
+    
+    private func cleanAPIKey(_ rawKey: String) -> String {
+        // Remove common corruption patterns
+        let trimmed = rawKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove known corruption prefixes
+        let corruptionPrefixes = ["KEYFOCUS: ", "KEYFOCUS:", "DEBUG: ", "API_KEY: ", "Key: "]
+        var cleaned = trimmed
+        
+        for prefix in corruptionPrefixes {
+            if cleaned.hasPrefix(prefix) {
+                cleaned = String(cleaned.dropFirst(prefix.count))
+                print("🧹 Removed corruption prefix '\(prefix)' from API key")
+            }
+        }
+        
+        // Remove any control characters or non-printable characters
+        cleaned = cleaned.components(separatedBy: .controlCharacters).joined()
+        
+        // Final trim
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    private func isValidAPIKeyFormat(_ key: String, for provider: AIProvider) -> Bool {
+        guard !key.isEmpty else { return false }
+        
+        switch provider {
+        case .openai:
+            return key.hasPrefix("sk-") && key.count > 10
+        case .anthropic:
+            return key.hasPrefix("sk-ant-") && key.count > 15
+        case .groq:
+            return key.hasPrefix("gsk_") && key.count > 10
+        case .cohere:
+            return key.hasPrefix("co-") && key.count > 10
+        case .huggingface:
+            return key.hasPrefix("hf_") && key.count > 10
+        case .ollama:
+            return key.contains(":") || key.hasPrefix("http") // URL format
+        case .mistral, .azure, .google:
+            return key.count > 5 // Basic length check
+        }
     }
 }
 
