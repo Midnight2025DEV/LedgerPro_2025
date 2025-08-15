@@ -52,9 +52,14 @@ class APITestCase: XCTestCase {
 extension XCTestCase {
     /// Check if backend is available for integration tests
     func isBackendAvailable() async -> Bool {
-        let testService = APIService()
-        await testService.checkHealth()
-        return testService.isHealthy
+        let testService = await APIService()
+        // Try to get health status endpoint directly
+        do {
+            let _ = try await testService.getJobStatus("health-check")
+            return await testService.isHealthy
+        } catch {
+            return false
+        }
     }
     
     /// Skip test if backend is not available

@@ -11,26 +11,21 @@ class MockAPIService: APIService {
     var uploadCallCount = 0
     var healthCheckCallCount = 0
     
-    override func checkHealth() async {
+    // Health check is now handled differently in the actual API
+    func simulateHealthCheck() async {
         healthCheckCallCount += 1
         if shouldFailHealthCheck {
             isHealthy = false
-            healthStatus = HealthStatus(status: "error", version: "1.0.0", services: [:])
         } else {
             isHealthy = true
-            healthStatus = HealthStatus(status: "healthy", version: "1.0.0", services: [
-                "pdf_processor": true,
-                "csv_processor": true,
-                "database": true
-            ])
         }
     }
     
-    override func uploadFile(_ fileURL: URL) async throws -> String {
+    override func uploadFile(_ fileURL: URL) async throws -> UploadResponse {
         uploadCallCount += 1
         
         if shouldFailUpload {
-            throw APIError.uploadFailed("Mock upload failure")
+            throw APIError.networkError("Mock upload failure")
         }
         
         // Simulate successful upload
@@ -38,7 +33,11 @@ class MockAPIService: APIService {
         try await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
         uploadProgress = 1.0
         
-        return mockJobId
+        return UploadResponse(
+            jobId: mockJobId,
+            status: "processing",
+            message: "File uploaded successfully"
+        )
     }
     
     override func getJobStatus(_ jobId: String) async throws -> JobStatus {
@@ -48,85 +47,81 @@ class MockAPIService: APIService {
             status: "completed",
             progress: 100,
             filename: "test.csv",
-            message: "Processing complete",
-            transactionCount: mockTransactions.count,
+            createdAt: "2024-01-01T00:00:00",
+            completedAt: "2024-01-01T00:01:00",
             error: nil
         )
     }
     
-    override func getTransactions(_ jobId: String) async throws -> [Transaction] {
+    override func getTransactions(_ jobId: String) async throws -> TransactionResults {
         // Return mock transactions
-        if mockTransactions.isEmpty {
-            // Generate default test transactions
-            return [
-                Transaction(
-                    id: "mock-1",
-                    date: "2024-01-01",
-                    description: "STARBUCKS",
-                    amount: -5.50,
-                    category: "Food & Dining",
-                    account: "Test Account",
-                    tags: ["coffee"],
-                    confidence: 0.95
-                ),
-                Transaction(
-                    id: "mock-2",
-                    date: "2024-01-02",
-                    description: "UBER RIDE",
-                    amount: -25.00,
-                    category: "Transportation",
-                    account: "Test Account",
-                    tags: ["rideshare"],
-                    confidence: 0.90
-                ),
-                Transaction(
-                    id: "mock-3",
-                    date: "2024-01-03",
-                    description: "SALARY DEPOSIT",
-                    amount: 3000.00,
-                    category: "Income",
-                    account: "Test Account",
-                    tags: ["paycheck"],
-                    confidence: 1.0
-                )
-            ]
-        }
-        return mockTransactions
+        let transactions = mockTransactions.isEmpty ? [
+            Transaction(
+                id: "mock-1",
+                date: "2024-01-01",
+                description: "STARBUCKS",
+                amount: -5.50,
+                category: "Food & Dining",
+                confidence: 0.95,
+                accountId: "test-account-1"
+            ),
+            Transaction(
+                id: "mock-2",
+                date: "2024-01-02",
+                description: "UBER RIDE",
+                amount: -25.00,
+                category: "Transportation",
+                confidence: 0.90,
+                accountId: "test-account-1"
+            ),
+            Transaction(
+                id: "mock-3",
+                date: "2024-01-03",
+                description: "SALARY DEPOSIT",
+                amount: 3000.00,
+                category: "Income",
+                confidence: 1.0,
+                accountId: "test-account-1"
+            )
+        ] : mockTransactions
+        
+        return TransactionResults(
+            jobId: jobId,
+            status: "completed",
+            transactions: transactions,
+            account: APIAccount(
+                id: "test-account-1",
+                name: "Test Account",
+                institution: "Test Bank",
+                accountType: "checking",
+                identifier: "1234",
+                isNew: false
+            ),
+            metadata: TransactionResults.Metadata(
+                filename: "test.csv",
+                totalTransactions: transactions.count,
+                processingTime: "0.1s"
+            ),
+            summary: TransactionResults.Summary(
+                totalIncome: transactions.filter { $0.amount > 0 }.reduce(0) { $0 + $1.amount },
+                totalExpenses: abs(transactions.filter { $0.amount < 0 }.reduce(0) { $0 + $1.amount }),
+                netAmount: transactions.reduce(0) { $0 + $1.amount },
+                transactionCount: transactions.count
+            )
+        )
     }
     
-    override func pollJobUntilComplete(_ jobId: String, maxAttempts: Int = 60) async throws -> JobStatus {
+    // pollJobUntilComplete was removed from the main APIService
+    func simulatePollJobUntilComplete(_ jobId: String, maxAttempts: Int = 60) async throws -> JobStatus {
         // Return completed status immediately for tests
         return JobStatus(
             jobId: jobId,
             status: "completed",
             progress: 100,
             filename: "test.csv",
-            message: "Processing complete",
-            transactionCount: mockTransactions.isEmpty ? 3 : mockTransactions.count,
+            createdAt: "2024-01-01T00:00:00",
+            completedAt: "2024-01-01T00:01:00",
             error: nil
         )
-    }
-}
-
-// MARK: - Mock URL Session for isolated testing
-class MockURLSession: URLSession {
-    var mockData: Data?
-    var mockResponse: URLResponse?
-    var mockError: Error?
-    
-    override func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        if let error = mockError {
-            throw error
-        }
-        
-        let data = mockData ?? Data()
-        let response = mockResponse ?? HTTPURLResponse(
-            url: request.url!,
-            statusCode: 200,
-            httpVersion: nil,
-            headerFields: nil
-        )!
-        
-        return (data, response)
     }
 }
