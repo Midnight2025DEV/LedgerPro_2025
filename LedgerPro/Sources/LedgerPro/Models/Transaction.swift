@@ -32,6 +32,15 @@ public struct Transaction: Codable, Identifiable, Hashable {
     var wasAutoCategorized: Bool?   // Whether this was auto-categorized
     let categorizationMethod: String? // "merchant_rule", "smart_rule", "ai_suggestion"
     
+    // Additional properties for enhanced functionality
+    var needsReview: Bool = false
+    var isFirstFromMerchant: Bool = false
+    var merchantName: String {
+        return displayMerchantName
+    }
+    var accountName: String?
+    var notes: String?
+    
     enum CodingKeys: String, CodingKey {
         case id, date, description, amount, category, confidence, jobId, accountId
         case rawData = "raw_data"
@@ -40,10 +49,14 @@ public struct Transaction: Codable, Identifiable, Hashable {
         case exchangeRate = "exchange_rate"
         case wasAutoCategorized = "was_auto_categorized"
         case categorizationMethod = "categorization_method"
+        case needsReview = "needs_review"
+        case isFirstFromMerchant = "is_first_from_merchant"
+        case accountName = "account_name"
+        case notes
     }
     
     // Memberwise initializer for creating transactions manually
-    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil) {
+    init(id: String? = nil, date: String, description: String, amount: Double, category: String, confidence: Double? = nil, jobId: String? = nil, accountId: String? = nil, rawData: [String: String]? = nil, originalAmount: Double? = nil, originalCurrency: String? = nil, exchangeRate: Double? = nil, wasAutoCategorized: Bool? = nil, categorizationMethod: String? = nil, needsReview: Bool = false, isFirstFromMerchant: Bool = false, accountName: String? = nil, notes: String? = nil) {
         if let providedId = id {
             self.id = providedId
         } else {
@@ -64,6 +77,10 @@ public struct Transaction: Codable, Identifiable, Hashable {
         self.exchangeRate = exchangeRate
         self.wasAutoCategorized = wasAutoCategorized
         self.categorizationMethod = categorizationMethod
+        self.needsReview = needsReview
+        self.isFirstFromMerchant = isFirstFromMerchant
+        self.accountName = accountName
+        self.notes = notes
     }
     
     // Decoder initializer for JSON parsing
@@ -96,6 +113,10 @@ public struct Transaction: Codable, Identifiable, Hashable {
         self.exchangeRate = try container.decodeIfPresent(Double.self, forKey: .exchangeRate)
         self.wasAutoCategorized = try container.decodeIfPresent(Bool.self, forKey: .wasAutoCategorized)
         self.categorizationMethod = try container.decodeIfPresent(String.self, forKey: .categorizationMethod)
+        self.needsReview = try container.decodeIfPresent(Bool.self, forKey: .needsReview) ?? false
+        self.isFirstFromMerchant = try container.decodeIfPresent(Bool.self, forKey: .isFirstFromMerchant) ?? false
+        self.accountName = try container.decodeIfPresent(String.self, forKey: .accountName)
+        self.notes = try container.decodeIfPresent(String.self, forKey: .notes)
     }
     
     /// Safely truncate description to specified length

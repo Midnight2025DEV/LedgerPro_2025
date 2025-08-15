@@ -29,10 +29,7 @@ public class CoreDataRepository: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        return try await performanceMonitor.trackFilterOperation(
-            filterType: "fetch_all_transactions",
-            itemCount: 0
-        ) {
+        return try await PerformanceMonitor.measureAsync("fetch_all_transactions") {
             let cdTransactions = try await coreDataManager.fetch(
                 CDTransaction.self,
                 sortDescriptors: [NSSortDescriptor(keyPath: \CDTransaction.date, ascending: false)]
@@ -47,10 +44,7 @@ public class CoreDataRepository: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        return try await performanceMonitor.trackFilterOperation(
-            filterType: "fetch_account_transactions",
-            itemCount: 0
-        ) {
+        return try await PerformanceMonitor.measureAsync("fetch_account_transactions") {
             let predicate = NSPredicate(format: "account.id == %@", accountId)
             let cdTransactions = try await coreDataManager.fetch(
                 CDTransaction.self,
@@ -67,10 +61,7 @@ public class CoreDataRepository: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        return try await performanceMonitor.trackFilterOperation(
-            filterType: "fetch_category_transactions",
-            itemCount: 0
-        ) {
+        return try await PerformanceMonitor.measureAsync("fetch_category_transactions") {
             let predicate = NSPredicate(format: "category == %@", category)
             let cdTransactions = try await coreDataManager.fetch(
                 CDTransaction.self,
@@ -87,10 +78,7 @@ public class CoreDataRepository: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        return try await performanceMonitor.trackFilterOperation(
-            filterType: "fetch_date_range_transactions",
-            itemCount: 0
-        ) {
+        return try await PerformanceMonitor.measureAsync("fetch_date_range_transactions") {
             let predicate = NSPredicate(format: "date >= %@ AND date <= %@", startDate, endDate)
             let cdTransactions = try await coreDataManager.fetch(
                 CDTransaction.self,
@@ -107,10 +95,7 @@ public class CoreDataRepository: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        return try await performanceMonitor.trackFilterOperation(
-            filterType: "fetch_uncategorized_transactions",
-            itemCount: 0
-        ) {
+        return try await PerformanceMonitor.measureAsync("fetch_uncategorized_transactions") {
             let predicate = NSPredicate(format: "category == %@ OR category == %@", "Other", "Uncategorized")
             let cdTransactions = try await coreDataManager.fetch(
                 CDTransaction.self,
@@ -318,20 +303,16 @@ public class CoreDataRepository: ObservableObject {
     
     /// Clear all data
     public func clearAllData() async throws {
-        let context = coreDataManager.newBackgroundContext()
+        // Delete all transactions
+        let transactionDeleteCount = try await coreDataManager.batchDelete(entity: CDTransaction.self)
         
-        try await context.perform {
-            // Delete all transactions
-            let transactionDeleteCount = try self.coreDataManager.batchDelete(entity: CDTransaction.self)
-            
-            // Delete all statements
-            let statementDeleteCount = try self.coreDataManager.batchDelete(entity: CDUploadedStatement.self)
-            
-            // Delete all accounts
-            let accountDeleteCount = try self.coreDataManager.batchDelete(entity: CDAccount.self)
-            
-            AppLogger.shared.info("🗑️ Cleared all data: \(transactionDeleteCount) transactions, \(statementDeleteCount) statements, \(accountDeleteCount) accounts", category: "CoreDataRepository")
-        }
+        // Delete all statements
+        let statementDeleteCount = try await coreDataManager.batchDelete(entity: CDUploadedStatement.self)
+        
+        // Delete all accounts
+        let accountDeleteCount = try await coreDataManager.batchDelete(entity: CDAccount.self)
+        
+        AppLogger.shared.info("🗑️ Cleared all data: \(transactionDeleteCount) transactions, \(statementDeleteCount) statements, \(accountDeleteCount) accounts", category: "CoreDataRepository")
     }
     
     // MARK: - Private Helper Methods
