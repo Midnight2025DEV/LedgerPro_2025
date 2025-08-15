@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var exportProgress = 0.0
     @State private var isExporting = false
     @State private var showingMCPManager = false
+    @State private var showingAPIKeys = false
     @State private var escKeyMonitor: Any?
     
     enum ExportFormat: String, CaseIterable {
@@ -64,8 +65,26 @@ struct SettingsView: View {
                 .buttonStyle(.bordered)
             }
             
-            // MCP AI Services
+            // AI Services
             Section("AI Services") {
+                // API Keys Configuration
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("API Keys & AI Configuration")
+                        Text("Configure OpenAI and other AI service keys")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Button("Configure API Keys") {
+                        showingAPIKeys = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                
+                // MCP Server Manager
                 HStack {
                     VStack(alignment: .leading) {
                         Text("MCP Server Manager")
@@ -79,17 +98,19 @@ struct SettingsView: View {
                     Button("Manage Servers") {
                         showingMCPManager = true
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.bordered)
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("AI Features")
+                    Text("AI Features Available")
                         .fontWeight(.medium)
-                    Text("Enable advanced transaction categorization, financial analysis, and PDF processing with AI-powered MCP servers.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text("• Smart transaction categorization with OpenAI")
+                    Text("• Enhanced PDF processing and bank detection")
+                    Text("• Advanced financial analysis and insights")
+                    Text("• Natural language financial queries")
                 }
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
             
             // Data Management
@@ -317,6 +338,10 @@ struct SettingsView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 .animation(.easeInOut(duration: 0.2), value: showingMCPManager)
             }
+        }
+        .sheet(isPresented: $showingAPIKeys) {
+            APIKeysSettingsView()
+                .frame(width: 600, height: 700)
         }
         .onAppear {
             loadSettings()

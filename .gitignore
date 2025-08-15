@@ -75,6 +75,16 @@ logs/
 *.temp
 .temp/
 .tmp/
+temp_archive/
+test_results_*/
+*.backup*
+*_backup*
+
+# Test artifacts
+test_*.swift
+update_*.swift
+debug_*.swift
+monitor_*.swift
 
 # MCP server virtual environments
 mcp-servers/*/venv/
@@ -85,3 +95,8 @@ LedgerPro/backend/venv/
 LedgerPro/backend/.env
 LedgerPro/backend/uploads/
 LedgerPro/backend/temp/
+
+# Root directory cleanup patterns
+Package.swift.old
+GIT_WORKFLOW.md.old
+*.md.backup

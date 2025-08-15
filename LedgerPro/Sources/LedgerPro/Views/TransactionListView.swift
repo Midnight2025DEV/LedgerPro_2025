@@ -10,6 +10,7 @@ struct TransactionListView: View {
     @State private var showingFilters = false
     @State private var selectedTransaction: Transaction?
     @State private var showingDetail = false
+    @State private var showingManualEntry = false
     
     // MARK: - Feature Flag System
     @AppStorage("useModernTransactionList") private var useModernTransactionList = false
@@ -468,6 +469,13 @@ struct TransactionListView: View {
                             .padding(.trailing, 8)
                     }
                 }
+                
+                Button(action: {
+                    showingManualEntry = true
+                }) {
+                    Label("Add", systemImage: "plus.circle.fill")
+                }
+                .help("Add transaction manually")
                 
                 Button(action: {
                     autoCategorizeUncategorized()
@@ -1145,6 +1153,11 @@ struct TransactionListView: View {
         .popover(isPresented: $showingDetail, arrowEdge: .trailing) {
             if let transaction = selectedTransaction {
                 TransactionDetailView(transaction: transaction)
+            }
+        }
+        .sheet(isPresented: $showingManualEntry) {
+            NavigationStack {
+                ManualTransactionView()
             }
         }
         .overlay(

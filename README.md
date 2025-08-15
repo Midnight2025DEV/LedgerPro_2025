@@ -16,7 +16,7 @@
 ## 🌟 Features
 
 - 🔒 **100% Local Processing** - Your financial data never leaves your device
-- 🤖 **Smart Categorization** - AI learns from your corrections and improves over time
+- 🤖 **AI-Powered Features** - Bring Your Own AI (BYOAI) with OpenAI integration
 - 📈 **Pattern Learning** - Automatically creates rules from your categorization patterns
 - 🏦 **Multi-Bank Support** - Works with PDF and CSV exports from major banks
 - 💱 **Foreign Currency** - Automatic forex detection and conversion
@@ -48,7 +48,33 @@ LedgerPro/
 cd backend && python api_server_real.py
 ```
 
-### 2. Build and Run the Mac App
+### 2. Optional: Configure AI Features 🤖
+
+LedgerPro works great out of the box, but you can unlock advanced AI features with **multiple AI providers**:
+
+**🤖 Supported AI Providers:**
+- 🆓 **Ollama** (Local, FREE) - Privacy-first
+- ⚡ **Groq** (Ultra-fast, Budget) - Best value
+- 🧠 **OpenAI** (GPT-4) - Industry standard  
+- 💬 **Anthropic** (Claude) - High quality
+- 🏢 **Cohere, Mistral, HuggingFace** - More options
+
+**Configure through the app:**
+1. Open LedgerPro
+2. Go to Settings → AI Services 
+3. Click "Configure API Keys"
+4. **Choose your preferred AI provider**
+5. Enter API key and test connection
+
+**💡 AI Features Unlocked:**
+- Smart transaction categorization with your chosen AI
+- Enhanced PDF processing and bank detection  
+- Advanced financial insights and analysis
+- Support for local models (Ollama) for complete privacy
+
+See [Multi-Provider AI Setup Guide](API_KEYS_SETUP.md) for all providers.
+
+### 3. Build and Run the Mac App
 ```bash
 cd LedgerPro
 swift build -c release
