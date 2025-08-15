@@ -82,23 +82,23 @@ enum AIProvider: String, CaseIterable, Identifiable {
     var costInfo: String {
         switch self {
         case .openai:
-            return "💰💰 Premium - GPT-4: ~$30/1M tokens, GPT-3.5: ~$1/1M"
+            return "GPT-4, GPT-3.5 Turbo - Advanced language models"
         case .anthropic:
-            return "💰💰💰 Premium - Claude 3.5 Sonnet: ~$3-15/1M, Opus: ~$15-75/1M tokens"
+            return "Claude 3.5 Sonnet, Claude 3 Opus - Advanced reasoning"
         case .groq:
-            return "💰 Very Fast & Affordable - ~$0.27-2.80/1M tokens"
+            return "Ultra-fast inference - LLaMA, Mixtral models"
         case .cohere:
-            return "💰 Competitive - ~$1-15/1M tokens"
+            return "Command, Coral - Business-focused AI"
         case .mistral:
-            return "💰💰 Mid-range - ~$2-8/1M tokens"
+            return "Mistral Large, Medium - European AI models"
         case .huggingface:
-            return "💰 Variable - Free tier available, paid from $0.60/hour"
+            return "Open source models - Inference API"
         case .ollama:
-            return "🆓 FREE - Runs locally on your machine"
+            return "Local models - Runs on your machine"
         case .azure:
-            return "💰💰 Enterprise - Similar to OpenAI pricing"
+            return "Azure OpenAI Service - Enterprise features"
         case .google:
-            return "💰 Competitive - Gemini Pro: ~$0.50-7/1M tokens"
+            return "Gemini Pro - Google's multimodal AI"
         }
     }
     

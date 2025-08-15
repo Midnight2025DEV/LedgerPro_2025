@@ -199,20 +199,20 @@ struct APIKeysSettingsView: View {
             
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("💡 **Cost Optimization Tips:**")
+                    Text("💡 **Usage Tips:**")
                         .font(.caption)
                         .fontWeight(.medium)
                     
-                    Text("• Use gpt-3.5-turbo for basic categorization (~90% cheaper)")
+                    Text("• Use gpt-3.5-turbo for basic categorization")
                     Text("• Use gpt-4-turbo for complex financial analysis")  
-                    Text("• Lower max tokens (1000) to reduce costs")
-                    Text("• API usage is only charged when AI features are used")
+                    Text("• Adjust max tokens based on your needs")
+                    Text("• AI features are optional and only used when enabled")
                         .foregroundColor(.blue)
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
             } header: {
-                Text("Cost Information")
+                Text("Usage Information")
             }
         }
         .formStyle(.grouped)
@@ -681,7 +681,7 @@ struct APIKeyHelpView: View {
                             .font(.headline)
                         
                         Text("• Your API key is stored locally and never shared")
-                        Text("• You control your OpenAI usage and billing")
+                        Text("• You have full control over your API usage")
                         Text("• You can revoke the key anytime from OpenAI dashboard")
                         Text("• LedgerPro only uses AI when you explicitly use AI features")
                     }
@@ -691,13 +691,13 @@ struct APIKeyHelpView: View {
                     Divider()
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Cost Comparison")
+                        Text("Model Comparison")
                             .font(.headline)
                         
-                        Text("🆓 **FREE**: Ollama (local)")
-                        Text("💰 **Budget**: Groq (~$0.27/1M tokens)")
-                        Text("💰💰 **Balanced**: OpenAI GPT-3.5 (~$1/1M tokens)")
-                        Text("💰💰💰 **Premium**: OpenAI GPT-4, Claude (~$15-30/1M)")
+                        Text("🎯 **Local**: Ollama - Runs on your machine")
+                        Text("⚡ **Fast**: Groq - Ultra-fast inference")
+                        Text("🤖 **Balanced**: GPT-3.5, Mistral - General purpose")
+                        Text("🌟 **Advanced**: GPT-4, Claude - Complex reasoning")
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
