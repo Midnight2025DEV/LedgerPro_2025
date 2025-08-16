@@ -95,7 +95,7 @@ class TransactionBatchProcessor: BatchProcessor {
                     description: transaction.description,
                     amount: transaction.amount,
                     category: suggestedCategory?.name ?? transaction.category,
-                    confidence: confidence ?? transaction.confidence ?? 0.0,
+                    confidence: confidence ?? transaction.confidence,
                     jobId: transaction.jobId,
                     accountId: transaction.accountId,
                     rawData: transaction.rawData,

@@ -1366,7 +1366,7 @@ extension FinancialDataManager {
         }
         
         let budgetsOnTrack = activeBudgets.filter { budget in
-            let spending = budget.calculateSpending(transactions: transactions)
+            let spending = budget.calculateSpending(from: transactions)
             return !budget.isOverBudget(spending: spending)
         }.count
         

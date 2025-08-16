@@ -20,7 +20,7 @@ struct CreateBudgetView: View {
     @State private var customEndDate: Date?
     @State private var budgetColor = "#007AFF"
     @State private var budgetIcon = "dollarsign.circle.fill"
-    @State private var notifications = BudgetNotifications()
+    @State private var notifications = BudgetNotifications(budgetId: "")
     
     // UI state
     @State private var hasAppeared = false

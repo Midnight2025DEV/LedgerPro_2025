@@ -31,6 +31,23 @@ enum SpendingPace: String {
             return "exclamationmark.triangle.fill"
         }
     }
+    
+    var displayText: String {
+        return self.rawValue
+    }
+    
+    func recommendation() -> String {
+        switch self {
+        case .tooSlow:
+            return "Consider increasing your spending to meet budget goals"
+        case .onTrack:
+            return "Great! You're on track with your budget"
+        case .tooFast:
+            return "Slow down spending to stay within budget"
+        case .overBudget:
+            return "Review expenses and reduce spending immediately"
+        }
+    }
 }
 
 /// SpendingPaceIndicator - Visual pace tracking with projections
@@ -48,7 +65,7 @@ struct SpendingPaceIndicator: View {
     
     // Calculated properties
     private var daysInPeriod: Int {
-        budget.period.dayCount
+        budget.period.durationInDays
     }
     
     private var daysPassed: Int {
@@ -516,7 +533,7 @@ struct SpendingPaceIndicator: View {
                 ))
             }
             
-        case .slow:
+        case .tooSlow:
             let surplus = budget.amount - projectedTotal
             if surplus > 0 {
                 recs.append(PaceRecommendation(

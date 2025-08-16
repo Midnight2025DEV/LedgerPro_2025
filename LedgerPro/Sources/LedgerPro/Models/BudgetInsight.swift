@@ -48,6 +48,25 @@ struct BudgetInsight: Identifiable, Codable, Hashable {
         case positive
         case negative
         case neutral
+        case medium  // Medium impact
+        case low     // Low impact
+        
+        var description: String {
+            switch self {
+            case .optimization(let amount):
+                return "Could save \(amount.formatAsCurrency())"
+            case .positive:
+                return "Positive impact"
+            case .negative:
+                return "Negative impact"
+            case .neutral:
+                return "Neutral impact"
+            case .medium:
+                return "Medium impact"
+            case .low:
+                return "Low impact"
+            }
+        }
     }
 }
 

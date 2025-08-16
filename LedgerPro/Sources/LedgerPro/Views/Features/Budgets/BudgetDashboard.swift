@@ -312,7 +312,7 @@ struct BudgetDashboard: View {
             ForEach(Array(dataManager.activeBudgets.enumerated()), id: \.element.id) { index, budget in
                 BudgetCard(
                     budget: budget,
-                    spending: budget.calculateSpending(transactions: dataManager.transactions)
+                    spending: budget.calculateSpending(from: dataManager.transactions)
                 )
                 .scaleEffect(hasAppeared ? 1.0 : 0.8)
                 .opacity(hasAppeared ? 1.0 : 0.0)
@@ -440,16 +440,16 @@ struct BudgetDashboard: View {
         
         totalBudget = dataManager.activeBudgets.reduce(0) { $0 + $1.amount }
         totalSpent = dataManager.activeBudgets.reduce(0) { sum, budget in
-            sum + budget.calculateSpending(transactions: dataManager.transactions)
+            sum + budget.calculateSpending(from: dataManager.transactions)
         }
         
         budgetsOnTrack = dataManager.activeBudgets.filter { budget in
-            let spending = budget.calculateSpending(transactions: dataManager.transactions)
+            let spending = budget.calculateSpending(from: dataManager.transactions)
             return !budget.isOverBudget(spending: spending)
         }.count
         
         budgetsOverspent = dataManager.activeBudgets.filter { budget in
-            let spending = budget.calculateSpending(transactions: dataManager.transactions)
+            let spending = budget.calculateSpending(from: dataManager.transactions)
             return budget.isOverBudget(spending: spending)
         }.count
     }

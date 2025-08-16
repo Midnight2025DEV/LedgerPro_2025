@@ -558,9 +558,9 @@ struct QuickAmountButton: View {
         BudgetAmountPicker(
             amount: .constant(500),
             suggestions: [
-                BudgetSuggestion(amount: 400, reason: "Based on your dining history", confidence: 0.85, basedOn: .historicalAverage),
-                BudgetSuggestion(amount: 600, reason: "Recommended for your income", confidence: 0.92, basedOn: .expertRecommendation),
-                BudgetSuggestion(amount: 350, reason: "Similar to other users", confidence: 0.75, basedOn: .similarUsers)
+                BudgetSuggestion(amount: 400, reason: "Based on your dining history", source: .historicalAverage, confidence: 0.85),
+                BudgetSuggestion(amount: 600, reason: "Recommended for your income", source: .expertRecommendation, confidence: 0.92),
+                BudgetSuggestion(amount: 350, reason: "Similar to other users", source: .similarUsers, confidence: 0.75)
             ]
         )
     }

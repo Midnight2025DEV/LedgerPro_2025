@@ -12,6 +12,8 @@ struct Budget: Codable, Identifiable, Hashable {
     var alertThreshold: Double // 0.0 to 1.0 (percentage)
     var color: String
     var description: String?
+    var icon: String  // Default icon
+    var categoryIds: [String]  // Categories this budget covers
     
     // Computed properties
     var remainingAmount: Double {
@@ -47,6 +49,37 @@ struct Budget: Codable, Identifiable, Hashable {
         }
     }
     
+    var dailyBudget: Double {
+        let totalDays = period.durationInDays
+        return amount / Double(totalDays)
+    }
+    
+    var spendingPace: SpendingPace {
+        let progress = percentageUsed
+        if progress > 1.0 {
+            return .overBudget
+        } else if progress > 0.8 {
+            return .tooFast
+        } else if progress < 0.2 {
+            return .tooSlow
+        } else {
+            return .onTrack
+        }
+    }
+    
+    func spendingPace(spending: Double) -> SpendingPace {
+        let progress = spending / amount
+        if progress > 1.0 {
+            return .overBudget
+        } else if progress > 0.8 {
+            return .tooFast
+        } else if progress < 0.2 {
+            return .tooSlow
+        } else {
+            return .onTrack
+        }
+    }
+    
     init(
         id: UUID = UUID(),
         name: String,
@@ -56,7 +89,9 @@ struct Budget: Codable, Identifiable, Hashable {
         startDate: Date = Date(),
         alertThreshold: Double = 0.8,
         color: String = "#007AFF",
-        description: String? = nil
+        description: String? = nil,
+        icon: String = "dollarsign.circle.fill",
+        categoryIds: [String] = []
     ) {
         self.id = id
         self.name = name
@@ -69,6 +104,8 @@ struct Budget: Codable, Identifiable, Hashable {
         self.alertThreshold = alertThreshold
         self.color = color
         self.description = description
+        self.icon = icon
+        self.categoryIds = categoryIds
     }
     
     mutating func updateSpentAmount(_ spent: Double) {
@@ -92,6 +129,10 @@ enum BudgetPeriod: String, CaseIterable, Codable {
     case quarterly = "Quarterly"
     case yearly = "Yearly"
     case custom = "Custom"
+    
+    var displayName: String {
+        return self.rawValue
+    }
     
     var systemImage: String {
         switch self {
@@ -231,7 +272,7 @@ extension Budget {
         return transactions
             .filter { transaction in
                 // Include transactions within the budget period
-                transaction.date >= startDate && transaction.date <= endDate &&
+                transaction.formattedDate >= startDate && transaction.formattedDate <= endDate &&
                 // Match category
                 transaction.category == category &&
                 // Only include expenses

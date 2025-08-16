@@ -370,11 +370,9 @@ struct BudgetCard: View {
     // MARK: - Helper Methods
     
     private func calculateDaysRemaining() -> Int? {
-        guard let endDate = budget.endDate else { return nil }
-        
         let calendar = Calendar.current
         let now = Date()
-        let components = calendar.dateComponents([.day], from: now, to: endDate)
+        let components = calendar.dateComponents([.day], from: now, to: budget.endDate)
         return max(components.day ?? 0, 0)
     }
     
