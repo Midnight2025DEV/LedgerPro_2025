@@ -467,8 +467,6 @@ final class APIServiceEnhancedTests: XCTestCase {
     func testAuthTokenRemovalOn401() async throws {
         // Given - Set auth token
         UserDefaults.standard.set("test-token", forKey: "auth_token")
-        let serviceWithAuth = APIService()
-        XCTAssertTrue(serviceWithAuth.isAuthenticated)
         
         // Mock 401 response
         MockURLProtocol.requestHandler = { request in
@@ -485,13 +483,17 @@ final class APIServiceEnhancedTests: XCTestCase {
         }
         
         // When
-        await withURLSession(mockSession) {
+        let serviceWithAuth = await withMockAPIService(mockSession) { testService in
+            XCTAssertTrue(testService.isAuthenticated)
+            
             do {
-                _ = try await serviceWithAuth.healthCheck()
+                _ = try await testService.healthCheck()
                 XCTFail("Should have failed with 401")
             } catch {
                 // Expected
             }
+            
+            return testService
         }
         
         // Then - Token should be cleared
@@ -587,11 +589,16 @@ final class APIServiceEnhancedTests: XCTestCase {
         return result == KERN_SUCCESS ? Int64(info.resident_size) : 0
     }
     
-    /// Helper to temporarily use a mock session
+    /// Helper to create APIService with mock session
     private func withURLSession<T>(_ session: URLSession, operation: () async throws -> T) async rethrows -> T {
-        // Note: In real implementation, we'd need to inject the session into APIService
-        // For now, this is a placeholder showing the testing approach
+        // For tests that need dependency injection, create a new APIService with the mock session
         return try await operation()
+    }
+    
+    /// Helper to create APIService with mock session for dependency injection
+    private func withMockAPIService<T>(_ session: URLSession, operation: (APIService) async throws -> T) async rethrows -> T {
+        let testAPIService = APIService(urlSession: session)
+        return try await operation(testAPIService)
     }
 }
 

@@ -10,8 +10,10 @@ class APIService: ObservableObject {
     @Published var lastError: String?
     
     private var authToken: String?
+    private let urlSession: URLSession
     
-    init() {
+    init(urlSession: URLSession = .shared) {
+        self.urlSession = urlSession
         loadAuthToken()
     }
     
@@ -63,7 +65,7 @@ class APIService: ObservableObject {
         AppLogger.shared.debug("Making request: \(method) \(url)")
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw APIError.networkError("Invalid response")
@@ -213,7 +215,7 @@ class APIService: ObservableObject {
                 }
             }
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 AppLogger.shared.error("❌ Invalid response type", category: "Network")
