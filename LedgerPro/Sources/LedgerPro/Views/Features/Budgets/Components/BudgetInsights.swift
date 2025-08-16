@@ -771,6 +771,7 @@ extension BudgetInsight.InsightType {
         BudgetInsights(
             budget: Budget(
                 name: "Dining Out",
+                category: "Food",
                 amount: 600,
                 period: .monthly
             ),

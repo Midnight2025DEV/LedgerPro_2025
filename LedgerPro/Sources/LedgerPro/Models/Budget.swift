@@ -161,3 +161,84 @@ enum BudgetStatus: String, CaseIterable {
         }
     }
 }
+
+// MARK: - Budget Extensions for Testing
+extension Budget {
+    // Sample budgets for testing and previews
+    static var sampleBudgets: [Budget] {
+        [
+            Budget(
+                name: "Groceries",
+                category: "Food",
+                amount: 600,
+                period: .monthly,
+                alertThreshold: 0.8,
+                color: "#34C759",
+                description: "Monthly grocery budget"
+            ),
+            Budget(
+                name: "Dining Out",
+                category: "Food",
+                amount: 300,
+                period: .monthly,
+                alertThreshold: 0.75,
+                color: "#FF9500",
+                description: "Restaurants and takeout"
+            ),
+            Budget(
+                name: "Transportation",
+                category: "Transport",
+                amount: 200,
+                period: .monthly,
+                alertThreshold: 0.9,
+                color: "#007AFF",
+                description: "Gas and public transit"
+            ),
+            Budget(
+                name: "Entertainment",
+                category: "Entertainment",
+                amount: 150,
+                period: .monthly,
+                alertThreshold: 0.7,
+                color: "#AF52DE",
+                description: "Movies, games, and fun"
+            ),
+            Budget(
+                name: "Utilities",
+                category: "Bills",
+                amount: 400,
+                period: .monthly,
+                alertThreshold: 0.95,
+                color: "#FF3B30",
+                description: "Electricity, water, internet"
+            )
+        ]
+    }
+    
+    // Progress percentage for UI display
+    func progressPercentage(spending: Double) -> Double {
+        guard amount > 0 else { return 0 }
+        return (spending / amount) * 100
+    }
+    
+    // Check if over budget with spending parameter
+    func isOverBudget(spending: Double) -> Bool {
+        return spending > amount
+    }
+    
+    // Calculate spending for this budget from transactions
+    func calculateSpending(from transactions: [Transaction]) -> Double {
+        return transactions
+            .filter { transaction in
+                // Include transactions within the budget period
+                transaction.date >= startDate && transaction.date <= endDate &&
+                // Match category
+                transaction.category == category &&
+                // Only include expenses
+                transaction.amount < 0
+            }
+            .reduce(0) { sum, transaction in
+                sum + abs(transaction.amount)
+            }
+    }
+}

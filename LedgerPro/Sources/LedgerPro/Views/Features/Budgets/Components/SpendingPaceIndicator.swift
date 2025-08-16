@@ -1,5 +1,38 @@
 import SwiftUI
 
+enum SpendingPace: String {
+    case tooSlow = "Too Slow"
+    case onTrack = "On Track"
+    case tooFast = "Too Fast"
+    case overBudget = "Over Budget"
+    
+    var color: Color {
+        switch self {
+        case .tooSlow:
+            return DSColors.primary.main
+        case .onTrack:
+            return DSColors.success.main
+        case .tooFast:
+            return DSColors.warning.main
+        case .overBudget:
+            return DSColors.error.main
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .tooSlow:
+            return "tortoise.fill"
+        case .onTrack:
+            return "checkmark.circle.fill"
+        case .tooFast:
+            return "hare.fill"
+        case .overBudget:
+            return "exclamationmark.triangle.fill"
+        }
+    }
+}
+
 /// SpendingPaceIndicator - Visual pace tracking with projections
 ///
 /// Intelligent spending pace visualization that shows current trajectory,
@@ -624,6 +657,7 @@ struct PaceRecommendation {
             SpendingPaceIndicator(
                 budget: Budget(
                     name: "Groceries",
+                    category: "Food",
                     amount: 600,
                     period: .monthly
                 ),
@@ -635,6 +669,7 @@ struct PaceRecommendation {
             SpendingPaceIndicator(
                 budget: Budget(
                     name: "Dining",
+                    category: "Food",
                     amount: 400,
                     period: .monthly
                 ),
@@ -646,11 +681,12 @@ struct PaceRecommendation {
             SpendingPaceIndicator(
                 budget: Budget(
                     name: "Entertainment",
+                    category: "Entertainment",
                     amount: 200,
                     period: .monthly
                 ),
                 currentSpending: 80,
-                pace: .slow
+                pace: .tooSlow
             )
         }
         .padding()

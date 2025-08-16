@@ -557,12 +557,9 @@ struct BudgetDetailView: View {
     }
     
     private var periodSubtitle: String {
-        if let endDate = budget.endDate {
-            let calendar = Calendar.current
-            let remaining = calendar.dateComponents([.day], from: Date(), to: endDate).day ?? 0
-            return "\(max(remaining, 0)) days left"
-        }
-        return "Active"
+        let calendar = Calendar.current
+        let remaining = calendar.dateComponents([.day], from: Date(), to: budget.endDate).day ?? 0
+        return "\(max(remaining, 0)) days left"
     }
     
     private var recentBudgetTransactions: [Transaction] {
