@@ -183,7 +183,7 @@ struct BudgetNotifications: Codable, Hashable {
     let id: UUID
     let budgetId: String
     let thresholds: [NotificationThreshold]
-    let isEnabled: Bool
+    var isEnabled: Bool
     let notificationMethods: [NotificationMethod]
     
     init(
@@ -206,7 +206,7 @@ struct NotificationThreshold: Codable, Hashable, Identifiable {
     let percentage: Double  // 0.0 to 1.0
     let message: String
     let priority: NotificationPriority
-    let isEnabled: Bool
+    var isEnabled: Bool
     
     init(
         id: UUID = UUID(),

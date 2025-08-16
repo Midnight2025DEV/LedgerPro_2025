@@ -282,7 +282,7 @@ struct CreateBudgetView: View {
                         .font(DSTypography.caption.regular)
                         .foregroundColor(DSColors.neutral.textSecondary)
                     
-                    Text(selectedPeriod.endDate(from: startDate).formatted(date: .abbreviated, time: .omitted))
+                    Text(selectedPeriod.calculateEndDate(from: startDate).formatted(date: .abbreviated, time: .omitted))
                         .font(DSTypography.body.regular).fontWeight(.medium)
                         .foregroundColor(DSColors.neutral.text)
                         .padding(.horizontal, DSSpacing.md)

@@ -549,6 +549,13 @@ struct SpendingPaceIndicator: View {
                 text: "Perfect pace! Keep up the great work",
                 type: .success
             ))
+            
+        case .overBudget:
+            recs.append(PaceRecommendation(
+                icon: "exclamationmark.triangle.fill",
+                text: "Budget exceeded! Review your expenses immediately",
+                type: .error
+            ))
         }
         
         return recs
