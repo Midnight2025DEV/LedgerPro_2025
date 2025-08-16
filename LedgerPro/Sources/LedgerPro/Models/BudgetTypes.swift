@@ -182,22 +182,31 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
 struct BudgetNotifications: Codable, Hashable {
     let id: UUID
     let budgetId: String
-    let thresholds: [NotificationThreshold]
+    var thresholds: [NotificationThreshold]
     var isEnabled: Bool
     let notificationMethods: [NotificationMethod]
+    var dailyUpdate: Bool
+    var weeklyReport: Bool
+    var overspendAlert: Bool
     
     init(
         id: UUID = UUID(),
         budgetId: String,
         thresholds: [NotificationThreshold] = NotificationThreshold.defaultThresholds,
         isEnabled: Bool = true,
-        notificationMethods: [NotificationMethod] = [.inApp]
+        notificationMethods: [NotificationMethod] = [.inApp],
+        dailyUpdate: Bool = false,
+        weeklyReport: Bool = false,
+        overspendAlert: Bool = true
     ) {
         self.id = id
         self.budgetId = budgetId
         self.thresholds = thresholds
         self.isEnabled = isEnabled
         self.notificationMethods = notificationMethods
+        self.dailyUpdate = dailyUpdate
+        self.weeklyReport = weeklyReport
+        self.overspendAlert = overspendAlert
     }
 }
 

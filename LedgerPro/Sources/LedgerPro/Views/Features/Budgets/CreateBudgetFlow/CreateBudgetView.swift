@@ -368,7 +368,7 @@ struct CreateBudgetView: View {
             VStack(spacing: DSSpacing.lg) {
                 ReviewSummaryRow(
                     label: "Duration",
-                    value: "\(selectedPeriod.displayName) • \(selectedPeriod.dayCount) days"
+                    value: "\(selectedPeriod.displayName) • \(selectedPeriod.durationInDays) days"
                 )
                 
                 ReviewSummaryRow(
@@ -383,7 +383,7 @@ struct CreateBudgetView: View {
                 
                 ReviewSummaryRow(
                     label: "Daily Budget",
-                    value: (budgetAmount / Double(selectedPeriod.dayCount)).formatAsCurrency()
+                    value: (budgetAmount / Double(selectedPeriod.durationInDays)).formatAsCurrency()
                 )
             }
         }
@@ -591,13 +591,13 @@ struct CreateBudgetView: View {
             do {
                 let newBudget = Budget(
                     name: budgetName,
+                    category: selectedCategories.first ?? "General",
                     amount: budgetAmount,
                     period: selectedPeriod,
-                    categoryIds: Array(selectedCategories),
                     startDate: startDate,
-                    notifications: notifications,
                     color: budgetColor,
-                    icon: budgetIcon
+                    icon: budgetIcon,
+                    categoryIds: Array(selectedCategories)
                 )
                 
                 // Simulate creation delay
@@ -644,9 +644,9 @@ struct CreateBudgetView: View {
     private func generateAmountSuggestions() -> [BudgetSuggestion] {
         // Generate smart amount suggestions based on historical data
         return [
-            BudgetSuggestion(amount: 300, reason: "Based on similar budgets", confidence: 0.8, basedOn: .similarUsers),
-            BudgetSuggestion(amount: 500, reason: "Recommended starting point", confidence: 0.9, basedOn: .expertRecommendation),
-            BudgetSuggestion(amount: 750, reason: "Above average for this category", confidence: 0.7, basedOn: .historicalAverage)
+            BudgetSuggestion(amount: 300, reason: "Based on similar budgets", source: .similarUsers, confidence: 0.8),
+            BudgetSuggestion(amount: 500, reason: "Recommended starting point", source: .expertRecommendation, confidence: 0.9),
+            BudgetSuggestion(amount: 750, reason: "Above average for this category", source: .historicalAverage, confidence: 0.7)
         ]
     }
     
