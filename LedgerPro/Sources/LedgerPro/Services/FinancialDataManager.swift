@@ -1587,7 +1587,7 @@ extension FinancialDataManager {
             }
             
             // Create processor and process batch  
-            let processor = TransactionBatchProcessor(batchSize: batchSize, categoryService: CategoryService.shared)
+            let processor = TransactionBatchProcessor(batchSize: batchSize, categoryService: await CategoryService.shared)
             let processedBatch = try await processor.processBatch(batch)
             allProcessedTransactions.append(contentsOf: processedBatch)
             
@@ -1610,12 +1610,15 @@ extension FinancialDataManager {
         // Final processing and UI update
         let totalDuration = CFAbsoluteTimeGetCurrent() - startTime
         
+        // Capture processed transactions before MainActor.run
+        let finalProcessedTransactions = allProcessedTransactions
+        
         await MainActor.run {
             // Add to existing transactions
-            self.transactions.append(contentsOf: allProcessedTransactions)
+            self.transactions.append(contentsOf: finalProcessedTransactions)
             
             // Create bank account if needed
-            if let firstTransaction = allProcessedTransactions.first {
+            if let firstTransaction = finalProcessedTransactions.first {
                 self.ensureAccountExistsForTransaction(firstTransaction, filename: filename)
             }
             
