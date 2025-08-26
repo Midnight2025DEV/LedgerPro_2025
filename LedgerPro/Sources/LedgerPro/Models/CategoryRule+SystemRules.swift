@@ -4,461 +4,264 @@ extension CategoryRule {
     static let systemRules: [CategoryRule] = {
         var rules: [CategoryRule] = []
         
-        // Transportation Rules (using existing transportation ID)
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "Uber Rides",
-                priority: 100
-            ).with {
-                $0.merchantContains = "UBER"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "Lyft Rides",
-                priority: 100
-            ).with {
-                $0.merchantContains = "LYFT"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "Taxi Services",
-                priority: 90
-            ).with {
-                $0.regexPattern = "TAXI|CAB|YELLOW CAB"
-                $0.confidence = 0.8
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "Gas Stations",
-                priority: 95
-            ).with {
-                $0.regexPattern = "SHELL|CHEVRON|EXXON(?!.*MOBILE)|BP|CITGO|SUNOCO|TEXACO|76.*GAS|COMPANIA GAS|GAS STATION"
-                $0.confidence = 0.85
-            }
-        ])
+        // MARK: - Transportation Rules
+        var uberRule = CategoryRule(categoryId: Category.systemCategoryIds.transportation, ruleName: "Uber Rides")
+        uberRule.merchantContains = "UBER"
+        uberRule.confidence = 0.9
+        uberRule.priority = 100
+        uberRule.isSystem = true
+        uberRule.amountSign = .negative
+        rules.append(uberRule)
         
-        // Food & Dining Rules (using existing foodDining ID)
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Uber Eats",
-                priority: 110  // Higher than Uber transportation
-            ).with {
-                $0.merchantContains = "UBER EATS"
-                $0.confidence = 0.95
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Food Delivery Services",
-                priority: 105
-            ).with {
-                $0.regexPattern = "DOORDASH|GRUBHUB|POSTMATES|SEAMLESS"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Starbucks",
-                priority: 100
-            ).with {
-                $0.merchantContains = "STARBUCKS"
-                $0.confidence = 0.95
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Fast Food Chains",
-                priority: 90
-            ).with {
-                $0.regexPattern = "MCDONALD|BURGER KING|WENDY|TACO BELL|SUBWAY|CHIPOTLE|KFC|POPEYES"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Coffee Shops",
-                priority: 85
-            ).with {
-                $0.regexPattern = "COFFEE|CAFE|DUNKIN|PEET'S|TIM HORTONS"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Restaurants",
-                priority: 80
-            ).with {
-                $0.regexPattern = "RESTAURANT|GRILL|KITCHEN|BISTRO|DINER|PIZZA"
-                $0.confidence = 0.8
-            }
-        ])
+        var lyftRule = CategoryRule(categoryId: Category.systemCategoryIds.transportation, ruleName: "Lyft Rides")
+        lyftRule.merchantContains = "LYFT"
+        lyftRule.confidence = 0.9
+        lyftRule.priority = 100
+        lyftRule.isSystem = true
+        lyftRule.amountSign = .negative
+        rules.append(lyftRule)
         
-        // Shopping Rules (using existing shopping ID)
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Amazon",
-                priority: 100
-            ).with {
-                $0.merchantContains = "AMAZON"
-                $0.confidence = 0.95
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Walmart",
-                priority: 95
-            ).with {
-                $0.merchantContains = "WALMART"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Target",
-                priority: 95
-            ).with {
-                $0.merchantContains = "TARGET"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Home Improvement",
-                priority: 85
-            ).with {
-                $0.regexPattern = "HOME DEPOT|LOWE'S|LOWES|ACE HARDWARE"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Grocery Stores",
-                priority: 90
-            ).with {
-                $0.regexPattern = "KROGER|SAFEWAY|PUBLIX|WEGMANS|HARRIS TEETER|GIANT|STOP SHOP"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Pharmacies",
-                priority: 85
-            ).with {
-                $0.regexPattern = "CVS|WALGREENS|RITE AID|PHARMACY"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "Subscriptions & Streaming",
-                priority: 80
-            ).with {
-                $0.regexPattern = "NETFLIX|HULU|SPOTIFY|APPLE|DISNEY|HBO|AMAZON PRIME"
-                $0.confidence = 0.8
-            }
-        ])
+        var taxiRule = CategoryRule(categoryId: Category.systemCategoryIds.transportation, ruleName: "Taxi Services")
+        taxiRule.regexPattern = "TAXI|CAB|YELLOW CAB"
+        taxiRule.confidence = 0.8
+        taxiRule.priority = 90
+        taxiRule.isSystem = true
+        taxiRule.amountSign = .negative
+        rules.append(taxiRule)
         
-        // Income Rules (using existing salary ID for payroll)
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.salary,
-                ruleName: "Direct Deposit Salary",
-                priority: 100
-            ).with {
-                $0.regexPattern = "DIRECT DEP|PAYROLL|SALARY"
-                $0.amountSign = .positive
-                $0.isRecurring = true
-                $0.confidence = 0.95
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.income,
-                ruleName: "Deposit",
-                priority: 80
-            ).with {
-                $0.descriptionContains = "DEPOSIT"
-                $0.amountSign = .positive
-                $0.confidence = 0.7
-            }
-        ])
+        var gasRule = CategoryRule(categoryId: Category.systemCategoryIds.transportation, ruleName: "Gas Stations")
+        gasRule.regexPattern = "SHELL|CHEVRON|EXXON|BP|CITGO|SUNOCO|TEXACO|76.*GAS|GAS STATION"
+        gasRule.confidence = 0.85
+        gasRule.priority = 95
+        gasRule.isSystem = true
+        gasRule.amountSign = .negative
+        rules.append(gasRule)
         
-        // Housing Rules (using existing housing ID)
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.housing,
-                ruleName: "Rent Payment",
-                priority: 95
-            ).with {
-                $0.regexPattern = "RENT|LEASE|APARTMENT|PROPERTY MGMT"
-                $0.amountMin = 500
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.housing,
-                ruleName: "Mortgage",
-                priority: 95
-            ).with {
-                $0.regexPattern = "MORTGAGE|HOME LOAN"
-                $0.amountMin = 500
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.housing,
-                ruleName: "Utilities",
-                priority: 90
-            ).with {
-                $0.regexPattern = "ELECTRIC|GAS COMPANY|WATER|COMCAST|VERIZON|AT&T|SPECTRUM|INTERNET|CABLE|UTILITY"
-                $0.confidence = 0.8
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.housing,
-                ruleName: "Real Estate",
-                priority: 85
-            ).with {
-                $0.regexPattern = "INMOBILIARIO|REAL ESTATE|PROPERTY|REALTY"
-                $0.confidence = 0.8
-            }
-        ])
+        // NEW: Parking rule
+        var parkingRule = CategoryRule(categoryId: Category.systemCategoryIds.transportation, ruleName: "Parking")
+        parkingRule.regexPattern = "PARKING|PARK\\s*METER|METER\\s*PARKING|PARK\\s*&|PARKADE|PARKWHIZ"
+        parkingRule.confidence = 0.85
+        parkingRule.priority = 90
+        parkingRule.isSystem = true
+        parkingRule.amountSign = .negative
+        rules.append(parkingRule)
         
-        // Credit Card Payment Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.creditCardPayment,
-                ruleName: "Capital One Payments",
-                priority: 100
-            ).with {
-                $0.merchantContains = "CAPITAL ONE"
-                $0.confidence = 0.95
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.creditCardPayment,
-                ruleName: "Credit Card Payments",
-                priority: 90
-            ).with {
-                $0.regexPattern = "PAYMENT|CARD PYMT|CC PAYMENT|AUTOPAY"
-                $0.amountSign = .positive
-                $0.confidence = 0.8
-            }
-        ])
+        // MARK: - Food & Dining Rules
+        var starbucksRule = CategoryRule(categoryId: Category.systemCategoryIds.foodDining, ruleName: "Starbucks")
+        starbucksRule.merchantContains = "STARBUCKS"
+        starbucksRule.confidence = 0.95
+        starbucksRule.priority = 90
+        starbucksRule.isSystem = true
+        starbucksRule.amountSign = .negative
+        rules.append(starbucksRule)
         
-        // Transfer Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transfers,
-                ruleName: "Bank Transfers",
-                priority: 85
-            ).with {
-                $0.regexPattern = "TRANSFER|XFER|ACH"
-                $0.confidence = 0.75
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transfers,
-                ruleName: "Capital One Mobile Transfer",
-                priority: 105
-            ).with {
-                $0.regexPattern = "CAPITAL ONE MOBILE(?!.*PAYMENT)"
-                $0.confidence = 0.95
-            }
-        ])
+        var mcdonaldsRule = CategoryRule(categoryId: Category.systemCategoryIds.foodDining, ruleName: "McDonald's")
+        mcdonaldsRule.merchantContains = "MCDONALD"
+        mcdonaldsRule.confidence = 0.9
+        mcdonaldsRule.priority = 85
+        mcdonaldsRule.isSystem = true
+        mcdonaldsRule.amountSign = .negative
+        rules.append(mcdonaldsRule)
         
-        // Enhanced AI & Tech Services Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.subscriptions,
-                ruleName: "Claude AI",
-                priority: 90
-            ).with {
-                $0.merchantContains = "CLAUDE"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.subscriptions,
-                ruleName: "Anthropic",
-                priority: 90
-            ).with {
-                $0.merchantContains = "ANTHROPIC"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.subscriptions,
-                ruleName: "OpenAI",
-                priority: 90
-            ).with {
-                $0.merchantContains = "OPENAI"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.subscriptions,
-                ruleName: "ChatGPT",
-                priority: 90
-            ).with {
-                $0.merchantContains = "CHATGPT"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.subscriptions,
-                ruleName: "Google Services",
-                priority: 85
-            ).with {
-                $0.merchantContains = "GOOGLE"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.education,
-                ruleName: "Coursera",
-                priority: 85
-            ).with {
-                $0.merchantContains = "COURSERA"
-                $0.confidence = 0.85
-            }
-        ])
+        // NEW: Coffee shops (Rifle Coffee)
+        var coffeeRule = CategoryRule(categoryId: Category.systemCategoryIds.foodDining, ruleName: "Coffee Shops")
+        coffeeRule.regexPattern = "COFFEE|CAFE|ESPRESSO|ROASTERY|BARISTA"
+        coffeeRule.confidence = 0.85
+        coffeeRule.priority = 80
+        coffeeRule.isSystem = true
+        coffeeRule.amountSign = .negative
+        rules.append(coffeeRule)
         
-        // Enhanced Food & Coffee Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Rifle Coffee",
-                priority: 90
-            ).with {
-                $0.merchantContains = "RIFLE COFFEE"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.foodDining,
-                ruleName: "Panera",
-                priority: 90
-            ).with {
-                $0.merchantContains = "PANERA"
-                $0.confidence = 0.9
-            }
-        ])
+        // NEW: Mexican food stores
+        var mexicanFoodRule = CategoryRule(categoryId: Category.systemCategoryIds.foodDining, ruleName: "Mexican Food Stores")
+        mexicanFoodRule.regexPattern = "CARNICERIA|FRUTERIA|PANADERIA|TAQUERIA|TORTILLERIA"
+        mexicanFoodRule.confidence = 0.85
+        mexicanFoodRule.priority = 80
+        mexicanFoodRule.isSystem = true
+        mexicanFoodRule.amountSign = .negative
+        rules.append(mexicanFoodRule)
         
-        // Enhanced Transportation & Parking Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "Parking",
-                priority: 85
-            ).with {
-                $0.merchantContains = "PARKING"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "76 Gas",
-                priority: 85
-            ).with {
-                $0.regexPattern = "76\\s"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.transportation,
-                ruleName: "PY Transport",
-                priority: 80
-            ).with {
-                $0.regexPattern = "PY\\s"
-                $0.confidence = 0.8
-            }
-        ])
+        // MARK: - Shopping Rules
+        var amazonRule = CategoryRule(categoryId: Category.systemCategoryIds.shopping, ruleName: "Amazon")
+        amazonRule.merchantContains = "AMAZON"
+        amazonRule.confidence = 0.9
+        amazonRule.priority = 85
+        amazonRule.isSystem = true
+        amazonRule.amountSign = .negative
+        rules.append(amazonRule)
         
-        // Mexican Stores Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.shopping,
-                ruleName: "OXXO",
-                priority: 85
-            ).with {
-                $0.merchantContains = "OXXO"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.groceries,
-                ruleName: "Carniceria",
-                priority: 85
-            ).with {
-                $0.merchantContains = "CARNICERIA"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.groceries,
-                ruleName: "Fruteria",
-                priority: 85
-            ).with {
-                $0.merchantContains = "FRUTERIA"
-                $0.confidence = 0.85
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.groceries,
-                ruleName: "Carn Store",
-                priority: 80
-            ).with {
-                $0.regexPattern = "CARN\\s"
-                $0.confidence = 0.8
-            }
-        ])
+        var walmartRule = CategoryRule(categoryId: Category.systemCategoryIds.shopping, ruleName: "Walmart")
+        walmartRule.merchantContains = "WALMART"
+        walmartRule.confidence = 0.9
+        walmartRule.priority = 85
+        walmartRule.isSystem = true
+        walmartRule.amountSign = .negative
+        rules.append(walmartRule)
         
-        // Hotel & Lodging Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.lodging,
-                ruleName: "Motel",
-                priority: 90
-            ).with {
-                $0.merchantContains = "MOTEL"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.lodging,
-                ruleName: "Hotel",
-                priority: 90
-            ).with {
-                $0.merchantContains = "HOTEL"
-                $0.confidence = 0.9
-            }
-        ])
+        // NEW: Convenience stores (OXXO)
+        var convenienceRule = CategoryRule(categoryId: Category.systemCategoryIds.shopping, ruleName: "Convenience Stores")
+        convenienceRule.regexPattern = "OXXO|7-ELEVEN|CIRCLE K|WAWA|CONVENIENCE|CVS(?!\\s*PHARMACY)"
+        convenienceRule.confidence = 0.85
+        convenienceRule.priority = 80
+        convenienceRule.isSystem = true
+        convenienceRule.amountSign = .negative
+        rules.append(convenienceRule)
         
-        // Enhanced Entertainment & Streaming Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.entertainment,
-                ruleName: "Crunchyroll",
-                priority: 90
-            ).with {
-                $0.merchantContains = "CRUNCHYROLL"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.entertainment,
-                ruleName: "Netflix",
-                priority: 90
-            ).with {
-                $0.merchantContains = "NETFLIX"
-                $0.confidence = 0.9
-            },
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.entertainment,
-                ruleName: "YouTube",
-                priority: 85
-            ).with {
-                $0.merchantContains = "YOUTUBE"
-                $0.confidence = 0.85
-            }
-        ])
+        var targetRule = CategoryRule(categoryId: Category.systemCategoryIds.shopping, ruleName: "Target")
+        targetRule.merchantContains = "TARGET"
+        targetRule.confidence = 0.9
+        targetRule.priority = 85
+        targetRule.isSystem = true
+        targetRule.amountSign = .negative
+        rules.append(targetRule)
         
-        // Financial Services Rules
-        rules.append(contentsOf: [
-            CategoryRule(
-                categoryId: Category.systemCategoryIds.business,
-                ruleName: "PayPal",
-                priority: 80
-            ).with {
-                $0.merchantContains = "PAYPAL"
-                $0.confidence = 0.8
-            }
-        ])
+        // MARK: - Entertainment Rules (NEW CATEGORY)
+        // Assuming entertainment category exists, otherwise use a different category
+        let entertainmentId = UUID(uuidString: "00000000-0000-0000-0000-000000000032") ?? Category.systemCategoryIds.other
+        
+        // NEW: Streaming services
+        var netflixRule = CategoryRule(categoryId: entertainmentId, ruleName: "Netflix")
+        netflixRule.merchantContains = "NETFLIX"
+        netflixRule.confidence = 0.95
+        netflixRule.priority = 90
+        netflixRule.isSystem = true
+        netflixRule.amountSign = .negative
+        rules.append(netflixRule)
+        
+        var crunchyrollRule = CategoryRule(categoryId: entertainmentId, ruleName: "Crunchyroll")
+        crunchyrollRule.merchantContains = "CRUNCHYROLL"
+        crunchyrollRule.confidence = 0.95
+        crunchyrollRule.priority = 90
+        crunchyrollRule.isSystem = true
+        crunchyrollRule.amountSign = .negative
+        rules.append(crunchyrollRule)
+        
+        var youtubeRule = CategoryRule(categoryId: entertainmentId, ruleName: "YouTube")
+        youtubeRule.merchantContains = "YOUTUBE"
+        youtubeRule.confidence = 0.95
+        youtubeRule.priority = 90
+        youtubeRule.isSystem = true
+        youtubeRule.amountSign = .negative
+        rules.append(youtubeRule)
+        
+        var spotifyRule = CategoryRule(categoryId: entertainmentId, ruleName: "Spotify")
+        spotifyRule.merchantContains = "SPOTIFY"
+        spotifyRule.confidence = 0.95
+        spotifyRule.priority = 90
+        spotifyRule.isSystem = true
+        spotifyRule.amountSign = .negative
+        rules.append(spotifyRule)
+        
+        // MARK: - Technology/AI Services (Education or Other category)
+        let educationId = UUID(uuidString: "00000000-0000-0000-0000-000000000034") ?? Category.systemCategoryIds.other
+        
+        // NEW: AI Services
+        var claudeRule = CategoryRule(categoryId: educationId, ruleName: "Claude AI")
+        claudeRule.regexPattern = "CLAUDE|ANTHROPIC"
+        claudeRule.confidence = 0.95
+        claudeRule.priority = 90
+        claudeRule.isSystem = true
+        claudeRule.amountSign = .negative
+        rules.append(claudeRule)
+        
+        var openaiRule = CategoryRule(categoryId: educationId, ruleName: "OpenAI")
+        openaiRule.regexPattern = "OPENAI|CHATGPT|GPT"
+        openaiRule.confidence = 0.95
+        openaiRule.priority = 90
+        openaiRule.isSystem = true
+        openaiRule.amountSign = .negative
+        rules.append(openaiRule)
+        
+        // NEW: Online Education
+        var courseraRule = CategoryRule(categoryId: educationId, ruleName: "Coursera")
+        courseraRule.merchantContains = "COURSERA"
+        courseraRule.confidence = 0.95
+        courseraRule.priority = 90
+        courseraRule.isSystem = true
+        courseraRule.amountSign = .negative
+        rules.append(courseraRule)
+        
+        // MARK: - Travel/Lodging Rules
+        let travelId = UUID(uuidString: "00000000-0000-0000-0000-000000000033") ?? Category.systemCategoryIds.other
+        
+        // NEW: Hotels
+        var hotelRule = CategoryRule(categoryId: travelId, ruleName: "Hotels")
+        hotelRule.regexPattern = "HOTEL|MOTEL|INN|MARRIOTT|HILTON|HYATT|SHERATON|HOLIDAY\\s*INN"
+        hotelRule.confidence = 0.9
+        hotelRule.priority = 85
+        hotelRule.isSystem = true
+        hotelRule.amountSign = .negative
+        rules.append(hotelRule)
+        
+        // MARK: - Income Rules
+        var salaryRule = CategoryRule(categoryId: Category.systemCategoryIds.salary, ruleName: "Salary Deposits")
+        salaryRule.descriptionContains = "PAYROLL"
+        salaryRule.confidence = 0.95
+        salaryRule.priority = 100
+        salaryRule.isSystem = true
+        salaryRule.amountSign = .positive
+        rules.append(salaryRule)
+        
+        var incomeRule = CategoryRule(categoryId: Category.systemCategoryIds.income, ruleName: "General Income")
+        incomeRule.descriptionContains = "DEPOSIT"
+        incomeRule.confidence = 0.8
+        incomeRule.priority = 90
+        incomeRule.isSystem = true
+        incomeRule.amountSign = .positive
+        rules.append(incomeRule)
+        
+        // MARK: - Transfer Rules
+        // NEW: Bank transfers
+        var transferRule = CategoryRule(categoryId: Category.systemCategoryIds.other, ruleName: "Bank Transfers")
+        transferRule.regexPattern = "TRANSFER|MOBILE\\s*TRANSFER|BANK\\s*TRANSFER|ACH|WIRE"
+        transferRule.confidence = 0.85
+        transferRule.priority = 85
+        transferRule.isSystem = true
+        transferRule.amountSign = .negative
+        rules.append(transferRule)
+        
+        // NEW: Payment services
+        var paypalRule = CategoryRule(categoryId: Category.systemCategoryIds.other, ruleName: "PayPal")
+        paypalRule.merchantContains = "PAYPAL"
+        paypalRule.confidence = 0.9
+        paypalRule.priority = 85
+        paypalRule.isSystem = true
+        paypalRule.amountSign = .negative
+        rules.append(paypalRule)
+        
+        // MARK: - Credit Card Payment Rules
+        var genericCreditCardRule = CategoryRule(categoryId: Category.systemCategoryIds.creditCardPayment, ruleName: "Credit Card Payments")
+        genericCreditCardRule.regexPattern = "CREDIT\\s*CARD\\s*PAYMENT|AUTOPAY|CC\\s*PAYMENT"
+        genericCreditCardRule.confidence = 0.9
+        genericCreditCardRule.priority = 90
+        genericCreditCardRule.isSystem = true
+        genericCreditCardRule.amountSign = .positive
+        rules.append(genericCreditCardRule)
+        
+        var creditCardRule = CategoryRule(categoryId: Category.systemCategoryIds.creditCardPayment, ruleName: "Capital One Payments")
+        creditCardRule.merchantContains = "CAPITAL ONE"
+        creditCardRule.descriptionContains = "PAYMENT"
+        creditCardRule.confidence = 0.95
+        creditCardRule.priority = 95
+        creditCardRule.isSystem = true
+        creditCardRule.amountSign = .positive
+        rules.append(creditCardRule)
         
         return rules
     }()
 }
 
-// Helper extension for builder pattern
-private extension CategoryRule {
-    func with(_ block: (inout CategoryRule) -> Void) -> CategoryRule {
-        var copy = self
-        block(&copy)
-        return copy
+// MARK: - Helper Extension for Testing
+extension CategoryRule {
+    /// Find all rules that match a given transaction description
+    static func findMatchingRules(for description: String, in rules: [CategoryRule] = systemRules) -> [CategoryRule] {
+        let mockTransaction = Transaction(
+            date: Date().ISO8601Format(),
+            description: description,
+            amount: -50.0,
+            category: "Uncategorized"
+        )
+        
+        return rules.filter { $0.matches(transaction: mockTransaction) }
     }
 }

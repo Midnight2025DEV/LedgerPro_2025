@@ -194,3 +194,44 @@ public func debugPrint(_ items: Any..., separator: String = " ", terminator: Str
     logger.debug(message)
     #endif
 }
+
+// MARK: - Secure Logging Extensions
+/// Security-focused logging extensions to prevent sensitive data exposure
+extension Logger {
+    
+    /// Logs request info without exposing sensitive headers
+    /// - Parameters:
+    ///   - request: The URLRequest to log
+    ///   - method: HTTP method string
+    public func logSecureRequest(_ request: URLRequest, method: String) {
+        let url = request.url?.absoluteString ?? "unknown"
+        let hasAuth = request.allHTTPHeaderFields?.keys.contains("Authorization") ?? false
+        debug("📤 \(method) request to: \(url) (authenticated: \(hasAuth))", category: "Network")
+    }
+    
+    /// Logs response info without exposing sensitive headers
+    /// - Parameters:
+    ///   - response: The HTTPURLResponse to log
+    ///   - request: The original URLRequest for context
+    public func logSecureResponse(_ response: HTTPURLResponse, for request: URLRequest) {
+        let url = request.url?.absoluteString ?? "unknown"
+        debug("📊 Response: \(response.statusCode) for \(url)", category: "Network")
+    }
+    
+    /// Logs transaction info without exposing sensitive data
+    /// - Parameter transactionDate: Transaction date for logging
+    /// - Parameter category: Transaction category for logging
+    public func logSecureTransaction(date: String, category: String) {
+        #if DEBUG
+        debug("Transaction: \(date) - Category: \(category)")
+        #else
+        info("Processing transaction")
+        #endif
+    }
+    
+    /// Logs authentication status without exposing token values
+    /// - Parameter hasToken: Whether an auth token is present
+    public func logAuthStatus(hasToken: Bool) {
+        debug("Auth status: \(hasToken ? "authenticated" : "not authenticated")")
+    }
+}

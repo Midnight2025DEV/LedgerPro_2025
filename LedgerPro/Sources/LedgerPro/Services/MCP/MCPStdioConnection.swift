@@ -77,7 +77,7 @@ class MCPStdioConnection: ObservableObject {
             let data = handle.availableData
             guard !data.isEmpty else { return }
             if let error = String(data: data, encoding: .utf8) {
-                Task { [weak self] in
+                Task { @MainActor [weak self] in
                     guard let self = self else { return }
                     self.logger.error("⚠️ Server error: \(error)")
                 }

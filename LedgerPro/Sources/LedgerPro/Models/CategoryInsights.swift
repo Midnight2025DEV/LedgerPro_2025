@@ -195,7 +195,7 @@ struct MerchantSummary: Codable {
     let averageAmount: Decimal
     let firstSeen: Date
     let lastSeen: Date
-    let frequency: TransactionFrequency
+    let frequency: String
     
     var formattedTotalAmount: String {
         let formatter = NumberFormatter()
@@ -420,7 +420,7 @@ extension CategoryInsights {
                 averageAmount: merchantAverage,
                 firstSeen: transactions.map(\.formattedDate).min() ?? Date(),
                 lastSeen: transactions.map(\.formattedDate).max() ?? Date(),
-                frequency: .irregular // Would be calculated based on transaction patterns
+                frequency: "irregular" // Would be calculated based on transaction patterns
             )
         }.sorted { $0.totalAmount > $1.totalAmount }.prefix(5).map { $0 }
         

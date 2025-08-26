@@ -313,8 +313,7 @@ final class FinancialDataManagerTests: XCTestCase {
             category: "Travel",
             originalAmount: -100.00,
             originalCurrency: "EUR",
-            exchangeRate: 1.205,
-            hasForex: true
+            exchangeRate: 1.205
         )
         
         // When
@@ -328,7 +327,7 @@ final class FinancialDataManagerTests: XCTestCase {
         XCTAssertEqual(storedTransaction.originalAmount, -100.00)
         XCTAssertEqual(storedTransaction.originalCurrency, "EUR")
         XCTAssertEqual(storedTransaction.exchangeRate, 1.205)
-        XCTAssertEqual(storedTransaction.hasForex, true)
+        XCTAssertTrue(storedTransaction.hasForex)
     }
     
     // MARK: - Error Handling Tests

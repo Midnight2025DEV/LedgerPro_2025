@@ -1,6 +1,9 @@
 import Foundation
 import SwiftUI
 
+// Import design system tokens for consistent styling
+// Note: These imports reference the design system tokens created in Views/DesignSystem/Tokens/
+
 // MARK: - Date Extensions
 extension Date {
     func formatted(style: DateFormatter.Style = .medium) -> String {
@@ -67,12 +70,15 @@ extension String {
 // MARK: - Color Extensions
 extension Color {
     @MainActor static func forCategory(_ category: String) -> Color {
-        // Use CategoryService as single source of truth
+        // Use design system category colors as primary source
+        let designSystemColor = DSColors.category.color(for: category)
+        
+        // Use CategoryService as fallback for dynamic categories
         let categoryService = CategoryService.shared
         
         // Find exact match first
         if let categoryObject = categoryService.categories.first(where: { $0.name.lowercased() == category.lowercased() }) {
-            return Color(hex: categoryObject.color) ?? .gray
+            return Color(hex: categoryObject.color) ?? designSystemColor
         }
         
         // Try partial match (e.g., "Dining" matches "Food & Dining")
@@ -80,55 +86,145 @@ extension Color {
             $0.name.lowercased().contains(category.lowercased()) || 
             category.lowercased().contains($0.name.lowercased())
         }) {
-            return Color(hex: categoryObject.color) ?? .gray
+            return Color(hex: categoryObject.color) ?? designSystemColor
         }
         
-        // Legacy fallback mappings for unmapped categories
-        switch category.lowercased() {
-        case "groceries", "food", "dining":
-            return .green
-        case "transportation", "gas", "fuel":
-            return .blue
-        case "shopping", "retail":
-            return .purple
-        default:
-            return .gray
-        }
+        // Return design system color for consistent mapping
+        return designSystemColor
     }
     
-    // System color adapters for better cross-platform compatibility
+    // System color adapters using design system tokens
     static var systemBackground: Color {
-        Color(NSColor.controlBackgroundColor)
+        DSColors.neutral.background
     }
     
     static var secondarySystemBackground: Color {
-        Color(NSColor.windowBackgroundColor)
+        DSColors.neutral.backgroundSecondary
     }
     
     static var label: Color {
-        Color(NSColor.labelColor)
+        DSColors.neutral.text
     }
     
     static var secondaryLabel: Color {
-        Color(NSColor.secondaryLabelColor)
+        DSColors.neutral.textSecondary
+    }
+    
+    static var tertiaryLabel: Color {
+        DSColors.neutral.textTertiary
+    }
+    
+    static var systemCard: Color {
+        DSColors.neutral.backgroundCard
+    }
+    
+    static var systemBorder: Color {
+        DSColors.neutral.border
+    }
+    
+    static var systemDivider: Color {
+        DSColors.neutral.divider
     }
 }
 
 // MARK: - View Extensions
 extension View {
+    /// Apply standard card styling using design system tokens
     func cardStyle() -> some View {
         self
-            .padding()
-            .background(Color.systemBackground)
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            .paddingCard()
+            .background(DSColors.neutral.backgroundCard)
+            .cornerRadiusStandard()
+            .shadowCard()
     }
     
+    /// Apply enhanced card styling with subtle elevation
+    func enhancedCardStyle() -> some View {
+        self
+            .paddingCard()
+            .background(DSColors.neutral.backgroundCard)
+            .cornerRadiusStandard()
+            .shadowMedium()
+    }
+    
+    /// Apply financial card styling for important data
+    func financialCardStyle() -> some View {
+        self
+            .paddingCard()
+            .background(DSColors.neutral.backgroundCard)
+            .cornerRadiusStandard()
+            .shadowBalanceCard()
+    }
+    
+    /// Apply navigation title styling using design system typography
     func navigationTitleStyle() -> some View {
         self
-            .font(.largeTitle)
-            .fontWeight(.bold)
-            .foregroundColor(.label)
+            .font(DSTypography.title.largeTitle)
+            .foregroundColor(DSColors.neutral.text)
+    }
+    
+    /// Apply primary heading style
+    func primaryHeadingStyle() -> some View {
+        self
+            .font(DSTypography.title.title2)
+            .foregroundColor(DSColors.neutral.text)
+    }
+    
+    /// Apply secondary heading style
+    func secondaryHeadingStyle() -> some View {
+        self
+            .font(DSTypography.title.title3)
+            .foregroundColor(DSColors.neutral.textSecondary)
+    }
+    
+    /// Apply body text style
+    func bodyTextStyle() -> some View {
+        self
+            .font(DSTypography.body.regular)
+            .foregroundColor(DSColors.neutral.text)
+    }
+    
+    /// Apply caption text style
+    func captionTextStyle() -> some View {
+        self
+            .font(DSTypography.caption.regular)
+            .foregroundColor(DSColors.neutral.textTertiary)
+    }
+    
+    /// Apply financial amount styling (positive/negative aware)
+    func financialAmountStyle(isPositive: Bool) -> some View {
+        self
+            .font(DSTypography.financial.currency)
+            .foregroundColor(isPositive ? DSColors.success.main : DSColors.error.main)
+    }
+    
+    /// Apply large financial amount styling
+    func largeFinancialAmountStyle(isPositive: Bool) -> some View {
+        self
+            .font(DSTypography.financial.currencyLarge)
+            .foregroundColor(isPositive ? DSColors.success.main : DSColors.error.main)
+    }
+    
+    /// Apply interactive button styling
+    func interactiveButtonStyle() -> some View {
+        self
+            .padding(.horizontal, DSSpacing.component.buttonPaddingH)
+            .padding(.vertical, DSSpacing.component.buttonPaddingV)
+            .background(DSColors.primary.main)
+            .foregroundColor(.white)
+            .cornerRadius(DSSpacing.radius.lg)
+            .shadowButton()
+    }
+    
+    /// Apply secondary button styling
+    func secondaryButtonStyle() -> some View {
+        self
+            .padding(.horizontal, DSSpacing.component.buttonPaddingH)
+            .padding(.vertical, DSSpacing.component.buttonPaddingV)
+            .background(DSColors.neutral.backgroundSecondary)
+            .foregroundColor(DSColors.neutral.text)
+            .cornerRadius(DSSpacing.radius.lg)
+            .shadowSubtle()
     }
     
     @ViewBuilder

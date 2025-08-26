@@ -11,11 +11,11 @@ import os
 import secrets
 import tempfile
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
 
 import aiofiles
-import magic
 from config.logging_config import get_logger, security_logger
 
 # Initialize logger
@@ -211,7 +211,11 @@ class SecureFileHandler:
                 if secure_path.exists():
                     secure_path.unlink()
             except Exception as e:
-                logger.warning(f"Could not delete temporary file", temp_path=str(secure_path), error=str(e))
+                logger.warning(
+                    "Could not delete temporary file: %s",
+                    str(secure_path),
+                    extra={"error": str(e)},
+                )
 
     async def secure_write_file(self, file_path: Path, content: bytes) -> None:
         """Securely write file content with proper permissions."""
@@ -236,7 +240,11 @@ class SecureFileHandler:
 
             shutil.rmtree(self.secure_temp_dir, ignore_errors=True)
         except Exception as e:
-            logger.warning(f"Could not clean up temporary directory", temp_dir=self.secure_temp_dir, error=str(e))
+            logger.warning(
+                "Could not clean up temporary directory: %s",
+                self.secure_temp_dir,
+                extra={"error": str(e)},
+            )
 
 
 # Try to import python-magic, fall back gracefully
@@ -248,8 +256,6 @@ except ImportError:
     logger.warning("python-magic not available, using fallback MIME detection")
     magic = None
     MAGIC_AVAILABLE = False
-
-from datetime import datetime
 
 # Global secure file handler instance
 secure_file_handler = SecureFileHandler()

@@ -118,28 +118,28 @@ struct KeyMetricsGrid: View {
     
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-            MetricCard(
+            InsightMetricCard(
                 title: "Savings Rate",
                 value: String(format: "%.1f%%", savingsRate),
                 trend: savingsRate >= 20 ? .positive : savingsRate >= 10 ? .neutral : .negative,
                 icon: "banknote.fill"
             )
             
-            MetricCard(
+            InsightMetricCard(
                 title: "Expense Ratio",
                 value: String(format: "%.1f%%", expenseRatio),
                 trend: expenseRatio <= 70 ? .positive : expenseRatio <= 85 ? .neutral : .negative,
                 icon: "chart.pie.fill"
             )
             
-            MetricCard(
+            InsightMetricCard(
                 title: "Avg Transaction",
                 value: averageTransactionAmount(),
                 trend: .neutral,
                 icon: "arrow.left.arrow.right"
             )
             
-            MetricCard(
+            InsightMetricCard(
                 title: "Active Accounts",
                 value: "\(dataManager.bankAccounts.filter { $0.isActive }.count)",
                 trend: .neutral,
@@ -161,7 +161,7 @@ struct KeyMetricsGrid: View {
     }
 }
 
-struct MetricCard: View {
+struct InsightMetricCard: View {
     let title: String
     let value: String
     let trend: TrendDirection

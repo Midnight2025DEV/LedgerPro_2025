@@ -71,7 +71,7 @@ class RuleViewModel: ObservableObject {
         case .name:
             filtered.sort { $0.ruleName < $1.ruleName }
         case .lastUsed:
-            filtered.sort { ($0.lastMatched ?? Date.distantPast) > ($1.lastMatched ?? Date.distantPast) }
+            filtered.sort(by: { ($0.lastMatchDate ?? Date.distantPast) > ($1.lastMatchDate ?? Date.distantPast) })
         case .successRate:
             filtered.sort { $0.confidence > $1.confidence }
         }
@@ -92,8 +92,8 @@ class RuleViewModel: ObservableObject {
         
         // Set amount range if consistent
         if transaction.amount < 0 {
-            rule.amountMin = Decimal(abs(transaction.amount) * 0.8)
-            rule.amountMax = Decimal(abs(transaction.amount) * 1.2)
+            rule.amountMin = abs(transaction.amount) * 0.8
+            rule.amountMax = abs(transaction.amount) * 1.2
         }
         
         return rule

@@ -1,6 +1,28 @@
 [flake8]
 max-line-length = 88
-extend-ignore = E203,W503,E722,F541,E231,D200,D400,D401,D205,F401,E501,I101,I201,I100,D101,D102,D104,D107,D403,B008,B007,B001,F841,SIM105,SIM102,SIM110,SIM910
-exclude = venv,__pycache__,.git,.pytest_cache,*.egg-info
-per-file-ignores = __init__.py:F401
-EOF < /dev/null
+extend-ignore = 
+    # E203: whitespace before ':' (conflicts with black)
+    E203,
+    # W503: line break before binary operator (conflicts with black)
+    W503,
+    # E501: line too long (handled by black)
+    E501,
+    # F401: imported but unused (common in __init__.py files)
+    F401,
+exclude = 
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    env,
+    .env,
+    migrations,
+    .pytest_cache,
+    logs/,
+per-file-ignores =
+    # Tests can have long lines and unused imports
+    tests/*:E501,F401,F811
+    # __init__.py files can have unused imports
+    __init__.py:F401
+    # Configuration files can be longer
+    config/*:E501

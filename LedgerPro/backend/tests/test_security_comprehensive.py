@@ -9,6 +9,7 @@ Covers authentication, file handling, input validation, and more.
 # Add parent directory to path for when running as script
 import os
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import hashlib
@@ -19,6 +20,7 @@ import pytest
 # Import our security modules
 # from config.secure_auth import SecureAuthConfig  # Module doesn't exist
 from middleware.security_headers import SecurityHeadersMiddleware
+
 # from utils.secure_file_handler import SecureFileHandler  # Has dependency on non-existent config.logging_config
 
 

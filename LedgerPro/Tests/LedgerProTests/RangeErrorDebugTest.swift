@@ -112,7 +112,7 @@ final class RangeErrorDebugTest: XCTestCase {
             Transaction(id: "test2", date: "2024-01-02", description: "STARBUCKS", amount: -5.75, category: "Uncategorized")
         ]
         
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "two-test", filename: "test.csv")
@@ -130,7 +130,7 @@ final class RangeErrorDebugTest: XCTestCase {
             Transaction(id: "test3", date: "2024-01-03", description: "AMAZON", amount: -99.99, category: "Uncategorized")
         ]
         
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "three-test", filename: "test.csv")
@@ -150,7 +150,7 @@ final class RangeErrorDebugTest: XCTestCase {
             Transaction(id: "test4", date: "2024-01-04", description: "WALMART", amount: -125.43, category: "Uncategorized")
         ]
         
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "four-negative-test", filename: "test.csv")
@@ -169,7 +169,7 @@ final class RangeErrorDebugTest: XCTestCase {
             Transaction(id: "test3", date: "2024-01-03", description: "PAYCHECK", amount: 3000.00, category: "Uncategorized")
         ]
         
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         let allTransactions = categorized.categorizedTransactions.map { $0.0 } + categorized.uncategorizedTransactions
         
         financialManager.addTransactions(allTransactions, jobId: "three-positive-test", filename: "test.csv")
@@ -184,7 +184,7 @@ final class RangeErrorDebugTest: XCTestCase {
     func testCategorizedTransactionStructure() async {
         let transaction = Transaction(id: "test", date: "2024-01-01", description: "STARBUCKS", amount: -5.50, category: "Uncategorized")
         
-        let categorized = importService.categorizeTransactions([transaction])
+        let categorized = await importService.categorizeTransactions([transaction])
         
         // Examine the structure
         print("Categorized count: \(categorized.categorizedCount)")

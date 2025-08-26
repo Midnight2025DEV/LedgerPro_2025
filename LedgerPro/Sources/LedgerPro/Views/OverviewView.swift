@@ -66,7 +66,7 @@ struct AccountFilterBar: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 // All Accounts
-                FilterChip(
+                AccountFilterChip(
                     title: "All Accounts",
                     systemImage: "wallet.fill",
                     isSelected: selectedAccountId == nil,
@@ -79,7 +79,7 @@ struct AccountFilterBar: View {
                 
                 // Individual Accounts
                 ForEach(dataManager.bankAccounts) { account in
-                    FilterChip(
+                    AccountFilterChip(
                         title: account.displayName,
                         systemImage: account.accountType.systemImage,
                         isSelected: selectedAccountId == account.id,
@@ -96,65 +96,6 @@ struct AccountFilterBar: View {
     }
 }
 
-struct FilterChip: View {
-    let title: String
-    let systemImage: String
-    let isSelected: Bool
-    let count: Int
-    let accountType: BankAccount.AccountType?
-    let action: () -> Void
-    
-    init(title: String, systemImage: String, isSelected: Bool, count: Int, accountType: BankAccount.AccountType? = nil, action: @escaping () -> Void) {
-        self.title = title
-        self.systemImage = systemImage
-        self.isSelected = isSelected
-        self.count = count
-        self.accountType = accountType
-        self.action = action
-    }
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 14))
-                
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
-                
-                Text("(\(count))")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(isSelected ? accentColor : Color(NSColor.controlBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
-            )
-            .foregroundColor(isSelected ? .white : .primary)
-        }
-        .buttonStyle(.plain)
-        .scaleEffect(isSelected ? 1.05 : 1.0)
-    }
-    
-    private var accentColor: Color {
-        if let accountType = accountType {
-            switch accountType {
-            case .checking: return .blue
-            case .savings: return .green
-            case .credit: return .orange
-            case .investment: return .purple
-            case .loan: return .red
-            }
-        }
-        return .blue
-    }
-}
 
 // MARK: - Context-Aware Components
 
@@ -599,6 +540,55 @@ struct CategorySpending: Identifiable {
         self.id = UUID()
         self.category = category
         self.amount = amount
+    }
+}
+
+// MARK: - Account Filter Chip
+
+struct AccountFilterChip: View {
+    let title: String
+    let systemImage: String
+    let isSelected: Bool
+    let count: Int
+    let accountType: BankAccount.AccountType?
+    let action: () -> Void
+    
+    init(title: String, systemImage: String, isSelected: Bool, count: Int, accountType: BankAccount.AccountType? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.isSelected = isSelected
+        self.count = count
+        self.accountType = accountType
+        self.action = action
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(isSelected ? .white : DSColors.primary.main)
+                
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(isSelected ? .white : DSColors.neutral.text)
+                
+                Text("(\(count))")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isSelected ? .white.opacity(0.8) : DSColors.neutral.textSecondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(isSelected ? DSColors.primary.main : DSColors.neutral.backgroundCard)
+            )
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? Color.clear : DSColors.neutral.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

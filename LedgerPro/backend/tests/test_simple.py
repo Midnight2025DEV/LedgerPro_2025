@@ -41,5 +41,5 @@ class TestBasicOperations:
 
     def test_simple_calculation(self):
         """Test simple calculation."""
-        result = 2 ** 3
+        result = 2**3
         assert result == 8

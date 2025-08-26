@@ -18,14 +18,13 @@ final class ForexCalculationTests: XCTestCase {
             category: "Shopping",
             originalAmount: mxnAmount,
             originalCurrency: "MXN",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         XCTAssertEqual(transaction.originalAmount, mxnAmount)
         XCTAssertEqual(transaction.originalCurrency, "MXN")
         XCTAssertEqual(transaction.exchangeRate, usdRate)
-        XCTAssertEqual(transaction.hasForex, true)
+        XCTAssertTrue(transaction.hasForex)
         
         // Test calculated USD amount
         let calculatedUSD = mxnAmount * usdRate
@@ -45,8 +44,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Food & Dining",
             originalAmount: eurAmount,
             originalCurrency: "EUR",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         let calculatedUSD = eurAmount * usdRate
@@ -66,8 +64,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Transportation",
             originalAmount: gbpAmount,
             originalCurrency: "GBP",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         let calculatedUSD = gbpAmount * usdRate
@@ -84,8 +81,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: 0.0,
             originalCurrency: "MXN",
-            exchangeRate: 0.058,
-            hasForex: true
+            exchangeRate: 0.058
         )
         
         XCTAssertEqual(transaction.originalAmount, 0.0)
@@ -108,8 +104,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: mxnAmount,
             originalCurrency: "MXN",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         let calculatedUSD = mxnAmount * usdRate
@@ -130,8 +125,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: mxnAmount,
             originalCurrency: "MXN",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         let calculatedUSD = mxnAmount * usdRate
@@ -151,8 +145,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: mxnAmount,
             originalCurrency: "MXN",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         let calculatedUSD = mxnAmount * usdRate
@@ -169,8 +162,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: 1000.0,
             originalCurrency: "MXN",
-            exchangeRate: 0.0,
-            hasForex: true
+            exchangeRate: 0.0
         )
         
         let calculatedUSD = (transaction.originalAmount ?? 0.0) * (transaction.exchangeRate ?? 1.0)
@@ -190,8 +182,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Food & Dining",
             originalAmount: jpyAmount,
             originalCurrency: "JPY",
-            exchangeRate: usdRate,
-            hasForex: true
+            exchangeRate: usdRate
         )
         
         let calculatedUSD = jpyAmount * usdRate
@@ -218,8 +209,7 @@ final class ForexCalculationTests: XCTestCase {
                 category: "Other",
                 originalAmount: 1000.0,
                 originalCurrency: "XXX",
-                exchangeRate: rate,
-                hasForex: true
+                exchangeRate: rate
             )
             
             XCTAssertEqual(transaction.exchangeRate, rate)
@@ -235,8 +225,7 @@ final class ForexCalculationTests: XCTestCase {
             category: "Shopping",
             originalAmount: 1000.0,
             originalCurrency: "MXN",
-            exchangeRate: 0.058,
-            hasForex: true
+            exchangeRate: 0.058
         )
         
         // Test that we can format the rate for display
@@ -259,12 +248,11 @@ final class ForexCalculationTests: XCTestCase {
                 category: "Other",
                 originalAmount: 1000.0,
                 originalCurrency: currency,
-                exchangeRate: 0.5,
-                hasForex: true
+                exchangeRate: 0.5
             )
             
             XCTAssertEqual(transaction.originalCurrency, currency)
-            XCTAssertEqual(transaction.hasForex, true)
+            XCTAssertTrue(transaction.hasForex)
         }
     }
     
@@ -276,12 +264,11 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: 1000.0,
             originalCurrency: "",
-            exchangeRate: 0.5,
-            hasForex: false
+            exchangeRate: 0.5
         )
         
         XCTAssertEqual(transaction.originalCurrency, "")
-        XCTAssertEqual(transaction.hasForex, false)
+        XCTAssertFalse(transaction.hasForex)
     }
     
     // MARK: - Transaction Forex Flag Tests
@@ -295,11 +282,10 @@ final class ForexCalculationTests: XCTestCase {
             category: "Other",
             originalAmount: 1000.0,
             originalCurrency: "MXN",
-            exchangeRate: 0.1,
-            hasForex: true
+            exchangeRate: 0.1
         )
         
-        XCTAssertTrue(forexTransaction.hasForex == true)
+        XCTAssertTrue(forexTransaction.hasForex)
         XCTAssertNotNil(forexTransaction.originalAmount)
         XCTAssertNotNil(forexTransaction.originalCurrency)
         XCTAssertNotNil(forexTransaction.exchangeRate)
@@ -311,11 +297,10 @@ final class ForexCalculationTests: XCTestCase {
             date: "2024-01-15",
             description: "DOMESTIC TRANSACTION",
             amount: -100.0,
-            category: "Other",
-            hasForex: false
+            category: "Other"
         )
         
-        XCTAssertFalse(domesticTransaction.hasForex == true)
+        XCTAssertFalse(domesticTransaction.hasForex)
         XCTAssertNil(domesticTransaction.originalAmount)
         XCTAssertNil(domesticTransaction.originalCurrency)
         XCTAssertNil(domesticTransaction.exchangeRate)
@@ -332,8 +317,7 @@ final class ForexCalculationTests: XCTestCase {
                 category: "Other",
                 originalAmount: Double(index * 17),
                 originalCurrency: "MXN",
-                exchangeRate: 0.058,
-                hasForex: true
+                exchangeRate: 0.058
             )
         }
         

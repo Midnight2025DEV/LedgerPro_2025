@@ -26,10 +26,10 @@ struct BudgetView: View {
         }
         .navigationTitle("Budgets")
         .sheet(isPresented: $showingCreateBudget) {
-            CreateBudgetView(budgetManager: budgetManager)
+            CreateBudgetView()
         }
         .sheet(item: $selectedBudget) { budget in
-            BudgetDetailView(budget: budget, budgetManager: budgetManager)
+            BudgetDetailView(budget: budget, spending: 0.0)
         }
         .onAppear {
             budgetManager.checkAndAdvancePeriods()

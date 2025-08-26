@@ -111,7 +111,9 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingRulesWindow) {
-            RulesManagementView()
+            // TODO: Fix RulesManagementView dependencies
+            Text("Rules Management (Coming Soon)")
+                .padding()
         }
         .sheet(isPresented: $showingLearningWindow) {
             LearningAnalyticsView()

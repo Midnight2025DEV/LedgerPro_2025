@@ -272,8 +272,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
                 category: "Uncategorized",
                 originalAmount: -21.50,
                 originalCurrency: "EUR",
-                exchangeRate: 1.186,
-                hasForex: true
+                exchangeRate: 1.186
             ),
             Transaction(
                 date: "2024-01-02", 
@@ -586,8 +585,7 @@ final class ImportCategorizationServiceTests: XCTestCase {
             rawData: ["original_key": "original_value"],
             originalAmount: transaction.originalAmount,
             originalCurrency: transaction.originalCurrency,
-            exchangeRate: transaction.exchangeRate,
-            hasForex: transaction.hasForex
+            exchangeRate: transaction.exchangeRate
         )
         
         // When

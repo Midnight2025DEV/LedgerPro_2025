@@ -31,10 +31,9 @@ struct RuleSuggestion: Identifiable, Hashable {
     func toCategoryRule() -> CategoryRule {
         var rule = CategoryRule(
             categoryId: suggestedCategory,
-            ruleName: merchantPattern,
-            priority: max(70, min(90, Int(confidence * 100)))
+            ruleName: merchantPattern
         )
-        
+        rule.priority = max(70, min(90, Int(confidence * 100)))
         rule.merchantContains = merchantPattern
         rule.amountSign = averageAmount < 0 ? .negative : .positive
         rule.isActive = true
@@ -397,14 +396,3 @@ extension Transaction {
     }
 }
 
-// MARK: - Array Extensions for Performance
-
-extension Array {
-    /// Splits array into chunks of specified size for batch processing
-    func chunked(into size: Int) -> [[Element]] {
-        guard !isEmpty && size > 0 else { return [] }
-        return stride(from: 0, to: count, by: size).map {
-            Array(self[$0..<Swift.min($0 + size, count)])
-        }
-    }
-}

@@ -12,6 +12,8 @@ struct Budget: Codable, Identifiable, Hashable {
     var alertThreshold: Double // 0.0 to 1.0 (percentage)
     var color: String
     var description: String?
+    var icon: String  // Default icon
+    var categoryIds: [String]  // Categories this budget covers
     
     // Computed properties
     var remainingAmount: Double {
@@ -47,6 +49,37 @@ struct Budget: Codable, Identifiable, Hashable {
         }
     }
     
+    var dailyBudget: Double {
+        let totalDays = period.durationInDays
+        return amount / Double(totalDays)
+    }
+    
+    var spendingPace: SpendingPace {
+        let progress = percentageUsed
+        if progress > 1.0 {
+            return .overBudget
+        } else if progress > 0.8 {
+            return .tooFast
+        } else if progress < 0.2 {
+            return .tooSlow
+        } else {
+            return .onTrack
+        }
+    }
+    
+    func spendingPace(spending: Double) -> SpendingPace {
+        let progress = spending / amount
+        if progress > 1.0 {
+            return .overBudget
+        } else if progress > 0.8 {
+            return .tooFast
+        } else if progress < 0.2 {
+            return .tooSlow
+        } else {
+            return .onTrack
+        }
+    }
+    
     init(
         id: UUID = UUID(),
         name: String,
@@ -56,7 +89,9 @@ struct Budget: Codable, Identifiable, Hashable {
         startDate: Date = Date(),
         alertThreshold: Double = 0.8,
         color: String = "#007AFF",
-        description: String? = nil
+        description: String? = nil,
+        icon: String = "dollarsign.circle.fill",
+        categoryIds: [String] = []
     ) {
         self.id = id
         self.name = name
@@ -69,6 +104,8 @@ struct Budget: Codable, Identifiable, Hashable {
         self.alertThreshold = alertThreshold
         self.color = color
         self.description = description
+        self.icon = icon
+        self.categoryIds = categoryIds
     }
     
     mutating func updateSpentAmount(_ spent: Double) {
@@ -92,6 +129,10 @@ enum BudgetPeriod: String, CaseIterable, Codable {
     case quarterly = "Quarterly"
     case yearly = "Yearly"
     case custom = "Custom"
+    
+    var displayName: String {
+        return self.rawValue
+    }
     
     var systemImage: String {
         switch self {
@@ -159,5 +200,86 @@ enum BudgetStatus: String, CaseIterable {
         case .overBudget: return "xmark.circle.fill"
         case .inactive: return "pause.circle.fill"
         }
+    }
+}
+
+// MARK: - Budget Extensions for Testing
+extension Budget {
+    // Sample budgets for testing and previews
+    static var sampleBudgets: [Budget] {
+        [
+            Budget(
+                name: "Groceries",
+                category: "Food",
+                amount: 600,
+                period: .monthly,
+                alertThreshold: 0.8,
+                color: "#34C759",
+                description: "Monthly grocery budget"
+            ),
+            Budget(
+                name: "Dining Out",
+                category: "Food",
+                amount: 300,
+                period: .monthly,
+                alertThreshold: 0.75,
+                color: "#FF9500",
+                description: "Restaurants and takeout"
+            ),
+            Budget(
+                name: "Transportation",
+                category: "Transport",
+                amount: 200,
+                period: .monthly,
+                alertThreshold: 0.9,
+                color: "#007AFF",
+                description: "Gas and public transit"
+            ),
+            Budget(
+                name: "Entertainment",
+                category: "Entertainment",
+                amount: 150,
+                period: .monthly,
+                alertThreshold: 0.7,
+                color: "#AF52DE",
+                description: "Movies, games, and fun"
+            ),
+            Budget(
+                name: "Utilities",
+                category: "Bills",
+                amount: 400,
+                period: .monthly,
+                alertThreshold: 0.95,
+                color: "#FF3B30",
+                description: "Electricity, water, internet"
+            )
+        ]
+    }
+    
+    // Progress percentage for UI display
+    func progressPercentage(spending: Double) -> Double {
+        guard amount > 0 else { return 0 }
+        return (spending / amount) * 100
+    }
+    
+    // Check if over budget with spending parameter
+    func isOverBudget(spending: Double) -> Bool {
+        return spending > amount
+    }
+    
+    // Calculate spending for this budget from transactions
+    func calculateSpending(from transactions: [Transaction]) -> Double {
+        return transactions
+            .filter { transaction in
+                // Include transactions within the budget period
+                transaction.formattedDate >= startDate && transaction.formattedDate <= endDate &&
+                // Match category
+                transaction.category == category &&
+                // Only include expenses
+                transaction.amount < 0
+            }
+            .reduce(0) { sum, transaction in
+                sum + abs(transaction.amount)
+            }
     }
 }

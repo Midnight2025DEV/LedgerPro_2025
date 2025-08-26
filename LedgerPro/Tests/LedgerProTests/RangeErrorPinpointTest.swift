@@ -31,7 +31,7 @@ final class RangeErrorPinpointTest: XCTestCase {
         ]
         
         print("🔍 Step 1: Testing ImportService.categorizeTransactions...")
-        let categorized = importService.categorizeTransactions(transactions)
+        let categorized = await importService.categorizeTransactions(transactions)
         print("✅ Categorization completed successfully")
         print("   - Categorized: \(categorized.categorizedCount)")
         print("   - Uncategorized: \(categorized.uncategorizedCount)")
@@ -78,7 +78,7 @@ final class RangeErrorPinpointTest: XCTestCase {
         let positiveTransaction = Transaction(id: "pos", date: "2024-01-01", description: "PAYCHECK", amount: 3000.00, category: "Uncategorized")
         
         print("🔍 Step 1: Categorizing positive transaction...")
-        let categorized = importService.categorizeTransactions([positiveTransaction])
+        let categorized = await importService.categorizeTransactions([positiveTransaction])
         print("✅ Categorization of positive transaction completed")
         
         print("🔍 Step 2: Extracting categorized positive transaction...")

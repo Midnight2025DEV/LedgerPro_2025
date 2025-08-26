@@ -69,8 +69,8 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
             ruleName: "Spotify Subscription"
         )
         customRule.merchantContains = "spotify"
-        customRule.amountMin = Decimal(-20)
-        customRule.amountMax = Decimal(-5)
+        customRule.amountMin = -20
+        customRule.amountMax = -5
         customRule.priority = 90
         customRule.confidence = 0.85
         
@@ -138,8 +138,8 @@ final class CategoryServiceCustomRuleTests: XCTestCase {
             ruleName: "Rent Payment Rule"
         )
         regexRule.regexPattern = "RENT|LEASE|APT\\s*#?\\d+"
-        regexRule.amountMin = Decimal(-5000)
-        regexRule.amountMax = Decimal(-500)
+        regexRule.amountMin = -5000
+        regexRule.amountMax = -500
         regexRule.priority = 95
         
         ruleStorage.saveRule(regexRule)

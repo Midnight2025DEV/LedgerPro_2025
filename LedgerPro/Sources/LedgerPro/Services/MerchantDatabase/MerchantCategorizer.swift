@@ -80,7 +80,11 @@ class MerchantCategorizer: ObservableObject {
         stats.uncategorized += 1
         
         // Use safe category retrieval with fallback
-        let fallbackCategory = Category.systemCategory(id: Category.systemCategoryIds.other) ?? 
+        let systemOtherCategory = Category.systemCategory(id: Category.systemCategoryIds.other)
+        if systemOtherCategory == nil {
+            AppLogger.shared.warning("⚠️ MerchantCategorizer: System 'Other' category not found, creating fallback")
+        }
+        let fallbackCategory = systemOtherCategory ?? 
                               Category(name: "Other", icon: "questionmark.circle", color: "#8E8E93")
         
         return CategorizationResult(
@@ -120,7 +124,7 @@ class MerchantCategorizer: ObservableObject {
                 originalAmount: transaction.originalAmount,
                 originalCurrency: transaction.originalCurrency,
                 exchangeRate: transaction.exchangeRate,
-                hasForex: transaction.hasForex,
+
                 wasAutoCategorized: transaction.wasAutoCategorized,
                 categorizationMethod: transaction.categorizationMethod
             )

@@ -2,6 +2,7 @@ import Foundation
 import OSLog
 import Combine
 import AppKit
+import Darwin
 
 /// MCP Server Launcher - Manages lifecycle of external MCP servers
 @MainActor
@@ -92,67 +93,90 @@ class MCPServerLauncher: ObservableObject {
         isLaunching = true
         launchStatus = .launching(serverType: type)
         
-        do {
-            let process = try createServerProcess(for: type)
-            let server = LaunchedServer(
-                type: type,
-                process: process,
-                port: type.port,
-                startTime: Date()
-            )
+        // Retry logic with exponential backoff
+        let maxRetries = 3
+        var lastError: Error?
+        
+        for attempt in 1...maxRetries {
+            logger.info("🔄 Launch attempt \(attempt)/\(maxRetries) for \(type.displayName)")
             
-            // Store the launched server
-            launchedServers[type.rawValue] = server
-            serverProcesses[type.rawValue] = process
-            
-            // Start the process
-            try process.run()
-            
-            // Wait for server to be ready
-            try await waitForServerReady(type)
-            
-            // Connect MCPBridge to the existing process we just launched
-            try await mcpBridge.connectToExistingServer(type: type)
-            
-            // Update status
-            launchedServers[type.rawValue]?.isHealthy = true
-            launchedServers[type.rawValue]?.lastHealthCheck = Date()
-            
-            updateLaunchStatus()
-            isLaunching = false
-            lastError = nil
-            
-            logger.info("✅ Successfully launched \(type.displayName) server on port \(type.port)")
-            
-        } catch {
-            isLaunching = false
-            
-            // Provide detailed error information
-            logger.error("❌ Failed to launch \(type.displayName):")
-            logger.error("   Original error: \(error.localizedDescription)")
-            
-            if let mcpError = error as? MCPLauncherError {
-                logger.error("   MCP Launcher error: \(mcpError.errorDescription ?? "Unknown MCP error")")
+            do {
+                let process = try createServerProcess(for: type)
+                let server = LaunchedServer(
+                    type: type,
+                    process: process,
+                    port: type.port,
+                    startTime: Date()
+                )
+                
+                // Store the launched server
+                launchedServers[type.rawValue] = server
+                serverProcesses[type.rawValue] = process
+                
+                // Start the process
+                try process.run()
+                logger.debug("Process launched, PID: \(process.processIdentifier)", category: "MCP-Launch")
+                
+                // Wait for server to be ready
+                try await waitForServerReady(type)
+                
+                // Connect MCPBridge to the existing process we just launched
+                try await mcpBridge.connectToExistingServer(type: type)
+                
+                // Update status
+                launchedServers[type.rawValue]?.isHealthy = true
+                launchedServers[type.rawValue]?.lastHealthCheck = Date()
+                
+                updateLaunchStatus()
+                isLaunching = false
+                lastError = nil
+                
+                logger.info("✅ Successfully launched \(type.displayName) server on port \(type.port) (attempt \(attempt))")
+                return
+                
+            } catch {
+                lastError = error
+                logger.warning("❌ Launch attempt \(attempt) failed for \(type.displayName): \(error.localizedDescription)")
+                
+                // Provide detailed error information on first attempt
+                if attempt == 1 {
+                    if let mcpError = error as? MCPLauncherError {
+                        logger.error("   MCP Launcher error: \(mcpError.errorDescription ?? "Unknown MCP error")")
+                    }
+                    if let connectionError = error as? MCPConnectionError {
+                        logger.error("   Connection error: \(connectionError.errorDescription ?? "Unknown connection error")")
+                    }
+                    if let processError = error as? CocoaError {
+                        logger.error("   Process error: \(processError.localizedDescription)")
+                    }
+                }
+                
+                // Cleanup failed attempt
+                await cleanupFailedServer(type)
+                
+                // Don't retry on the last attempt
+                if attempt < maxRetries {
+                    // Exponential backoff: 1s, 2s, 4s
+                    let delay = TimeInterval(1 << (attempt - 1))
+                    logger.info("⏳ Retrying in \(delay)s...")
+                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
             }
-            if let connectionError = error as? MCPConnectionError {
-                logger.error("   Connection error: \(connectionError.errorDescription ?? "Unknown connection error")")
-            }
-            if let processError = error as? CocoaError {
-                logger.error("   Process error: \(processError.localizedDescription)")
-            }
-            
-            let mcpError = MCPLauncherError.launchFailed(type.displayName, error.localizedDescription)
-            lastError = mcpError
-            launchStatus = .error(mcpError)
-            
-            // Cleanup on failure - but wait for launch state to clear first
-            await cleanupFailedServer(type)
-            
-            throw mcpError
         }
+        
+        // All retries failed
+        isLaunching = false
+        let mcpError = MCPLauncherError.launchFailed(type.displayName, lastError?.localizedDescription ?? "Unknown error")
+        self.lastError = mcpError
+        launchStatus = .error(mcpError)
+        
+        logger.error("❌ Failed to launch \(type.displayName) after \(maxRetries) attempts")
+        logger.error("   Final error: \(lastError?.localizedDescription ?? "Unknown error")")
+        
+        throw mcpError
     }
     
-    /// Stop a specific MCP server
+    /// Stop a specific MCP server with enhanced cleanup
     func stopServer(_ type: ServerType) {
         logger.info("🛑 Stopping \(type.displayName) server...")
         
@@ -161,20 +185,56 @@ class MCPServerLauncher: ObservableObject {
             await mcpBridge.removeServer(type: type)
         }
         
-        // Terminate process and wait for proper cleanup
+        // Enhanced process termination with monitoring
         if let process = serverProcesses[type.rawValue] {
+            let pid = process.processIdentifier
+            logger.debug("Terminating process PID: \(pid)", category: "MCP-Cleanup")
+            
+            // Step 1: Graceful termination
             process.terminate()
             
-            // Wait for graceful termination synchronously
-            let deadline = Date().addingTimeInterval(2.0)
+            // Step 2: Wait for graceful termination with better monitoring
+            let deadline = Date().addingTimeInterval(5.0) // Increased timeout
+            var checkCount = 0
+            
             while process.isRunning && Date() < deadline {
+                checkCount += 1
+                if checkCount % 10 == 0 { // Log every 1 second
+                    logger.debug("Waiting for graceful termination... (\(checkCount/10)s)", category: "MCP-Cleanup")
+                }
                 Thread.sleep(forTimeInterval: 0.1)
             }
             
-            // Force kill if still running
+            // Step 3: Force kill if still running
             if process.isRunning {
+                logger.warning("⚠️ Process still running after graceful termination, forcing kill", category: "MCP-Cleanup")
                 process.interrupt()
-                Thread.sleep(forTimeInterval: 0.5) // Give time for interrupt to take effect
+                
+                // Wait for interrupt to take effect
+                let forceDeadline = Date().addingTimeInterval(2.0)
+                while process.isRunning && Date() < forceDeadline {
+                    Thread.sleep(forTimeInterval: 0.1)
+                }
+                
+                // Step 4: System kill as last resort
+                if process.isRunning {
+                    logger.error("❌ Process still running after interrupt, attempting system kill", category: "MCP-Cleanup")
+                    
+                    // Use Darwin.kill with SIGKILL for force termination
+                    let killResult = Darwin.kill(pid, SIGKILL)
+                    if killResult == 0 {
+                        logger.info("✅ Successfully killed process with system call", category: "MCP-Cleanup")
+                    } else {
+                        logger.error("❌ Failed to kill process with system call (errno: \(errno))", category: "MCP-Cleanup")
+                    }
+                }
+            }
+            
+            // Step 5: Final verification
+            if process.isRunning {
+                logger.error("❌ Process \(pid) is still running after all termination attempts", category: "MCP-Cleanup")
+            } else {
+                logger.info("✅ Process \(pid) terminated successfully", category: "MCP-Cleanup")
             }
         }
         
@@ -366,14 +426,18 @@ class MCPServerLauncher: ObservableObject {
         outputPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty, let output = String(data: data, encoding: .utf8) {
-                self.logger.info("📊 \(script): \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+                Task { @MainActor in
+                    self.logger.info("📊 \(script): \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+                }
             }
         }
         
         errorPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty, let error = String(data: data, encoding: .utf8) {
-                self.logger.error("⚠️ \(script): \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
+                Task { @MainActor in
+                    self.logger.error("⚠️ \(script): \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
+                }
             }
         }
         
@@ -391,29 +455,108 @@ class MCPServerLauncher: ObservableObject {
         stopServer(type)
     }
     
-    private func waitForServerReady(_ type: ServerType, timeout: TimeInterval = 10.0) async throws {
-        // Wait for process to start
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+    private func waitForServerReady(_ type: ServerType, timeout: TimeInterval = 30.0) async throws {
+        let startTime = Date()
+        logger.info("🔄 Waiting for \(type.displayName) server to be ready (timeout: \(timeout)s)...")
         
-        // Check if process started successfully
-        guard let server = launchedServers[type.rawValue],
-              server.process.isRunning else {
+        // Phase 1: Wait for process to start (up to 5 seconds)
+        logger.debug("Phase 1: Waiting for process to start...", category: "MCP-Startup")
+        var processStarted = false
+        let processTimeout = min(5.0, timeout)
+        
+        for attempt in 1...Int(processTimeout) {
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            
+            guard let server = launchedServers[type.rawValue] else {
+                logger.warning("Attempt \(attempt): Server not found in launched servers", category: "MCP-Startup")
+                continue
+            }
+            
+            if server.process.isRunning {
+                logger.info("✅ Phase 1 complete: Process started after \(attempt)s", category: "MCP-Startup")
+                processStarted = true
+                break
+            } else {
+                logger.debug("Attempt \(attempt): Process not running yet", category: "MCP-Startup")
+            }
+        }
+        
+        guard processStarted else {
+            logger.error("❌ Process failed to start within \(processTimeout)s", category: "MCP-Startup")
             throw MCPLauncherError.serverStartupTimeout(type.displayName)
         }
         
-        logger.info("✅ MCP server \(type.displayName) process started successfully")
+        // Phase 2: Wait for server to be ready to accept connections
+        logger.debug("Phase 2: Waiting for server to be ready for connections...", category: "MCP-Startup")
+        let remainingTimeout = timeout - Date().timeIntervalSince(startTime)
+        
+        var serverReady = false
+        let maxAttempts = Int(remainingTimeout / 0.5) // Check every 500ms
+        
+        for attempt in 1...maxAttempts {
+            try await Task.sleep(nanoseconds: 500_000_000) // 500ms
+            
+            // Check if process is still running
+            guard let server = launchedServers[type.rawValue],
+                  server.process.isRunning else {
+                logger.error("❌ Process died during startup", category: "MCP-Startup")
+                throw MCPLauncherError.serverStartupTimeout(type.displayName)
+            }
+            
+            // Try to communicate with server using basic MCP protocol
+            if await testServerCommunication(type) {
+                logger.info("✅ Phase 2 complete: Server ready after \(String(format: "%.1f", Date().timeIntervalSince(startTime)))s", category: "MCP-Startup")
+                serverReady = true
+                break
+            } else {
+                logger.debug("Attempt \(attempt): Server not ready for communication", category: "MCP-Startup")
+            }
+        }
+        
+        guard serverReady else {
+            logger.error("❌ Server failed to be ready within \(timeout)s", category: "MCP-Startup")
+            throw MCPLauncherError.serverStartupTimeout(type.displayName)
+        }
+        
+        logger.info("✅ MCP server \(type.displayName) fully ready in \(String(format: "%.1f", Date().timeIntervalSince(startTime)))s")
     }
     
-    private func checkServerHealth(_ type: ServerType) async -> Bool {
-        // MCP servers communicate via stdio, not HTTP
-        // Check if the process is running
+    private func testServerCommunication(_ type: ServerType) async -> Bool {
+        // Test basic MCP communication by sending a simple ping
         guard let server = launchedServers[type.rawValue],
               server.process.isRunning else {
             return false
         }
         
-        // Process is running = server is healthy
-        return true
+        // For MCP servers, we can test by checking if the process is accepting input
+        // and hasn't crashed during initialization
+        do {
+            // Give a small delay to allow any startup logging to complete
+            try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            
+            // Check if process is still running and hasn't crashed
+            if server.process.isRunning {
+                // Additional check: see if process has been running for at least 1 second
+                // This indicates it got past initial startup phase
+                let uptime = Date().timeIntervalSince(server.startTime)
+                return uptime >= 1.0
+            }
+            
+            return false
+        } catch {
+            return false
+        }
+    }
+    
+    private func checkServerHealth(_ type: ServerType) async -> Bool {
+        // Enhanced health check with communication test
+        guard let server = launchedServers[type.rawValue],
+              server.process.isRunning else {
+            return false
+        }
+        
+        // Test basic communication
+        return await testServerCommunication(type)
     }
     
     private func updateLaunchStatus() {

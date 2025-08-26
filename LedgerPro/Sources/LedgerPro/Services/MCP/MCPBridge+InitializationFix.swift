@@ -73,21 +73,34 @@ extension MCPBridge {
         throw MCPRPCError(code: -32603, message: "MCP servers failed to initialize after \(maxAttempts) attempts")
     }
     
-    /// Helper function to add timeout to async operations
+    /// Executes an async operation with a timeout, using Swift's structured concurrency.
+    /// - Parameters:
+    ///   - seconds: Maximum time to wait before timing out
+    ///   - operation: The async operation to execute
+    /// - Returns: The result of the operation if it completes before timeout
+    /// - Throws: MCPRPCError if the operation times out or fails
     private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
         return try await withThrowingTaskGroup(of: T.self) { group in
+            // Add the main operation task
             group.addTask {
                 try await operation()
             }
             
+            // Add timeout task that throws after specified duration
             group.addTask {
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                 throw MCPRPCError(code: -32603, message: "Operation timed out after \(seconds) seconds")
             }
             
-            let result = try await group.next()!
-            group.cancelAll()
-            return result
+            // Use for-await-in pattern for safe iteration
+            for try await result in group {
+                // First result wins - cancel remaining tasks
+                group.cancelAll()
+                return result
+            }
+            
+            // This code should never be reached, but we handle it gracefully
+            throw MCPRPCError(code: -32603, message: "Unexpected task group state - no tasks completed")
         }
     }
 }

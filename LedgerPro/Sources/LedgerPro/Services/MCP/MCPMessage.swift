@@ -74,6 +74,11 @@ struct MCPRPCError: Codable, LocalizedError {
     static let authenticationRequired = MCPRPCError(code: -32001, message: "Authentication required")
     static let rateLimited = MCPRPCError(code: -32002, message: "Rate limited")
     static let resourceNotFound = MCPRPCError(code: -32003, message: "Resource not found")
+    
+    // Additional MCP-specific error codes
+    static func timeout(_ message: String) -> MCPRPCError {
+        return MCPRPCError(code: -32004, message: message)
+    }
 }
 
 /// MCP Method Enumeration
