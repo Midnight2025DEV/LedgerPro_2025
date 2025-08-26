@@ -1,6 +1,16 @@
-# Swift/Xcode
+# macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Swift/Xcode
 build/
+.build/
+.build-*/
 DerivedData/
 *.pbxuser
 *.xccheckout
@@ -60,3 +70,15 @@ personal_data/
 .coverage
 htmlcov/
 .pytest_cache/
+test_results*/
+test_fixes/
+run_*.sh
+test_*.sh
+*_test_*.txt
+swift_test_output.txt
+
+# Temporary files
+*.tmp
+*.temp
+filter_logic.txt
+force_unwrap_fix_report.md

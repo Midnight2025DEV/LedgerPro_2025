@@ -211,7 +211,11 @@ class SecureFileHandler:
                 if secure_path.exists():
                     secure_path.unlink()
             except Exception as e:
-                logger.warning(f"Could not delete temporary file", temp_path=str(secure_path), error=str(e))
+                logger.warning(
+                    f"Could not delete temporary file",
+                    temp_path=str(secure_path),
+                    error=str(e),
+                )
 
     async def secure_write_file(self, file_path: Path, content: bytes) -> None:
         """Securely write file content with proper permissions."""
@@ -236,7 +240,11 @@ class SecureFileHandler:
 
             shutil.rmtree(self.secure_temp_dir, ignore_errors=True)
         except Exception as e:
-            logger.warning(f"Could not clean up temporary directory", temp_dir=self.secure_temp_dir, error=str(e))
+            logger.warning(
+                f"Could not clean up temporary directory",
+                temp_dir=self.secure_temp_dir,
+                error=str(e),
+            )
 
 
 # Try to import python-magic, fall back gracefully

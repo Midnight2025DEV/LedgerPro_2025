@@ -33,6 +33,7 @@ from pydantic import BaseModel
 # Import the real CamelotProcessor and CSV processor
 from processors.python.camelot_processor import CamelotFinancialProcessor
 from processors.python.csv_processor_enhanced import EnhancedCSVProcessor
+from processors.python.data_sanitizer import DataSanitizer, PrivacyLevel
 
 # Use enhanced processor for better CSV handling
 enhanced_processor = EnhancedCSVProcessor()
@@ -69,6 +70,9 @@ file_hashes: Dict[str, str] = {}  # hash -> job_id mapping for duplicate detecti
 
 # Initialize the real processor
 processor = CamelotFinancialProcessor()
+
+# Initialize data sanitizer
+sanitizer = DataSanitizer({"level": PrivacyLevel.BALANCED.value})
 
 
 # Pydantic models
@@ -426,7 +430,9 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
             for transaction in result["transactions"]:
                 # DEBUG: Log transaction processing (secure logging)
                 if os.getenv("DEBUG_MODE", "false").lower() == "true":
-                    desc = transaction.get("description", "")[:20]  # Truncate description
+                    desc = transaction.get("description", "")[
+                        :20
+                    ]  # Truncate description
                     print(f"🔧 Processing transaction: {desc}...")
                     print(f"- has_forex: {transaction.get('has_forex')}")
                     # Remove amount logging for security
@@ -599,6 +605,78 @@ async def get_transactions(job_id: str):
         "transactions": results.get("transactions", []),
         "metadata": results.get("metadata", {}),
         "summary": results.get("summary", {}),
+    }
+
+
+@app.get("/api/transactions/{job_id}/sanitized")
+@app.get("/api/v1/transactions/{job_id}/sanitized")
+async def get_sanitized_transactions(job_id: str, privacy_level: str = "balanced"):
+    """Get sanitized transaction results safe for LLM consumption."""
+    if job_id not in processing_jobs:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
+
+    job = processing_jobs[job_id]
+
+    if job["status"] == "error":
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Processing failed: {job.get('error', 'Unknown error')}",
+        )
+
+    if job["status"] != "completed":
+        raise HTTPException(
+            status_code=status.HTTP_202_ACCEPTED,
+            detail=f"Processing still in progress: {job['status']}",
+        )
+
+    results = job.get("results")
+    if results is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Processing results not available",
+        )
+
+    # Validate privacy level
+    valid_levels = ["minimal", "balanced", "strict"]
+    if privacy_level not in valid_levels:
+        privacy_level = "balanced"
+
+    # Create a new sanitizer with the requested privacy level
+    transaction_sanitizer = DataSanitizer({"level": privacy_level})
+
+    # Get original transactions and metadata
+    original_transactions = results.get("transactions", [])
+    original_metadata = results.get("metadata", {})
+
+    # Sanitize transactions
+    safe_transactions = transaction_sanitizer.sanitize_transactions_batch(
+        original_transactions
+    )
+
+    # Sanitize metadata
+    safe_metadata = transaction_sanitizer.sanitize_document_metadata(original_metadata)
+
+    # Create anonymized summary
+    summary = transaction_sanitizer.create_anonymized_summary(original_transactions)
+
+    # Validate no PII remains
+    validation_issues = transaction_sanitizer.validate_no_pii(safe_transactions)
+
+    return {
+        "job_id": job_id,
+        "status": "completed",
+        "transactions": safe_transactions,
+        "metadata": safe_metadata,
+        "summary": summary,
+        "privacy_level": privacy_level,
+        "sanitized_at": datetime.now().isoformat(),
+        "audit_summary": {
+            "total_redactions": len(transaction_sanitizer.get_audit_log()),
+            "validation_passed": len(validation_issues) == 0,
+            "validation_issues": len(validation_issues),
+        },
     }
 
 

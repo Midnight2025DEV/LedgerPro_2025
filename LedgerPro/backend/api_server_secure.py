@@ -6,7 +6,7 @@ AI Financial Accountant - Secure FastAPI Server with Rate Limiting
 Production API server with comprehensive security protections:
 - File size limits (50MB)
 - Request rate limiting per IP
-- Body size limits middleware  
+- Body size limits middleware
 - Concurrent job limits per IP
 - Enhanced authentication with bypass privileges
 - Comprehensive monitoring and metrics
@@ -59,10 +59,10 @@ MAX_BODY_SIZE = 52 * 1024 * 1024  # 52MB body limit (slightly larger for overhea
 
 # Rate limiting configuration
 DEFAULT_UPLOAD_RATE = "10/minute"  # 10 uploads per minute for unauthenticated
-AUTH_UPLOAD_RATE = "30/minute"     # 30 uploads per minute for authenticated
-JOB_STATUS_RATE = "60/minute"      # 60 job status checks per minute
-TRANSACTION_RATE = "30/minute"     # 30 transaction requests per minute
-METRICS_RATE = "5/minute"          # 5 metrics requests per minute
+AUTH_UPLOAD_RATE = "30/minute"  # 30 uploads per minute for authenticated
+JOB_STATUS_RATE = "60/minute"  # 60 job status checks per minute
+TRANSACTION_RATE = "30/minute"  # 30 transaction requests per minute
+METRICS_RATE = "5/minute"  # 5 metrics requests per minute
 
 # Concurrent job limits
 MAX_CONCURRENT_JOBS_PER_IP = 3
@@ -75,13 +75,14 @@ processor = CamelotFinancialProcessor()
 
 # MARK: - Security Middleware
 
+
 class BodySizeLimitMiddleware(BaseHTTPMiddleware):
     """Middleware to limit request body size and prevent memory exhaustion"""
-    
+
     def __init__(self, app, max_body_size: int = MAX_BODY_SIZE):
         super().__init__(app)
         self.max_body_size = max_body_size
-    
+
     async def dispatch(self, request, call_next):
         if request.headers.get("content-length"):
             content_length = int(request.headers["content-length"])
@@ -91,9 +92,10 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
                     status_code=413,
                     content={
                         "detail": f"Request body too large. Maximum size is {self.max_body_size // (1024*1024)}MB"
-                    }
+                    },
                 )
         return await call_next(request)
+
 
 # MARK: - FastAPI App Setup
 
@@ -122,7 +124,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173", 
+        "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
@@ -153,24 +155,21 @@ request_metrics = {
     "auth_bypass_uses": 0,
     "by_endpoint": defaultdict(int),
     "by_ip": defaultdict(int),
-    "hourly_stats": defaultdict(lambda: {
-        "requests": 0,
-        "uploads": 0,
-        "errors": 0
-    })
+    "hourly_stats": defaultdict(lambda: {"requests": 0, "uploads": 0, "errors": 0}),
 }
 
 # MARK: - Authentication Setup
 
 security = HTTPBearer(auto_error=False)
 
+
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Optional[Dict[str, Any]]:
     """Optional authentication - returns user if authenticated, None otherwise"""
     if not credentials:
         return None
-    
+
     token = credentials.credentials
     if token in user_sessions:
         session = user_sessions[token]
@@ -179,47 +178,55 @@ async def get_current_user_optional(
         else:
             # Clean up expired session
             del user_sessions[token]
-    
+
     return None
 
+
 # MARK: - Security Helper Functions
+
 
 def check_ip_job_limit(ip_address: str) -> bool:
     """Check if IP has reached concurrent job limit"""
     now = datetime.now()
     ip_data = ip_job_counts[ip_address]
-    
+
     # Reset counter every hour
     if now > ip_data["reset_time"] + timedelta(hours=IP_LIMIT_RESET_HOURS):
         ip_data["count"] = 0
         ip_data["reset_time"] = now
-    
+
     if ip_data["count"] >= MAX_CONCURRENT_JOBS_PER_IP:
         # Check if any jobs have actually completed
-        active_jobs = sum(1 for job in processing_jobs.values() 
-                         if job.get("ip_address") == ip_address 
-                         and job["status"] in ["processing", "extracting_tables", "analyzing_transactions"])
+        active_jobs = sum(
+            1
+            for job in processing_jobs.values()
+            if job.get("ip_address") == ip_address
+            and job["status"]
+            in ["processing", "extracting_tables", "analyzing_transactions"]
+        )
         ip_data["count"] = active_jobs
-        
+
         if active_jobs >= MAX_CONCURRENT_JOBS_PER_IP:
             return False
-    
+
     return True
+
 
 def update_request_metrics(endpoint: str, ip_address: str, success: bool = True):
     """Update request metrics for monitoring"""
     request_metrics["total_requests"] += 1
     request_metrics["by_endpoint"][endpoint] += 1
     request_metrics["by_ip"][ip_address] += 1
-    
+
     if not success:
         request_metrics["failed_requests"] += 1
-    
+
     # Update hourly stats
     hour_key = datetime.now().strftime("%Y-%m-%d-%H")
     request_metrics["hourly_stats"][hour_key]["requests"] += 1
     if not success:
         request_metrics["hourly_stats"][hour_key]["errors"] += 1
+
 
 def validate_file_size(file_content: bytes, filename: str) -> None:
     """Validate file size and raise appropriate exception if too large"""
@@ -228,10 +235,12 @@ def validate_file_size(file_content: bytes, filename: str) -> None:
         raise HTTPException(
             status_code=413,
             detail=f"File '{filename}' is too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB. "
-                   f"Current size: {len(file_content) // (1024*1024)}MB"
+            f"Current size: {len(file_content) // (1024*1024)}MB",
         )
 
+
 # MARK: - Custom Rate Limit Exception Handler
+
 
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
@@ -239,33 +248,38 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     request_metrics["rate_limited_requests"] += 1
     client_ip = get_remote_address(request)
     request_metrics["by_ip"][client_ip] += 1
-    
+
     update_request_metrics(str(request.url.path), client_ip, success=False)
-    
+
     return JSONResponse(
         status_code=429,
         content={
             "detail": f"Rate limit exceeded: {exc.detail}",
             "retry_after": "60",
-            "tip": "Consider authenticating for higher rate limits"
+            "tip": "Consider authenticating for higher rate limits",
         },
-        headers={"Retry-After": "60"}
+        headers={"Retry-After": "60"},
     )
 
+
 # MARK: - Pydantic Models
+
 
 class LoginRequest(BaseModel):
     email: str
     password: str
 
+
 class LoginResponse(BaseModel):
     token: str
     user: Dict[str, Any]
+
 
 class UploadResponse(BaseModel):
     job_id: str
     status: str
     message: str
+
 
 class MetricsResponse(BaseModel):
     metrics: Dict[str, Any]
@@ -273,7 +287,9 @@ class MetricsResponse(BaseModel):
     unique_ips: int
     timestamp: str
 
+
 # MARK: - API Endpoints
+
 
 @app.get("/api/health")
 @limiter.limit("30/minute")
@@ -281,7 +297,7 @@ async def health_check(request: Request):
     """Health check endpoint with basic rate limiting"""
     client_ip = get_remote_address(request)
     update_request_metrics("/api/health", client_ip)
-    
+
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
@@ -291,12 +307,13 @@ async def health_check(request: Request):
         "security_features": [
             "File size limits",
             "Rate limiting",
-            "Body size limits", 
+            "Body size limits",
             "Concurrent job limits",
             "Enhanced authentication",
-            "Request monitoring"
-        ]
+            "Request monitoring",
+        ],
     }
+
 
 @app.post("/api/auth/login", response_model=LoginResponse)
 @limiter.limit("10/minute")
@@ -304,20 +321,31 @@ async def login(request: Request, login_request: LoginRequest):
     """Enhanced authentication endpoint with rate limiting"""
     client_ip = get_remote_address(request)
     update_request_metrics("/api/auth/login", client_ip)
-    
+
     # Demo credentials for local testing
     demo_users = {
-        "demo@example.com": {"password": "demo123", "name": "Demo User", "role": "user"},
-        "test@financiai.com": {"password": "test123", "name": "Test User", "role": "user"},
-        "admin@financiai.com": {"password": "admin123", "name": "Admin User", "role": "admin"},
+        "demo@example.com": {
+            "password": "demo123",
+            "name": "Demo User",
+            "role": "user",
+        },
+        "test@financiai.com": {
+            "password": "test123",
+            "name": "Test User",
+            "role": "user",
+        },
+        "admin@financiai.com": {
+            "password": "admin123",
+            "name": "Admin User",
+            "role": "admin",
+        },
     }
 
     user_info = demo_users.get(login_request.email.lower())
     if not user_info or user_info["password"] != login_request.password:
         update_request_metrics("/api/auth/login", client_ip, success=False)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
 
     # Create session token
@@ -335,10 +363,11 @@ async def login(request: Request, login_request: LoginRequest):
         "user": user_data,
         "expires_at": datetime.now() + timedelta(hours=24),
         "ip_address": client_ip,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
 
     return LoginResponse(token=token, user=user_data)
+
 
 @app.post("/api/upload", response_model=UploadResponse)
 @app.post("/api/v1/upload", response_model=UploadResponse)
@@ -346,11 +375,11 @@ async def login(request: Request, login_request: LoginRequest):
 async def upload_file(
     request: Request,
     file: UploadFile = File(...),
-    current_user = Depends(get_current_user_optional)
+    current_user=Depends(get_current_user_optional),
 ):
     """Secure upload endpoint with comprehensive protection"""
     client_ip = get_remote_address(request)
-    
+
     # Apply different rate limits based on authentication
     if current_user:
         request_metrics["auth_bypass_uses"] += 1
@@ -359,11 +388,13 @@ async def upload_file(
             await limiter.check_request(request, AUTH_UPLOAD_RATE)
         except RateLimitExceeded as e:
             raise e
-    
+
     # Update metrics
     update_request_metrics("/api/upload", client_ip)
-    request_metrics["hourly_stats"][datetime.now().strftime("%Y-%m-%d-%H")]["uploads"] += 1
-    
+    request_metrics["hourly_stats"][datetime.now().strftime("%Y-%m-%d-%H")][
+        "uploads"
+    ] += 1
+
     # Validate file type
     if not file.filename.lower().endswith((".pdf", ".csv")):
         update_request_metrics("/api/upload", client_ip, success=False)
@@ -375,7 +406,7 @@ async def upload_file(
     # Read file content and validate size
     file_content = await file.read()
     await file.seek(0)  # Reset file pointer
-    
+
     # SECURITY: File size validation
     validate_file_size(file_content, file.filename)
 
@@ -392,7 +423,7 @@ async def upload_file(
                 job_id=existing_job_id,
                 status=existing_job["status"],
                 message=f"Duplicate file detected. Returning existing job for {file.filename}. "
-                       f"Original processed on {existing_job['created_at'][:10]}",
+                f"Original processed on {existing_job['created_at'][:10]}",
             )
 
     # SECURITY: Check concurrent job limits (skip for authenticated users)
@@ -401,7 +432,7 @@ async def upload_file(
         raise HTTPException(
             status_code=429,
             detail=f"Too many concurrent uploads. Maximum {MAX_CONCURRENT_JOBS_PER_IP} active jobs per IP. "
-                   f"Please authenticate for higher limits."
+            f"Please authenticate for higher limits.",
         )
 
     # Create new job ID
@@ -431,13 +462,16 @@ async def upload_file(
     if file.filename.lower().endswith(".csv"):
         asyncio.create_task(process_csv_file_async(job_id, file.filename, file_content))
     else:
-        asyncio.create_task(process_pdf_with_camelot(job_id, file.filename, file_content))
+        asyncio.create_task(
+            process_pdf_with_camelot(job_id, file.filename, file_content)
+        )
 
     return UploadResponse(
         job_id=job_id,
         status="processing",
         message=f"Processing started for {file.filename} (authenticated: {current_user is not None})",
     )
+
 
 @app.get("/api/jobs/{job_id}")
 @app.get("/api/v1/jobs/{job_id}")
@@ -446,12 +480,11 @@ async def get_job_status(request: Request, job_id: str):
     """Get job status with rate limiting"""
     client_ip = get_remote_address(request)
     update_request_metrics("/api/jobs", client_ip)
-    
+
     if job_id not in processing_jobs:
         update_request_metrics("/api/jobs", client_ip, success=False)
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     job = processing_jobs[job_id]
@@ -472,8 +505,9 @@ async def get_job_status(request: Request, job_id: str):
         "completed_at": job.get("completed_at"),
         "error": job.get("error"),
         "is_duplicate": is_duplicate,
-        "is_authenticated": job.get("is_authenticated", False)
+        "is_authenticated": job.get("is_authenticated", False),
     }
+
 
 @app.get("/api/transactions/{job_id}")
 @app.get("/api/v1/transactions/{job_id}")
@@ -482,12 +516,11 @@ async def get_transactions(request: Request, job_id: str):
     """Get processed transactions with rate limiting"""
     client_ip = get_remote_address(request)
     update_request_metrics("/api/transactions", client_ip)
-    
+
     if job_id not in processing_jobs:
         update_request_metrics("/api/transactions", client_ip, success=False)
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     job = processing_jobs[job_id]
@@ -521,45 +554,51 @@ async def get_transactions(request: Request, job_id: str):
         "summary": results.get("summary", {}),
     }
 
+
 @app.get("/api/metrics", response_model=MetricsResponse)
 @limiter.limit(METRICS_RATE)
 async def get_metrics(
-    request: Request, 
-    current_user = Depends(get_current_user_optional)
+    request: Request, current_user=Depends(get_current_user_optional)
 ):
     """Get comprehensive API metrics (authenticated users only)"""
     if not current_user:
         raise HTTPException(
-            status_code=401, 
-            detail="Authentication required for metrics access"
+            status_code=401, detail="Authentication required for metrics access"
         )
-    
+
     client_ip = get_remote_address(request)
     update_request_metrics("/api/metrics", client_ip)
-    
+
     # Calculate active jobs
-    active_jobs = len([j for j in processing_jobs.values() 
-                      if j["status"] in ["processing", "extracting_tables", "analyzing_transactions"]])
-    
+    active_jobs = len(
+        [
+            j
+            for j in processing_jobs.values()
+            if j["status"]
+            in ["processing", "extracting_tables", "analyzing_transactions"]
+        ]
+    )
+
     # Get unique IP count
     unique_ips = len(ip_job_counts)
-    
+
     # Clean old hourly stats (keep last 24 hours)
     current_time = datetime.now()
     cutoff_time = current_time - timedelta(hours=24)
     cutoff_key = cutoff_time.strftime("%Y-%m-%d-%H")
-    
+
     # Remove old hourly stats
     old_keys = [k for k in request_metrics["hourly_stats"].keys() if k < cutoff_key]
     for old_key in old_keys[:10]:  # Remove up to 10 old entries per request
         del request_metrics["hourly_stats"][old_key]
-    
+
     return MetricsResponse(
         metrics=dict(request_metrics),
         active_jobs=active_jobs,
         unique_ips=unique_ips,
-        timestamp=datetime.now().isoformat()
+        timestamp=datetime.now().isoformat(),
     )
+
 
 @app.get("/api/jobs")
 @limiter.limit("30/minute")
@@ -567,7 +606,7 @@ async def list_jobs(request: Request):
     """List all processing jobs for debugging (with rate limiting)"""
     client_ip = get_remote_address(request)
     update_request_metrics("/api/jobs", client_ip)
-    
+
     return {
         "jobs": [
             {
@@ -593,16 +632,18 @@ async def list_jobs(request: Request):
             "rate_limited_requests": request_metrics["rate_limited_requests"],
             "large_file_rejections": request_metrics["large_file_rejections"],
             "concurrent_limit_hits": request_metrics["concurrent_limit_hits"],
-        }
+        },
     }
 
+
 # MARK: - Processing Functions (with cleanup tracking)
+
 
 async def process_csv_file_async(job_id: str, filename: str, file_content: bytes):
     """Process CSV file with enhanced tracking and cleanup"""
     temp_path = None
     client_ip = processing_jobs[job_id].get("ip_address")
-    
+
     try:
         # Update status
         processing_jobs[job_id]["status"] = "processing_csv"
@@ -663,7 +704,7 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
         if result and "transactions" in result:
             for transaction in result["transactions"]:
                 raw_data = transaction.get("raw_data", {})
-                
+
                 transaction_data = {
                     "date": transaction["date"],
                     "description": transaction["description"],
@@ -675,12 +716,14 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
 
                 # Add forex fields if present
                 if transaction.get("has_forex"):
-                    transaction_data.update({
-                        "original_amount": transaction.get("original_amount"),
-                        "original_currency": transaction.get("original_currency"),
-                        "exchange_rate": transaction.get("exchange_rate"),
-                        "has_forex": True,
-                    })
+                    transaction_data.update(
+                        {
+                            "original_amount": transaction.get("original_amount"),
+                            "original_currency": transaction.get("original_currency"),
+                            "exchange_rate": transaction.get("exchange_rate"),
+                            "has_forex": True,
+                        }
+                    )
 
                 transactions.append(transaction_data)
 
@@ -690,21 +733,23 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
                     total_expenses += abs(transaction["amount"])
 
         # Mark as complete
-        processing_jobs[job_id].update({
-            "status": "completed",
-            "progress": 100,
-            "results": {
-                "transactions": transactions,
-                "metadata": result.get("metadata", {}),
-                "summary": {
-                    "total_income": total_income,
-                    "total_expenses": total_expenses,
-                    "net_amount": total_income - total_expenses,
-                    "transaction_count": len(transactions),
+        processing_jobs[job_id].update(
+            {
+                "status": "completed",
+                "progress": 100,
+                "results": {
+                    "transactions": transactions,
+                    "metadata": result.get("metadata", {}),
+                    "summary": {
+                        "total_income": total_income,
+                        "total_expenses": total_expenses,
+                        "net_amount": total_income - total_expenses,
+                        "transaction_count": len(transactions),
+                    },
                 },
-            },
-            "completed_at": datetime.now().isoformat(),
-        })
+                "completed_at": datetime.now().isoformat(),
+            }
+        )
 
         print(f"✅ CSV processing complete: {len(transactions)} transactions found")
 
@@ -721,19 +766,21 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
 
     except Exception as e:
         print(f"❌ CSV processing error: {str(e)}")
-        processing_jobs[job_id].update({
-            "status": "error",
-            "error": str(e),
-            "completed_at": datetime.now().isoformat(),
-        })
+        processing_jobs[job_id].update(
+            {
+                "status": "error",
+                "error": str(e),
+                "completed_at": datetime.now().isoformat(),
+            }
+        )
         update_request_metrics("/api/upload", client_ip, success=False)
-        
+
     finally:
         # Cleanup: Decrement IP counter for unauthenticated users
         if not processing_jobs[job_id].get("is_authenticated", False):
             if client_ip and ip_job_counts[client_ip]["count"] > 0:
                 ip_job_counts[client_ip]["count"] -= 1
-        
+
         # Clean up temp file
         if temp_path:
             try:
@@ -741,11 +788,12 @@ async def process_csv_file_async(job_id: str, filename: str, file_content: bytes
             except Exception as cleanup_error:
                 print(f"⚠️ Failed to cleanup temp file: {cleanup_error}")
 
+
 async def process_pdf_with_camelot(job_id: str, filename: str, file_content: bytes):
     """Process PDF with enhanced tracking and cleanup"""
     temp_path = None
     client_ip = processing_jobs[job_id].get("ip_address")
-    
+
     try:
         # Update status
         processing_jobs[job_id]["status"] = "extracting_tables"
@@ -817,12 +865,14 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
 
                 # Add forex fields if present
                 if transaction.get("has_forex"):
-                    transaction_data.update({
-                        "original_amount": transaction.get("original_amount"),
-                        "original_currency": transaction.get("original_currency"),
-                        "exchange_rate": transaction.get("exchange_rate"),
-                        "has_forex": True,
-                    })
+                    transaction_data.update(
+                        {
+                            "original_amount": transaction.get("original_amount"),
+                            "original_currency": transaction.get("original_currency"),
+                            "exchange_rate": transaction.get("exchange_rate"),
+                            "has_forex": True,
+                        }
+                    )
 
                 transactions.append(transaction_data)
 
@@ -850,7 +900,9 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
         }
         processing_jobs[job_id]["completed_at"] = datetime.now().isoformat()
 
-        print(f"✅ Successfully processed {filename}: {len(transactions)} transactions found")
+        print(
+            f"✅ Successfully processed {filename}: {len(transactions)} transactions found"
+        )
 
         await manager.send_job_update(
             job_id,
@@ -869,13 +921,13 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
         processing_jobs[job_id]["completed_at"] = datetime.now().isoformat()
         print(f"❌ Error processing {filename}: {e}")
         update_request_metrics("/api/upload", client_ip, success=False)
-        
+
     finally:
         # Cleanup: Decrement IP counter for unauthenticated users
         if not processing_jobs[job_id].get("is_authenticated", False):
             if client_ip and ip_job_counts[client_ip]["count"] > 0:
                 ip_job_counts[client_ip]["count"] -= 1
-        
+
         # Clean up temporary file
         if temp_path and os.path.exists(temp_path):
             try:
@@ -883,7 +935,9 @@ async def process_pdf_with_camelot(job_id: str, filename: str, file_content: byt
             except OSError:
                 pass
 
+
 # MARK: - WebSocket Support (unchanged but with rate limiting awareness)
+
 
 class ConnectionManager:
     def __init__(self):
@@ -904,7 +958,9 @@ class ConnectionManager:
             except Exception:
                 self.disconnect(job_id)
 
+
 manager = ConnectionManager()
+
 
 @app.websocket("/api/ws/progress/{job_id}")
 @app.websocket("/api/v1/ws/progress/{job_id}")
@@ -914,26 +970,30 @@ async def websocket_progress(websocket: WebSocket, job_id: str):
 
     try:
         if job_id in processing_jobs:
-            await websocket.send_json({
-                "job_id": job_id,
-                "status": processing_jobs[job_id]["status"],
-                "progress": processing_jobs[job_id].get("progress", 0),
-                "filename": processing_jobs[job_id].get("filename", ""),
-            })
+            await websocket.send_json(
+                {
+                    "job_id": job_id,
+                    "status": processing_jobs[job_id]["status"],
+                    "progress": processing_jobs[job_id].get("progress", 0),
+                    "filename": processing_jobs[job_id].get("filename", ""),
+                }
+            )
 
         while True:
             await websocket.receive_text()
 
             if job_id in processing_jobs:
                 job = processing_jobs[job_id]
-                await websocket.send_json({
-                    "job_id": job_id,
-                    "status": job["status"],
-                    "progress": job.get("progress", 0),
-                    "filename": job.get("filename", ""),
-                    "completed": job["status"] in ["completed", "error"],
-                    "error": job.get("error") if job["status"] == "error" else None,
-                })
+                await websocket.send_json(
+                    {
+                        "job_id": job_id,
+                        "status": job["status"],
+                        "progress": job.get("progress", 0),
+                        "filename": job.get("filename", ""),
+                        "completed": job["status"] in ["completed", "error"],
+                        "error": job.get("error") if job["status"] == "error" else None,
+                    }
+                )
 
                 if job["status"] in ["completed", "error"]:
                     break
@@ -943,6 +1003,7 @@ async def websocket_progress(websocket: WebSocket, job_id: str):
     except Exception as e:
         print(f"WebSocket error for job {job_id}: {e}")
         manager.disconnect(job_id)
+
 
 # MARK: - Server Startup
 
@@ -959,7 +1020,9 @@ if __name__ == "__main__":
     print()
     print("🔒 Security Features Enabled:")
     print(f"  📏 File Size Limit: {MAX_FILE_SIZE // (1024*1024)}MB")
-    print(f"  ⏱️  Rate Limits: {DEFAULT_UPLOAD_RATE} (unauth), {AUTH_UPLOAD_RATE} (auth)")
+    print(
+        f"  ⏱️  Rate Limits: {DEFAULT_UPLOAD_RATE} (unauth), {AUTH_UPLOAD_RATE} (auth)"
+    )
     print(f"  🔢 Concurrent Jobs: {MAX_CONCURRENT_JOBS_PER_IP} per IP")
     print(f"  📦 Body Size Limit: {MAX_BODY_SIZE // (1024*1024)}MB")
     print("  🛡️  IP-based rate limiting with authentication bypass")
@@ -972,9 +1035,5 @@ if __name__ == "__main__":
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "8000"))
     uvicorn.run(
-        "api_server_secure:app", 
-        host=host, 
-        port=port, 
-        reload=True, 
-        log_level="info"
+        "api_server_secure:app", host=host, port=port, reload=True, log_level="info"
     )

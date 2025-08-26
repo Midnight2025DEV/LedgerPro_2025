@@ -64,11 +64,23 @@ class EnhancedCSVProcessor:
             "transaction_type",
             "transaction type",
         ]
-        
+
         self.forex_columns = {
-            "original_amount": ["original amount", "original_amount", "instructed amount"],
-            "original_currency": ["original currency", "original_currency", "instructed currency"], 
-            "exchange_rate": ["exchange rate", "exchange_rate", "currency exchange rate"]
+            "original_amount": [
+                "original amount",
+                "original_amount",
+                "instructed amount",
+            ],
+            "original_currency": [
+                "original currency",
+                "original_currency",
+                "instructed currency",
+            ],
+            "exchange_rate": [
+                "exchange rate",
+                "exchange_rate",
+                "currency exchange rate",
+            ],
         }
 
     def detect_format(self, file_content: str) -> str:
@@ -259,26 +271,32 @@ class EnhancedCSVProcessor:
 
                 # Check for forex data in the row using dynamic column mapping
                 forex_mapping = {}
-                
+
                 # Map forex columns dynamically
                 for col_variant in self.forex_columns["original_amount"]:
-                    matching_header = next((h for h in headers if h.lower() == col_variant.lower()), None)
+                    matching_header = next(
+                        (h for h in headers if h.lower() == col_variant.lower()), None
+                    )
                     if matching_header:
                         forex_mapping["original_amount"] = matching_header
                         break
-                
+
                 for col_variant in self.forex_columns["original_currency"]:
-                    matching_header = next((h for h in headers if h.lower() == col_variant.lower()), None)
+                    matching_header = next(
+                        (h for h in headers if h.lower() == col_variant.lower()), None
+                    )
                     if matching_header:
                         forex_mapping["original_currency"] = matching_header
                         break
-                
+
                 for col_variant in self.forex_columns["exchange_rate"]:
-                    matching_header = next((h for h in headers if h.lower() == col_variant.lower()), None)
+                    matching_header = next(
+                        (h for h in headers if h.lower() == col_variant.lower()), None
+                    )
                     if matching_header:
                         forex_mapping["exchange_rate"] = matching_header
                         break
-                
+
                 # Also check for the hardcoded "Instructed" columns for backward compatibility
                 if "Instructed Currency" in headers:
                     forex_mapping["original_currency"] = "Instructed Currency"
@@ -286,33 +304,46 @@ class EnhancedCSVProcessor:
                     forex_mapping["original_amount"] = "Instructed Amount"
                 if "Currency Exchange Rate" in headers:
                     forex_mapping["exchange_rate"] = "Currency Exchange Rate"
-                
+
                 # Process forex data if currency column found
                 if forex_mapping.get("original_currency"):
-                    currency = row_dict.get(forex_mapping["original_currency"], "").strip()
+                    currency = row_dict.get(
+                        forex_mapping["original_currency"], ""
+                    ).strip()
                     if currency and currency != "USD":
                         transaction["original_currency"] = currency
                         transaction["has_forex"] = True
-                        
+
                         # Add original amount if available
                         if forex_mapping.get("original_amount"):
-                            orig_amt_str = row_dict.get(forex_mapping["original_amount"], "").strip()
+                            orig_amt_str = row_dict.get(
+                                forex_mapping["original_amount"], ""
+                            ).strip()
                             if orig_amt_str:
-                                transaction["original_amount"] = self.parse_amount_enhanced(orig_amt_str)
-                        
+                                transaction["original_amount"] = (
+                                    self.parse_amount_enhanced(orig_amt_str)
+                                )
+
                         # Add exchange rate if available
                         if forex_mapping.get("exchange_rate"):
-                            rate_str = row_dict.get(forex_mapping["exchange_rate"], "").strip()
+                            rate_str = row_dict.get(
+                                forex_mapping["exchange_rate"], ""
+                            ).strip()
                             if rate_str:
                                 try:
                                     transaction["exchange_rate"] = float(rate_str)
                                 except:
                                     pass
-                        
+
                         # Calculate exchange rate if not provided but we have both amounts
-                        if not transaction.get("exchange_rate") and transaction.get("original_amount"):
+                        if not transaction.get("exchange_rate") and transaction.get(
+                            "original_amount"
+                        ):
                             if transaction["original_amount"] != 0:
-                                transaction["exchange_rate"] = abs(transaction["amount"] / transaction["original_amount"])
+                                transaction["exchange_rate"] = abs(
+                                    transaction["amount"]
+                                    / transaction["original_amount"]
+                                )
 
                 # Store raw data
                 transaction["raw_data"] = {

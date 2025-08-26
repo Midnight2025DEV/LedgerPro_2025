@@ -2,11 +2,18 @@
 """
 OpenAI MCP Server for AI Financial Accountant
 Provides centralized OpenAI functionality with BYOAI support
+NOTE: All data is sanitized to remove PII before sending to OpenAI
 """
 import os
 import json
+import sys
 from datetime import datetime
 from typing import Dict, List, Optional
+from pathlib import Path
+
+# Add backend processors to path
+sys.path.append(str(Path(__file__).parent.parent.parent / 'backend'))
+
 from mcp.server import Server, NotificationOptions
 from mcp.server.models import InitializationOptions
 import mcp.server.stdio
@@ -14,11 +21,21 @@ import mcp.types as types
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# Import data sanitizer
+try:
+    from processors.python.data_sanitizer import DataSanitizer, PrivacyLevel
+except ImportError:
+    print("Warning: DataSanitizer not available. Running without PII protection.")
+    DataSanitizer = None
+
 # Load environment variables
 load_dotenv()
 
 # Initialize MCP server
 server = Server("openai-service")
+
+# Initialize data sanitizer with balanced privacy level
+sanitizer = DataSanitizer({'level': PrivacyLevel.BALANCED.value}) if DataSanitizer else None
 
 def get_openai_client(api_key: Optional[str] = None) -> OpenAI:
     """Get OpenAI client with provided or default API key"""
@@ -232,18 +249,25 @@ async def extract_financial_insights(
 ) -> Dict:
     """Extract financial insights from transactions"""
     
-    # Calculate basic stats
-    total_spent = sum(t['amount'] for t in transactions if t['amount'] < 0)
-    total_income = sum(t['amount'] for t in transactions if t['amount'] > 0)
+    # Sanitize transactions before analysis
+    if sanitizer:
+        safe_transactions = sanitizer.sanitize_transactions_batch(transactions)
+    else:
+        safe_transactions = transactions
+        print("Warning: Processing without PII sanitization")
+    
+    # Calculate basic stats from sanitized data
+    total_spent = sum(t['amount'] for t in safe_transactions if t['amount'] < 0)
+    total_income = sum(t['amount'] for t in safe_transactions if t['amount'] > 0)
     
     prompt = f"""Analyze these {period} financial transactions:
 Total Income: ${total_income}
 Total Spent: ${abs(total_spent)}
 Net: ${total_income + total_spent}
-Transaction Count: {len(transactions)}
+Transaction Count: {len(safe_transactions)}
 
 Sample transactions:
-{json.dumps(transactions[:10], indent=2)}
+{json.dumps(safe_transactions[:10], indent=2)}
 
 Provide insights on:
 1. Spending patterns and trends
@@ -269,10 +293,22 @@ Return as JSON with actionable insights and specific recommendations."""
 async def detect_bank_from_text(client: OpenAI, text_content: str) -> Dict:
     """Detect bank from PDF text content using AI"""
     
+    # Sanitize text content to remove PII
+    if sanitizer:
+        # Check for common PII patterns in the text
+        safe_text = text_content
+        for pattern_type, patterns in sanitizer.PATTERNS.items():
+            safe_text, _ = sanitizer._detect_and_redact(
+                safe_text, pattern_type, patterns
+            )
+    else:
+        safe_text = text_content
+        print("Warning: Processing without PII sanitization")
+    
     prompt = f"""Analyze this PDF text from the first page of a bank statement and identify the bank:
 
 Text content:
-{text_content[:1000]}...
+{safe_text[:1000]}...
 
 Common banks to identify:
 - Chase (JPMorgan Chase)

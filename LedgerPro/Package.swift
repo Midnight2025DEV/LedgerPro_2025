@@ -32,7 +32,7 @@ let package = Package(
         .testTarget(
             name: "LedgerProUITests",
             dependencies: ["LedgerPro"],
-            path: "LedgerProUITests",
+            path: "Tests/LedgerProUITests",
             resources: [
                 .process("TestResources")
             ]
