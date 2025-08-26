@@ -126,7 +126,7 @@ File Size Limits:
 
 Rate Limiting:
 - RATE_LIMIT_UPLOADS_UNAUTH: Upload rate for unauthenticated users (default: "10/minute")
-- RATE_LIMIT_UPLOADS_AUTH: Upload rate for authenticated users (default: "30/minute")  
+- RATE_LIMIT_UPLOADS_AUTH: Upload rate for authenticated users (default: "30/minute")
 - RATE_LIMIT_JOBS: Job status check rate (default: "60/minute")
 - RATE_LIMIT_TRANSACTIONS: Transaction fetch rate (default: "30/minute")
 - RATE_LIMIT_METRICS: Metrics access rate (default: "5/minute")

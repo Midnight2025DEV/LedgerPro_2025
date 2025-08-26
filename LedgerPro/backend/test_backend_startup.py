@@ -92,7 +92,7 @@ def test_processor_creation():
     try:
         from processors.python.csv_processor_enhanced import EnhancedCSVProcessor
 
-        processor = EnhancedCSVProcessor()
+        EnhancedCSVProcessor()
         print("✅ Enhanced CSV processor created successfully")
     except Exception as e:
         print(f"❌ CSV processor creation failed: {e}")

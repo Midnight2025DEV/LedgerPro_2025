@@ -1,9 +1,12 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 
 # Add parent directory to path (must be done before other imports)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Now import all other modules
 import pytest
 import asyncio
 import json
