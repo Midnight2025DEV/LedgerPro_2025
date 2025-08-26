@@ -33,7 +33,6 @@ from api_server_secure import (
     limiter,
 )
 
-# Test client
 client = TestClient(app)
 
 
