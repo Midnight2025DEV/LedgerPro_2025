@@ -44,7 +44,7 @@ class TestSecurityFeatures:
         ip_job_counts.clear()
         processing_jobs.clear()
         user_sessions.clear()
-        
+
         # Clear rate limiter storage to prevent cross-test interference
         limiter.reset()
 
@@ -157,7 +157,6 @@ class TestSecurityFeatures:
             time.sleep(0.1)
 
         # Should have fewer rate limits than unauthenticated
-        rate_limited_count = sum(1 for r in responses if r.status_code == 429)
         success_count = sum(1 for r in responses if r.status_code == 200)
 
         # Authenticated users should have at least the same successful requests as their own limit
@@ -174,7 +173,7 @@ class TestSecurityFeatures:
         test_ip = "192.168.1.100"
 
         # Initially should allow jobs
-        assert check_ip_job_limit(test_ip) == True
+        assert check_ip_job_limit(test_ip) is True
 
         # Simulate reaching the limit by creating mock active jobs
         for i in range(MAX_CONCURRENT_JOBS_PER_IP):
@@ -183,14 +182,14 @@ class TestSecurityFeatures:
                 "ip_address": test_ip,
                 "filename": f"test_{i}.csv"
             }
-        
+
         ip_job_counts[test_ip]["count"] = MAX_CONCURRENT_JOBS_PER_IP
-        assert check_ip_job_limit(test_ip) == False
+        assert check_ip_job_limit(test_ip) is False
 
         # Reset should allow again by clearing jobs
         processing_jobs.clear()
         ip_job_counts[test_ip]["count"] = 0
-        assert check_ip_job_limit(test_ip) == True
+        assert check_ip_job_limit(test_ip) is True
 
     def test_invalid_file_type_rejection(self):
         """Test that invalid file types are rejected"""
@@ -312,8 +311,6 @@ class TestSecurityFeatures:
 
     def test_security_headers_and_responses(self):
         """Test that security-related headers and responses are correct"""
-        response = client.get("/api/health")
-
         # Should include rate limit info in some endpoints
         upload_response = client.post(
             "/api/upload",

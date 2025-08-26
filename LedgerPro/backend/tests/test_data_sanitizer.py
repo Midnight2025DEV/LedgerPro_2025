@@ -2,14 +2,15 @@
 Comprehensive tests for the Data Sanitizer module
 """
 
+import sys
+from pathlib import Path
+
+# Add parent directory to path (must be done before other imports)
+sys.path.append(str(Path(__file__).parent.parent))
+
 import unittest
 import json
 from datetime import datetime, timedelta
-from pathlib import Path
-import sys
-
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parent.parent))
 
 from processors.python.data_sanitizer import DataSanitizer, PrivacyLevel
 

@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add parent directory to path (must be done before other imports)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pytest
 import asyncio
 import json
@@ -7,11 +13,6 @@ import time
 import hashlib
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock, AsyncMock
-import sys
-import os
-
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api_server_real import app, processing_jobs, file_hashes
 

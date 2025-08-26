@@ -111,9 +111,9 @@ def main():
     """Main entry point for CI server"""
     print("🚀 Starting CI-specific API server...")
     print("=" * 50)
-    print(f"Environment: CI Mode")
+    print("Environment: CI Mode")
     print(f"Python version: {sys.version}")
-    print(f"FastAPI version: Starting server...")
+    print("FastAPI version: Starting server...")
     print("=" * 50)
 
     try:

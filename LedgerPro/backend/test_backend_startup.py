@@ -102,7 +102,7 @@ def test_processor_creation():
     try:
         from processors.python.camelot_processor import CamelotFinancialProcessor
 
-        processor = CamelotFinancialProcessor()
+        CamelotFinancialProcessor()
         print("✅ Camelot processor created successfully")
     except Exception as e:
         print(f"⚠️  Camelot processor creation failed: {e}")
