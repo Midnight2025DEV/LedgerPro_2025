@@ -1,0 +1,159 @@
+# Privacy Configuration for Data Sanitization
+# Controls how PII is redacted before sending to LLM APIs
+
+privacy_levels:
+  strict:
+    # Maximum privacy - suitable for highly sensitive data
+    redact_amounts: true
+    amount_rounding: 10  # Round to nearest $10
+    generalize_dates: "week"  # Generalize to week level
+    remove_descriptions: false
+    tokenize_merchants: true
+    redact_all_locations: true
+    preserve_patterns: false
+    
+  balanced:
+    # Default - balances privacy with analytical value
+    redact_amounts: false
+    amount_rounding: 1  # Round to nearest dollar
+    generalize_dates: "day"  # Keep day precision
+    remove_descriptions: false
+    tokenize_merchants: false
+    redact_all_locations: false
+    preserve_patterns: true
+    
+  minimal:
+    # Minimum redaction - only removes clear PII
+    redact_amounts: false
+    amount_rounding: 0  # Keep original precision
+    generalize_dates: false
+    remove_descriptions: false
+    tokenize_merchants: false
+    redact_all_locations: false
+    preserve_patterns: true
+
+# Additional patterns to supplement built-in regex
+additional_patterns:
+  # Custom account patterns for specific banks
+  bank_specific:
+    - 'CHASE\s*\*{4}\d{4}'  # Chase account references
+    - 'WELLS\s*FARGO\s*\d{4}'  # Wells Fargo references
+    - 'BOFA\s*\d{4}'  # Bank of America references
+    
+  # Loyalty/membership numbers
+  membership:
+    - '(?:member|membership|loyalty)[\s#:-]*\d{8,16}'
+    - '(?:rewards|points)[\s#:-]*\d{8,16}'
+    
+  # Transaction-specific identifiers
+  transaction_ids:
+    - '(?:ref|reference|trans)[\s#:-]*[A-Z0-9]{8,20}'
+    - '(?:confirmation|conf)[\s#:-]*[A-Z0-9]{8,16}'
+    
+  # Custom PII patterns
+  custom_pii:
+    - '(?:employee|emp)[\s#:-]*\d{5,10}'  # Employee IDs
+    - '(?:student|stu)[\s#:-]*\d{6,10}'  # Student IDs
+
+# Safe merchant allowlist - these won't be tokenized
+safe_merchants:
+  - AMAZON
+  - WALMART
+  - TARGET
+  - COSTCO
+  - "WHOLE FOODS"
+  - KROGER
+  - SAFEWAY
+  - "TRADER JOES"
+  - STARBUCKS
+  - MCDONALDS
+  - SUBWAY
+  - CHIPOTLE
+  - "TACO BELL"
+  - "BURGER KING"
+  - SHELL
+  - CHEVRON
+  - EXXON
+  - BP
+  - UBER
+  - LYFT
+  - NETFLIX
+  - SPOTIFY
+  - "APPLE STORE"
+  - "GOOGLE PLAY"
+  - VENMO
+  - PAYPAL
+  - ZELLE
+
+# Categories that should be preserved for analysis
+preserve_categories:
+  - Shopping
+  - Groceries
+  - "Dining Out"
+  - Entertainment
+  - Transportation
+  - Utilities
+  - Healthcare
+  - Education
+  - "Home & Garden"
+  - "Personal Care"
+  - "Bills & Utilities"
+  - Insurance
+  - Taxes
+  - Investments
+  - "Cash & ATM"
+  - Transfer
+  - "Fees & Charges"
+  - Income
+  - "Gift & Donations"
+
+# Fields that should always be checked for PII
+sensitive_fields:
+  - description
+  - merchant
+  - merchant_name
+  - payee
+  - payer
+  - memo
+  - notes
+  - reference
+  - check_number
+  - account_name
+  - account_holder
+  - beneficiary
+  - sender
+  - receiver
+
+# Audit and compliance settings
+audit:
+  enabled: true
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  retention_days: 90
+  include_patterns: true  # Log which patterns triggered redaction
+  
+compliance:
+  standards:
+    - GDPR
+    - CCPA
+    - PCI-DSS
+  require_user_consent: true
+  auto_delete_mappings: true
+  mapping_retention_hours: 24
+
+# Performance settings
+performance:
+  batch_size: 1000  # Process transactions in batches
+  cache_patterns: true  # Cache compiled regex patterns
+  parallel_processing: false  # Enable for large datasets
+  max_workers: 4
+
+# Export settings for sanitized data
+export:
+  formats:
+    - json
+    - csv
+  include_audit_trail: true
+  compress_output: false
+  encryption:
+    enabled: false
+    algorithm: "AES-256-GCM"
