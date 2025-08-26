@@ -22,7 +22,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     
     - name: Install system dependencies
       run: |
@@ -107,7 +107,7 @@ jobs:
     
     - name: Upload backend logs on failure
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: backend-logs
         path: LedgerPro/backend/backend.log
@@ -128,20 +128,25 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y ghostscript libpoppler-cpp-dev python3-tk python3-dev
         sudo apt-get install -y libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
+        # Additional dependencies for camelot-py and opencv
+        sudo apt-get install -y libgtk-3-dev libcairo2-dev pkg-config libgirepository1.0-dev
     
     - name: Install Python dependencies
       run: |
         cd LedgerPro/backend
         python -m pip install --upgrade pip setuptools wheel
+        # Install opencv-python-headless for CI (no GUI dependencies)
         pip install opencv-python-headless==4.8.0.74
-        pip install -r requirements.txt
+        pip install numpy==1.26.0
+        # Install requirements with better error handling
+        pip install -r requirements.txt --verbose
     
     - name: Run Python tests
       run: |

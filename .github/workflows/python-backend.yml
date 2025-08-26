@@ -58,7 +58,7 @@ jobs:
         python -m pytest -p no:asyncio -p no:anyio tests/ -v --tb=short
         
     - name: Upload coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./LedgerPro/backend/coverage.xml
         flags: backend
